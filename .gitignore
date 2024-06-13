@@ -1,0 +1,7 @@
+R/flureeSetup.R
+node_modules
+.Rproj.user
+.Rhistory
+.Rbuildignore
+*.json
+*.Rproj
