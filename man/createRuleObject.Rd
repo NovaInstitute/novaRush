@@ -4,20 +4,34 @@
 \alias{createRuleObject}
 \title{createRuleObject}
 \usage{
-createRuleObject(id, doc, collection, predicates, fns, ops)
+createRuleObject(
+  errormessage = NULL,
+  collectiondefault = NULL,
+  ops = NULL,
+  fns = NULL,
+  predicates = NULL,
+  collection = NULL,
+  doc = NULL,
+  id = NULL,
+  deleteObject = FALSE
+)
 }
 \arguments{
-\item{id}{character}
+\item{errormessage}{character}
 
-\item{doc}{character}
+\item{collectiondefault}{character}
 
-\item{collection}{character}
-
-\item{predicates}{character}
+\item{ops}{character}
 
 \item{fns}{character}
 
-\item{ops}{character}
+\item{predicates}{character}
+
+\item{collection}{character}
+
+\item{doc}{character}
+
+\item{id}{character}
 }
 \value{
 data.frame

@@ -4,14 +4,28 @@
 \alias{createFnObject}
 \title{createFnObject}
 \usage{
-createFnObject(name, code, doc)
+createFnObject(
+  language = NULL,
+  spec = NULL,
+  doc = NULL,
+  code = NULL,
+  params = NULL,
+  name = NULL,
+  deleteObject = FALSE
+)
 }
 \arguments{
-\item{name}{character}
+\item{language}{character}
+
+\item{spec}{character}
+
+\item{doc}{character}
 
 \item{code}{character}
 
-\item{doc}{character}
+\item{params}{character}
+
+\item{name}{character}
 }
 \value{
 data.frame

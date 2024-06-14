@@ -4,14 +4,22 @@
 \alias{createUserObject}
 \title{createUserObject}
 \usage{
-createUserObject(username, auth, roles)
+createUserObject(
+  doc = NULL,
+  roles = NULL,
+  auth = NULL,
+  username = NULL,
+  deleteObject = FALSE
+)
 }
 \arguments{
-\item{username}{character}
+\item{doc}{character}
+
+\item{roles}{character}
 
 \item{auth}{character}
 
-\item{roles}{character}
+\item{username}{character}
 }
 \value{
 data.frame

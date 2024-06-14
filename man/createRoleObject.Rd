@@ -4,14 +4,22 @@
 \alias{createRoleObject}
 \title{createRoleObject}
 \usage{
-createRoleObject(id, doc, rules)
+createRoleObject(
+  ctx = NULL,
+  rules = NULL,
+  doc = NULL,
+  id = NULL,
+  deleteObject = FALSE
+)
 }
 \arguments{
-\item{id}{character}
+\item{ctx}{character}
+
+\item{rules}{character}
 
 \item{doc}{character}
 
-\item{rules}{character}
+\item{id}{character}
 }
 \value{
 data.frame

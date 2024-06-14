@@ -4,12 +4,12 @@
 \alias{createTagObject}
 \title{createTagObject}
 \usage{
-createTagObject(id, doc)
+createTagObject(doc = NULL, id = NULL, deleteObject = FALSE)
 }
 \arguments{
-\item{id}{character}
-
 \item{doc}{character}
+
+\item{id}{character}
 }
 \value{
 data.frame

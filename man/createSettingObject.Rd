@@ -4,14 +4,34 @@
 \alias{createSettingObject}
 \title{createSettingObject}
 \usage{
-createSettingObject(ledgers, id, language)
+createSettingObject(
+  language = NULL,
+  id = NULL,
+  txmax = NULL,
+  passwords = NULL,
+  doc = NULL,
+  consensus = NULL,
+  ledgers = NULL,
+  anonymous = NULL,
+  deleteObject = FALSE
+)
 }
 \arguments{
-\item{ledgers}{character}
+\item{language}{character}
 
 \item{id}{character}
 
-\item{language}{character}
+\item{txmax}{character}
+
+\item{passwords}{character}
+
+\item{doc}{character}
+
+\item{consensus}{character}
+
+\item{ledgers}{character}
+
+\item{anonymous}{character}
 }
 \value{
 data.frame

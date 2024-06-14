@@ -4,14 +4,34 @@
 \alias{createAuthObject}
 \title{createAuthObject}
 \usage{
-createAuthObject(id, doc, roles)
+createAuthObject(
+  fuel = NULL,
+  authority = NULL,
+  type = NULL,
+  doc = NULL,
+  roles = NULL,
+  salt = NULL,
+  password = NULL,
+  id = NULL,
+  deleteObject = FALSE
+)
 }
 \arguments{
-\item{id}{character}
+\item{fuel}{character}
+
+\item{authority}{character}
+
+\item{type}{character}
 
 \item{doc}{character}
 
 \item{roles}{character}
+
+\item{salt}{character}
+
+\item{password}{character}
+
+\item{id}{character}
 }
 \value{
 data.frame

@@ -4,14 +4,31 @@
 \alias{createCollectionObject}
 \title{createCollectionObject}
 \usage{
-createCollectionObject(name, doc, version)
+createCollectionObject(
+  partition = NULL,
+  shard = NULL,
+  specdoc = NULL,
+  spec = NULL,
+  version = NULL,
+  doc = NULL,
+  name = NULL,
+  deleteObject = FALSE
+)
 }
 \arguments{
-\item{name}{character}
+\item{partition}{character}
+
+\item{shard}{character}
+
+\item{specdoc}{character}
+
+\item{spec}{character}
+
+\item{version}{character}
 
 \item{doc}{character}
 
-\item{version}{character}
+\item{name}{character}
 }
 \value{
 data.frame

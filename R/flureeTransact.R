@@ -10,7 +10,7 @@ flureeTransact <- function(ledgerName, transactObject, signQuery = TRUE){
   require(httr)
   require(jsonlite)
   # Convert the query object to JSON
-  bodyObject <- jsonlite::toJSON(transactObject, auto_unbox = TRUE)
+  bodyObject <- transactObject
   if(signQuery){
     # Sign the query
     bodyObject <- makeQuerySignature(ledgerName = ledgerName, queryString =  bodyObject)

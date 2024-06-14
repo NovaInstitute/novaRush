@@ -34,7 +34,7 @@ getAllEntityRecords <- function(ledgerName, entityName, signQuery = TRUE){
     body = body
   )
   # Parse JSON data
-  data_list <- fromJSON(content(response, "text"))
+  data_list <- jsonlite::fromJSON(content(response, "text"))
   # Convert list to tibble
   data_tibble <- as_tibble(data_list)
   return(data_tibble)

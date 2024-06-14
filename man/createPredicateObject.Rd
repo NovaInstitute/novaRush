@@ -5,35 +5,66 @@
 \title{createPredicateObject}
 \usage{
 createPredicateObject(
-  name,
-  doc,
-  type,
-  restrictcollection,
-  unique,
-  multi,
-  restricttag,
-  index,
-  upsert
+  retractduplicates = NULL,
+  fulltext = NULL,
+  restricttag = NULL,
+  txspecdoc = NULL,
+  txspec = NULL,
+  specdoc = NULL,
+  deprecated = NULL,
+  encrypted = NULL,
+  spec = NULL,
+  restrictcollection = NULL,
+  nohistory = NULL,
+  component = NULL,
+  upsert = NULL,
+  index = NULL,
+  multi = NULL,
+  unique = NULL,
+  type = NULL,
+  doc = NULL,
+  name = NULL,
+  deleteObject = FALSE
 )
 }
 \arguments{
-\item{name}{character}
+\item{retractduplicates}{character}
 
-\item{doc}{character}
-
-\item{type}{character}
-
-\item{restrictcollection}{character}
-
-\item{unique}{character}
-
-\item{multi}{character}
+\item{fulltext}{character}
 
 \item{restricttag}{character}
 
-\item{index}{character}
+\item{txspecdoc}{character}
+
+\item{txspec}{character}
+
+\item{specdoc}{character}
+
+\item{deprecated}{character}
+
+\item{encrypted}{character}
+
+\item{spec}{character}
+
+\item{restrictcollection}{character}
+
+\item{nohistory}{character}
+
+\item{component}{character}
 
 \item{upsert}{character}
+
+\item{index}{character}
+
+\item{multi}{character}
+
+\item{unique}{character}
+
+\item{type}{character}
+
+\item{doc}{character}
+
+\item{name}{character}
 }
 \value{
 data.frame
