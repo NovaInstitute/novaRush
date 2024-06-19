@@ -8,6 +8,7 @@ createChatObject(
   comments = NULL,
   instant = NULL,
   person = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }

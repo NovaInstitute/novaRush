@@ -10,6 +10,7 @@ createPersonObject(
   favnums = NULL,
   follows = NULL,
   handle = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }

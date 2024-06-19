@@ -13,6 +13,7 @@ createSettingObject(
   consensus = NULL,
   ledgers = NULL,
   anonymous = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }

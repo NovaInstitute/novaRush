@@ -3,6 +3,8 @@ library(httr)
 library(jsonlite)
 library(tibble)
 library(plyr)
+library(dplyr)
+
 Sys.setenv(fluree_link = "http://localhost:8090/fdb/")
 Sys.setenv(privateKey = "0c7ebd0dcbdb5796ff0175757724cffeaa948794dc0cb649b2eb525e9e70e6cb")
 Sys.setenv(authId = "Tf8yFnwVxvekbvwXwsEzgwUVz4YBZMgjHEL")
@@ -113,15 +115,15 @@ flureeTransact(ledgerName = "authority/test",
                 transactObject = lsPredicates,
                 signQuery = FALSE)
 
-getAllEntityRecords("authority/test", "_collection", signQuery = FALSE)
-getAllEntityRecords("authority/test", "_predicate", signQuery = FALSE)
-
+getAllEntityRecords(ledgerName = "authority/test", entityName = "_collection", signQuery = TRUE)
+ds <- getAllEntityRecords("authority/test", "_predicate", signQuery = TRUE)
 
 
 lsPeople <- list(createPersonObject(fullname = "Jane Doe", handle = "jdoe"),
 createPersonObject(fullname = "Zach Smith", handle = "zsmith"))
 
-dfPeople <- do.call("rbind.fill", lsPeople) %>%  jsonlite::toJSON(auto_unbox = TRUE)
+dfPeople <- do.call("rbind.fill", lsPeople) %>%
+  jsonlite::toJSON(auto_unbox = TRUE)
 
 flureeTransact(ledgerName = "authority/test",
                transactObject = dfPeople,
@@ -142,16 +144,69 @@ flureeTransact(ledgerName = "authority/test",
 # A person with the full name, Alton Brown, handle, aBrown, and favorite numbers: 89 and 7
 # A person with the full name, Oprah Winfrey, handle, oWinfrey, and favorite numbers: 2, 6 and 908
 # A person with the full name, Roger Goodell, handle, rGood, and favorite numbers: 2
-lsPeople <- list(createPersonObject(fullname = "Alton Brown", handle = "aBrown", favnums = list(89, 7)) ,
-                 createPersonObject(fullname = "Oprah Winfrey", handle = "oWinfrey", favnums = jsonlite::toJSON(c(2, 6, 908))),
-                 createPersonObject(fullname = "Roger Goodell", handle = "rGood", favnums = jsonlite::toJSON(c(2))))
+lsPeople <- list(createPersonObject(fullname = "Alton Brown", handle = "aBrown", favnums = c(89, 7)) ,
+                 createPersonObject(fullname = "Oprah Winfrey", handle = "oWinfrey", favnums = c(2, 6, 908)),
+                 createPersonObject(fullname = "Roger Goodell", handle = "rGood", favnums = c(2)))
 dfPeople <- do.call("rbind.fill", lsPeople) %>%  jsonlite::toJSON(auto_unbox = TRUE)
 
 flureeTransact(ledgerName = "authority/test",
                transactObject = dfPeople,
                signQuery = FALSE)
 
-getAllEntityRecords("authority/test", "person", signQuery = FALSE)
+#getAllEntityRecords("authority/test", "person", signQuery = FALSE)
+# Create 1 New Person and 1 New Artist
+# Write a transaction to create the 1 new person and 1 new artist
+# Person with the full name, Connie Seur, handle, cSuer, favorite numbers: 13, and favorite artists: Gustav Klimt
+# Artist with the name, Gustav Klimt
+lsData <- list(createPersonObject(fullname = "Connie Seur", handle = "cSuer",
+                                         favnums = 13, favartists = "artist$Gustav"),
+                            createArtistObject(name = "Gustav Klimt", entityId = "artist$Gustav"))
+
+dfData <- lsData %>% jsonlite::toJSON(auto_unbox = TRUE, pretty = TRUE)
+
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfData,
+               signQuery = FALSE)
+
+# Create 1 New Chat and 1 New Comment
+# Write a transaction to create a new person with the full name, Joy Tan, and handle, jTan
+# Write a transaction to create a new chat with the message, This is a message from Joy!, instant, now, and person, Joy Tan
+lsData <- list(createPersonObject(fullname = "Joy Tan", handle = "jTan", entityId = "person$joy"),
+               createChatObject(comments = "This is a message from Joy!",
+                                instant = "#(now)",
+                                person = "person$joy"))
+dfData <- lsData %>% jsonlite::toJSON(auto_unbox = TRUE)
+
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfData,
+               signQuery = FALSE)
+
+
+
+lsData <- list(createPersonObject(fullname = "John Cena", handle = "jCena"))
+dfData <- lsData %>% jsonlite::toJSON(auto_unbox = TRUE)
+
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfData,
+               signQuery = FALSE)
+
+
+lsData <- list(createAuthObject(id = Sys.getenv("authId"),
+                                doc = "Test 123"))
+dfData <- lsData %>% jsonlite::toJSON(auto_unbox = TRUE)
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfData,
+               signQuery = FALSE)
+
+
+
+
+
+lsData <- list(createPersonObject(fullname = "Veli Tshepo", handle = "vSotiya1"))
+dfData <- lsData %>% jsonlite::toJSON(auto_unbox = TRUE)
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfData,
+               signQuery = FALSE)
 
 
 

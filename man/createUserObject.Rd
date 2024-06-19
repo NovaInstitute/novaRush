@@ -9,6 +9,7 @@ createUserObject(
   roles = NULL,
   auth = NULL,
   username = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }

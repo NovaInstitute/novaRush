@@ -9,6 +9,7 @@ createCtxObject(
   fn = NULL,
   key = NULL,
   name = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }
