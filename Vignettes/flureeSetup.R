@@ -6,8 +6,6 @@ library(plyr)
 library(dplyr)
 
 Sys.setenv(fluree_link = "http://localhost:8090/fdb/")
-Sys.setenv(privateKey = "0c7ebd0dcbdb5796ff0175757724cffeaa948794dc0cb649b2eb525e9e70e6cb")
-Sys.setenv(authId = "Tf8yFnwVxvekbvwXwsEzgwUVz4YBZMgjHEL")
 
 #Step 1: Start docker container with: docker run -d --name fluree-ledger --network fluree-network  -e fdb-mode=dev -e fdb-open-api=false -p 8090:8090 fluree/ledger
 #Step 2: To enable authentication, set the environment variable fdb-auth=true: sudo docker exec -it containerID bash, apt-get update && apt-get install vim nano, vim /opt/fluree/fdb/config/fdb.properties, fdb-auth=true
