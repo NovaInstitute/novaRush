@@ -37,7 +37,7 @@ if(nchar(privateKey) <1 | nchar(authId) <1){
 
 jsCode <- signatureText(ledgerName = ledgerName,
                         privateKey = privateKey,
-                        endpoint = "query/",
+                        endpoint = "query",
                         body = body,
                         authId = authId)
 

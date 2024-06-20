@@ -11,16 +11,14 @@ signatureText <- function(ledgerName,
                           endpoint,
                           body,
                           authId){
+
+fluree_link <- Sys.getenv("fluree_link")
+
 signText <- paste0("const { signQuery } = require('@fluree/crypto-utils');
 const fetch = require('node-fetch');
-const queryObj = {
-  select: ['*'],
-  from: '_auth',
-};
-const queryString = JSON.stringify(queryObj);
 const queryAsUser = () =>
   fetch(
-    `http://localhost:8090/fdb/authority/test/", endpoint,"`,
+    `", fluree_link, ledgerName,"/", endpoint,"`,
     signQuery(
       '", privateKey,"',
       '", as.character(body),"',

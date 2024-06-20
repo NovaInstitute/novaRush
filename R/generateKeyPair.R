@@ -5,7 +5,7 @@
 generateKeyPair <- function(){
   # Construct the inline Node.js code
   jsCode <- paste0("
-   const { generateKeyPair, getSinFromPublicKey } = require('@fluree/crypto-utils');
+  const { generateKeyPair, getSinFromPublicKey } = require('@fluree/crypto-utils');
   const { publicKey: authorityPubKey, privateKey: authorityPrivKey } = generateKeyPair();
   const authorityAuthId = getSinFromPublicKey(authorityPubKey);
   authority = {

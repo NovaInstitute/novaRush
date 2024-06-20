@@ -8,9 +8,10 @@ library(dplyr)
 Sys.setenv(fluree_link = "http://localhost:8090/fdb/")
 
 #Step 1: Start docker container with: docker run -d --name fluree-ledger --network fluree-network  -e fdb-mode=dev -e fdb-open-api=false -p 8090:8090 fluree/ledger
-#Step 2: To enable authentication, set the environment variable fdb-auth=true: sudo docker exec -it containerID bash, apt-get update && apt-get install vim nano, vim /opt/fluree/fdb/config/fdb.properties, fdb-auth=true
-#Step 3: Install nodejs and npm in the root directory of this project
-#Step 4: Install required packages @fluree/crypto-utils,
+#Step 2: To enable authentication, set the environment variable fdb-auth=true: sudo docker exec -it containerID bash, apt-get update && apt-get install nano
+#Step 3: Edit properties file: nano /opt/fluree/fluree_sample.properties, fdb-auth=true
+#Step 4: Install nodejs and npm in the root directory of this project
+#Step 5: Install required packages @fluree/crypto-utils, node-fetch
 
 # create auth account
 # transactObj <- createAuthObject(ledgerName = "authority/test",
