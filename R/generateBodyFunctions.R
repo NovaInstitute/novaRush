@@ -3,16 +3,16 @@
 #' @param ledgerName Character. The name of the ledger.
 #' @param signQuery Logical. Should the query be signed?
 #' @return character
+#' @import dplyr
 #'
 #' @export
 generateBodyFunctions <- function(ledgerName =  "authority/test", signQuery = FALSE){
 
-  require(dplyr)
   dfCollections <- getAllEntityRecords(ledgerName = ledgerName, entityName = "_collection", signQuery = signQuery)
   names(dfCollections) <- novaUtils::fixname(names(dfCollections))
 
   #clear the file
-  cat("\n\n###Do don't manually edit this file, modify generateBodyFunctions() instead.###\n\n\n", file = "R/flureeObjectFunctions.R")
+  cat("\n\n###Do not manually edit this file, modify generateBodyFunctions() instead.###\n\n\n", file = "R/flureeObjectFunctions.R")
 
   dfAllPredicates <- getAllEntityRecords(ledgerName = ledgerName,
                                          entityName = "_predicate",
