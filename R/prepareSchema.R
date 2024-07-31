@@ -50,9 +50,13 @@ prepareSchema <- function(predicateNames = NULL, dfData = NULL){
 #' @return character
 #' @export
 #' @import httr
-createSchema <- function(path,
-                         schema_list,
+createSchema <- function(path = NULL,
+                         schema_list = NULL,
                          fluree_link = Sys.getenv("fluree_link")) {
+
+  if (is.null(path)) stop("please provide a path")
+  if (is.null(schema_list)) stop("please provide a schema_list: e.g. output from prepareSchema()")
+
   link <- paste0(fluree_link, path, "transact")
   flureeFetch(path = link,
               method = "POST",
