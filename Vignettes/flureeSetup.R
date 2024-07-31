@@ -7,16 +7,23 @@ Sys.setenv(fluree_link = "http://localhost:8090/fdb/")
 Sys.setenv(privateKey = "0c7ebd0dcbdb5796ff0175757724cffeaa948794dc0cb649b2eb525e9e70e6cb")
 Sys.setenv(authId = "Tf8yFnwVxvekbvwXwsEzgwUVz4YBZMgjHEL")
 
-#Step 1: Start docker container with: docker run -d --name fluree-ledger --network fluree-network  -e fdb-mode=dev -e fdb-open-api=false -p 8090:8090 fluree/ledger
-#Step 2: To enable authentication, set the environment variable fdb-auth=true: sudo docker exec -it containerID bash, apt-get update && apt-get install vim nano, vim /opt/fluree/fdb/config/fdb.properties, fdb-auth=true
-#Step 3: Install nodejs and npm in the root directory of this project
-#Step 4: Install required packages @fluree/crypto-utils,
+# Step 1: Start docker container with: docker run -d --name fluree-ledger --network fluree-network  -e fdb-mode=dev -e fdb-open-api=false -p 8090:8090 fluree/ledger
+system("docker network ls") # check if network exists
+system("docker network create fluree-network") # create network
+system("docker run -d --name fluree-ledger --network fluree-network  -e fdb-mode=dev -e fdb-open-api=false -p 8090:8090 fluree/ledger")
+system("docker ps -a")
+system("docker start fb2c5f749966")
+
+# Step 2: To enable authentication, set the environment variable fdb-auth=true:
+# sudo docker exec -it fb2c5f749966 bash, apt-get update && apt-get install vim nano, vim /opt/fluree/fdb/config/fdb.properties, fdb-auth=true"
+# Step 3: Install nodejs and npm in the root directory of this project
+# Step 4: Install required packages @fluree/crypto-utils,
 
 # create auth account
-# transactObj <- createAuthObject(ledgerName = "authority/test",
-#                                 authId = Sys.getenv("authId"),
-#                                 authDoc = "Test 123")
-# flureeTransact("authority/test", transactObj)
+transactObj <- createAuthObject(ledgerName = "authority/test",
+                                 authId = Sys.getenv("authId"),
+                                 authDoc = "Test 123")
+flureeTransact("authority/test", transactObj)
 
 #creating collections 'tables' in fluree
 flureeTransact(ledgerName = "authority/test",
