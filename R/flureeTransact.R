@@ -13,13 +13,37 @@ flureeTransact <- function(ledgerName, transactObject, signQuery = TRUE){
   bodyObject <- transactObject
   if(signQuery){
     # Sign the query
-    bodyObject <- makeQuerySignature(ledgerName = ledgerName, queryString =  bodyObject)
+    #bodyObject <- makeQuerySignature(ledgerName = ledgerName, queryString = bodyObject)
+    authId <- Sys.getenv("authId")
+    privateKey <- Sys.getenv("privateKey")
+    if(is.null(authId) | is.null(privateKey)){
+      stop("Please set the authId and privateKey in the environment variables")
+    }
+    if(nchar(privateKey) <1 | nchar(authId) <1){
+      stop("Please set the authId and privateKey in the environment variables")
+    }
+
+    jsCode <- signatureText(ledgerName = ledgerName,
+                            privateKey = privateKey,
+                            endpoint = "transact",
+                            body = bodyObject,
+                            authId = authId)
+
+    cat(jsCode, file = "temp.js")
+    payload <- system(paste('node temp.js'), intern = TRUE)
+    unlink("temp.js")
+    if(any(grepl("using Node.js", payload))){
+      payload <- payload[-1]
+    }
+    payload <- paste(payload, collapse = "")
+    json_payload <- jsonlite::fromJSON(payload)
+    return(json_payload)
   }
   # Define the URL
   response <- flureeFetch(path = paste0(Sys.getenv("fluree_link"), ledgerName, "/transact/"),
                           method = "POST",
                           body = bodyObject)
-  return(response)
+  return( response)
 }
 
 

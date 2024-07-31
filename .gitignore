@@ -5,3 +5,4 @@ node_modules
 .Rbuildignore
 *.json
 *.Rproj
+temp.js

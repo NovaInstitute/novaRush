@@ -4,7 +4,7 @@
 \alias{createArtistObject}
 \title{createArtistObject}
 \usage{
-createArtistObject(name = NULL, deleteObject = FALSE)
+createArtistObject(name = NULL, entityId = NULL, deleteObject = FALSE)
 }
 \arguments{
 \item{name}{character}

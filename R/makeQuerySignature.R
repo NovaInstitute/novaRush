@@ -13,16 +13,13 @@ makeQuerySignature <- function(ledgerName,
   # Construct the inline Node.js code
   jsCode <- paste0("
     const { signQuery } = require('@fluree/crypto-utils');
-    console.log(signQuery(
+    console.log(JSON.stringify(signQuery(
       '", privateKey, "',
       '", queryString, "',
       'query',
       '", ledgerName, "',
       '", authId, "'
-    ))")
-
-  # Escape double quotes for inline execution
-  jsCode <- gsub("\"", "\\\"", jsCode)
+    )))")
 
   # Execute the JavaScript code inline with node
   signedQuery <- system(paste('node -e "', jsCode, '"'), intern = TRUE)
@@ -31,5 +28,6 @@ makeQuerySignature <- function(ledgerName,
     signedQuery <- signedQuery[-1]
   }
   signedQuery <- paste(signedQuery, collapse = "")
-  return(signedQuery)
+
+ return(signedQuery)
 }

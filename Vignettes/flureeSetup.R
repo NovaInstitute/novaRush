@@ -17,7 +17,7 @@ system("docker start fb2c5f749966")
 # Step 2: To enable authentication, set the environment variable fdb-auth=true:
 # sudo docker exec -it fb2c5f749966 bash, apt-get update && apt-get install vim nano, vim /opt/fluree/fdb/config/fdb.properties, fdb-auth=true"
 # Step 3: Install nodejs and npm in the root directory of this project
-# Step 4: Install required packages @fluree/crypto-utils,
+# Step 4: Install npm init -y,
 
 # create auth account
 transactObj <- createAuthObject(ledgerName = "authority/test",
@@ -26,13 +26,13 @@ transactObj <- createAuthObject(ledgerName = "authority/test",
 flureeTransact("authority/test", transactObj)
 
 #creating collections 'tables' in fluree
-flureeTransact(ledgerName = "authority/test",
+flureeTransact(ledgerName = "cjp/test",
                transactObject = createCollectionObject(name  = "person",
                                                        doc = "Collection to for all persons",
                                                        version = 1),
                signQuery = FALSE)
 
-flureeTransact(ledgerName = "authority/test",
+flureeTransact(ledgerName = "cjp/test",
                transactObject = createCollectionObject(name  = "chat",
                                                        doc = "Collection to for all chats",
                                                        version = 1),

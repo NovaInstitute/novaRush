@@ -1,6 +1,6 @@
 
 
-###Do don't manually edit this file, modify generateBodyFunctions() instead.###
+### Do not manually edit this file, modify generateBodyFunctions() instead. ###
 
 
 
@@ -12,28 +12,25 @@
 #' @import openssl
 #' @export
 
- createArtistObject <- function(name = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createArtistObject <- function(name = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  name = name,
-  '_id' = 'artist')
+  entityObject <- list(
+    name = name, 
+    '_id' = ifelse(is.null(entityId), paste0('artist'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -46,29 +43,26 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createCommentObject <- function(message = NULL, person = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createCommentObject <- function(message = NULL, person = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  message = message,
-  person = person,
-  '_id' = 'comment')
+  entityObject <- list(
+    message = message, 
+    person = person, 
+    '_id' = ifelse(is.null(entityId), paste0('comment'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -82,30 +76,27 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createChatObject <- function(comments = NULL, instant = NULL, person = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createChatObject <- function(comments = NULL, instant = NULL, person = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  comments = list(comments),
-  instant = instant,
-  person = person,
-  '_id' = 'chat')
+  entityObject <- list(
+    comments = if(!is.null(comments)) list(comments) else NULL, 
+    instant = instant, 
+    person = person, 
+    '_id' = ifelse(is.null(entityId), paste0('chat'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -121,32 +112,29 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createPersonObject <- function(fullname = NULL, favartists = NULL, favnums = NULL, follows = NULL, handle = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createPersonObject <- function(fullname = NULL, favartists = NULL, favnums = NULL, follows = NULL, handle = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  fullName = list(fullname),
-  favArtists = list(favartists),
-  favNums = list(favnums),
-  follows = list(follows),
-  handle = handle,
-  '_id' = 'person')
+  entityObject <- list(
+    fullName = fullname, 
+    favArtists = if(!is.null(favartists)) list(favartists) else NULL, 
+    favNums = if(!is.null(favnums)) list(favnums) else NULL, 
+    follows = if(!is.null(follows)) list(follows) else NULL, 
+    handle = handle, 
+    '_id' = ifelse(is.null(entityId), paste0('person'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -161,31 +149,28 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createCtxObject <- function(doc = NULL, fn = NULL, key = NULL, name = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createCtxObject <- function(doc = NULL, fn = NULL, key = NULL, name = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  doc = doc,
-  fn = fn,
-  key = key,
-  name = name,
-  '_id' = '_ctx')
+  entityObject <- list(
+    doc = doc, 
+    fn = fn, 
+    key = key, 
+    name = name, 
+    '_id' = ifelse(is.null(entityId), paste0('_ctx'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -204,35 +189,32 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createSettingObject <- function(language = NULL, id = NULL, txmax = NULL, passwords = NULL, doc = NULL, consensus = NULL, ledgers = NULL, anonymous = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createSettingObject <- function(language = NULL, id = NULL, txmax = NULL, passwords = NULL, doc = NULL, consensus = NULL, ledgers = NULL, anonymous = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  language = language,
-  id = id,
-  txMax = txmax,
-  passwords = passwords,
-  doc = doc,
-  consensus = consensus,
-  ledgers = list(ledgers),
-  anonymous = anonymous,
-  '_id' = '_setting')
+  entityObject <- list(
+    language = language, 
+    id = id, 
+    txMax = txmax, 
+    passwords = passwords, 
+    doc = doc, 
+    consensus = consensus, 
+    ledgers = if(!is.null(ledgers)) list(ledgers) else NULL, 
+    anonymous = anonymous, 
+    '_id' = ifelse(is.null(entityId), paste0('_setting'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -251,35 +233,32 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createRuleObject <- function(errormessage = NULL, collectiondefault = NULL, ops = NULL, fns = NULL, predicates = NULL, collection = NULL, doc = NULL, id = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createRuleObject <- function(errormessage = NULL, collectiondefault = NULL, ops = NULL, fns = NULL, predicates = NULL, collection = NULL, doc = NULL, id = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  errorMessage = errormessage,
-  collectionDefault = collectiondefault,
-  ops = list(ops),
-  fns = list(fns),
-  predicates = list(predicates),
-  collection = collection,
-  doc = doc,
-  id = id,
-  '_id' = '_rule')
+  entityObject <- list(
+    errorMessage = errormessage, 
+    collectionDefault = collectiondefault, 
+    ops = if(!is.null(ops)) list(ops) else NULL, 
+    fns = if(!is.null(fns)) list(fns) else NULL, 
+    predicates = if(!is.null(predicates)) list(predicates) else NULL, 
+    collection = collection, 
+    doc = doc, 
+    id = id, 
+    '_id' = ifelse(is.null(entityId), paste0('_rule'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -294,31 +273,28 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createRoleObject <- function(ctx = NULL, rules = NULL, doc = NULL, id = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createRoleObject <- function(ctx = NULL, rules = NULL, doc = NULL, id = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  ctx = list(ctx),
-  rules = list(rules),
-  doc = doc,
-  id = id,
-  '_id' = '_role')
+  entityObject <- list(
+    ctx = if(!is.null(ctx)) list(ctx) else NULL, 
+    rules = if(!is.null(rules)) list(rules) else NULL, 
+    doc = doc, 
+    id = id, 
+    '_id' = ifelse(is.null(entityId), paste0('_role'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -337,35 +313,32 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createAuthObject <- function(fuel = NULL, authority = NULL, type = NULL, doc = NULL, roles = NULL, salt = NULL, password = NULL, id = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createAuthObject <- function(fuel = NULL, authority = NULL, type = NULL, doc = NULL, roles = NULL, salt = NULL, password = NULL, id = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  fuel = fuel,
-  authority = list(authority),
-  type = type,
-  doc = doc,
-  roles = list(roles),
-  salt = salt,
-  password = password,
-  id = id,
-  '_id' = '_auth')
+  entityObject <- list(
+    fuel = fuel, 
+    authority = if(!is.null(authority)) list(authority) else NULL, 
+    type = type, 
+    doc = doc, 
+    roles = if(!is.null(roles)) list(roles) else NULL, 
+    salt = salt, 
+    password = password, 
+    id = id, 
+    '_id' = ifelse(is.null(entityId), paste0('_auth'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -380,31 +353,28 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createUserObject <- function(doc = NULL, roles = NULL, auth = NULL, username = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createUserObject <- function(doc = NULL, roles = NULL, auth = NULL, username = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  doc = doc,
-  roles = list(roles),
-  auth = list(auth),
-  username = username,
-  '_id' = '_user')
+  entityObject <- list(
+    doc = doc, 
+    roles = if(!is.null(roles)) list(roles) else NULL, 
+    auth = if(!is.null(auth)) list(auth) else NULL, 
+    username = username, 
+    '_id' = ifelse(is.null(entityId), paste0('_user'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -421,33 +391,30 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createFnObject <- function(language = NULL, spec = NULL, doc = NULL, code = NULL, params = NULL, name = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createFnObject <- function(language = NULL, spec = NULL, doc = NULL, code = NULL, params = NULL, name = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  language = language,
-  spec = spec,
-  doc = doc,
-  code = code,
-  params = params,
-  name = name,
-  '_id' = '_fn')
+  entityObject <- list(
+    language = language, 
+    spec = spec, 
+    doc = doc, 
+    code = code, 
+    params = params, 
+    name = name, 
+    '_id' = ifelse(is.null(entityId), paste0('_fn'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -460,29 +427,26 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createTagObject <- function(doc = NULL, id = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createTagObject <- function(doc = NULL, id = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  doc = doc,
-  id = id,
-  '_id' = '_tag')
+  entityObject <- list(
+    doc = doc, 
+    id = id, 
+    '_id' = ifelse(is.null(entityId), paste0('_tag'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -496,30 +460,27 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createShardObject <- function(mutable = NULL, miners = NULL, name = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createShardObject <- function(mutable = NULL, miners = NULL, name = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  mutable = mutable,
-  miners = list(miners),
-  name = name,
-  '_id' = '_shard')
+  entityObject <- list(
+    mutable = mutable, 
+    miners = if(!is.null(miners)) list(miners) else NULL, 
+    name = name, 
+    '_id' = ifelse(is.null(entityId), paste0('_shard'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -537,34 +498,31 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createCollectionObject <- function(partition = NULL, shard = NULL, specdoc = NULL, spec = NULL, version = NULL, doc = NULL, name = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createCollectionObject <- function(partition = NULL, shard = NULL, specdoc = NULL, spec = NULL, version = NULL, doc = NULL, name = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  partition = partition,
-  shard = shard,
-  specDoc = specdoc,
-  spec = list(spec),
-  version = version,
-  doc = doc,
-  name = name,
-  '_id' = '_collection')
+  entityObject <- list(
+    partition = partition, 
+    shard = shard, 
+    specDoc = specdoc, 
+    spec = if(!is.null(spec)) list(spec) else NULL, 
+    version = version, 
+    doc = doc, 
+    name = name, 
+    '_id' = ifelse(is.null(entityId), paste0('_collection'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 
 
@@ -594,45 +552,42 @@ entityObject <- tibble::tibble(
 #' @import openssl
 #' @export
 
- createPredicateObject <- function(retractduplicates = NULL, fulltext = NULL, restricttag = NULL, txspecdoc = NULL, txspec = NULL, specdoc = NULL, deprecated = NULL, encrypted = NULL, spec = NULL, restrictcollection = NULL, nohistory = NULL, component = NULL, upsert = NULL, index = NULL, multi = NULL, unique = NULL, type = NULL, doc = NULL, name = NULL, deleteObject = FALSE){
-
-   arguments <- as.list(match.call())[-1]
-
-   arguments <- setdiff(names(arguments), 'deleteObject')
-
-   if(length(arguments)<1){
-     stop('Please provide at least one argument')
-   }
+ createPredicateObject <- function(retractduplicates = NULL, fulltext = NULL, restricttag = NULL, txspecdoc = NULL, txspec = NULL, specdoc = NULL, deprecated = NULL, encrypted = NULL, spec = NULL, restrictcollection = NULL, nohistory = NULL, component = NULL, upsert = NULL, index = NULL, multi = NULL, unique = NULL, type = NULL, doc = NULL, name = NULL, entityId = NULL, deleteObject = FALSE) {
+  arguments <- as.list(match.call())[-1]
+  arguments <- setdiff(names(arguments), 'deleteObject')
+  if (length(arguments) < 1) {
+    stop('Please provide at least one argument')
+  }
   if (all(sapply(arguments, function(arg) is.null(arg) || identical(arg, FALSE)))) {
     stop('All arguments are NULL or FALSE')
   }
 
-entityObject <- tibble::tibble(
-  retractDuplicates = retractduplicates,
-  fullText = fulltext,
-  restrictTag = restricttag,
-  txSpecDoc = txspecdoc,
-  txSpec = list(txspec),
-  specDoc = specdoc,
-  deprecated = deprecated,
-  encrypted = encrypted,
-  spec = list(spec),
-  restrictCollection = restrictcollection,
-  noHistory = nohistory,
-  component = component,
-  upsert = upsert,
-  index = index,
-  multi = multi,
-  unique = unique,
-  type = type,
-  doc = doc,
-  name = name,
-  '_id' = '_predicate')
+  entityObject <- list(
+    retractDuplicates = retractduplicates, 
+    fullText = fulltext, 
+    restrictTag = restricttag, 
+    txSpecDoc = txspecdoc, 
+    txSpec = if(!is.null(txspec)) list(txspec) else NULL, 
+    specDoc = specdoc, 
+    deprecated = deprecated, 
+    encrypted = encrypted, 
+    spec = if(!is.null(spec)) list(spec) else NULL, 
+    restrictCollection = restrictcollection, 
+    noHistory = nohistory, 
+    component = component, 
+    upsert = upsert, 
+    index = index, 
+    multi = multi, 
+    unique = unique, 
+    type = type, 
+    doc = doc, 
+    name = name, 
+    '_id' = ifelse(is.null(entityId), paste0('_predicate'), entityId))
 
- if(deleteObject){
-
-  entityObject$action <- 'delete'
- }
- return(entityObject)
+  if (deleteObject) {
+    entityObject$action <- 'delete'
+  }
+  entityObject <- Filter(Negate(is.null), entityObject) 
+  return(entityObject)
 }
 

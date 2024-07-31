@@ -4,7 +4,7 @@
 \alias{createTagObject}
 \title{createTagObject}
 \usage{
-createTagObject(doc = NULL, id = NULL, deleteObject = FALSE)
+createTagObject(doc = NULL, id = NULL, entityId = NULL, deleteObject = FALSE)
 }
 \arguments{
 \item{doc}{character}

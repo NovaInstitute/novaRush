@@ -8,6 +8,7 @@ createShardObject(
   mutable = NULL,
   miners = NULL,
   name = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }

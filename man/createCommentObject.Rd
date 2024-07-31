@@ -4,7 +4,12 @@
 \alias{createCommentObject}
 \title{createCommentObject}
 \usage{
-createCommentObject(message = NULL, person = NULL, deleteObject = FALSE)
+createCommentObject(
+  message = NULL,
+  person = NULL,
+  entityId = NULL,
+  deleteObject = FALSE
+)
 }
 \arguments{
 \item{message}{character}

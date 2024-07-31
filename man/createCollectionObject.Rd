@@ -12,6 +12,7 @@ createCollectionObject(
   version = NULL,
   doc = NULL,
   name = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }

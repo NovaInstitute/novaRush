@@ -9,6 +9,7 @@ createRoleObject(
   rules = NULL,
   doc = NULL,
   id = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }

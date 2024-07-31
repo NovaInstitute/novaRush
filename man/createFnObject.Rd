@@ -11,6 +11,7 @@ createFnObject(
   code = NULL,
   params = NULL,
   name = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }

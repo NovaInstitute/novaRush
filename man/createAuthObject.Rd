@@ -13,6 +13,7 @@ createAuthObject(
   salt = NULL,
   password = NULL,
   id = NULL,
+  entityId = NULL,
   deleteObject = FALSE
 )
 }
