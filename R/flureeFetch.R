@@ -11,7 +11,7 @@
 
 # Helper function to fetch data from Fluree
 flureeFetch <- function(path, method, body) {
-  res <- VERB(
+  res <- httr::VERB(
     method,
     paste0(path),
     body = body,
