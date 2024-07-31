@@ -16,7 +16,7 @@ prepareData <- function(dfData = NULL, collectionName = NULL){
   }
 
   data_list <- list()
-  for(i in 1:length(dfData)){
+  for(i in 1:nrow(dfData)){
     dfRow <- dfData[i,]
     dfRow[["_id"]] <- collectionName
     data_list[[i]] <- dfRow
