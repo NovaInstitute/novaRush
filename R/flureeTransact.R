@@ -42,7 +42,7 @@ flureeTransact <- function(ledgerName, transactObject, signQuery = TRUE){
   # Define the URL
   response <- flureeFetch(path = paste0(Sys.getenv("fluree_link"), ledgerName, "/transact/"),
                           method = "POST",
-                          body = bodyObject)
+                          body = list(bodyObject))
   return( response)
 }
 
