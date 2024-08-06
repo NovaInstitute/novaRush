@@ -1,0 +1,40 @@
+---
+title: "Local Fluree setup"
+author: "Christiaan Pauw, Tshepo Sotiya, Jaco Human"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Purpose and scope of this document
+
+This document ....
+
+# Download Docker image
+
+
+```{r message=FALSE}
+library(rjson)
+library(httr)
+library(jsonlite)
+library(tibble)
+library(plyr)
+library(novaRush)
+
+Sys.setenv(fluree_link = "http://localhost:8090/fdb/") # "http://localhost:8091/fluree"
+Sys.setenv(privateKey = "0c7ebd0dcbdb5796ff0175757724cffeaa948794dc0cb649b2eb525e9e70e6cb")
+Sys.setenv(authId = "Tf8yFnwVxvekbvwXwsEzgwUVz4YBZMgjHEL")
+```
+
+Check if the network exists
+
+```{r}
+system("docker network ls", intern = TRUE)
+```
+
+
