@@ -3,7 +3,9 @@ library(httr)
 library(jsonlite)
 library(tibble)
 library(plyr)
-Sys.setenv(fluree_link = "http://localhost:8090/fdb/")
+library(novaRush)
+
+Sys.setenv(fluree_link = "http://localhost:8090/fdb/") # "http://localhost:8091/fluree"
 Sys.setenv(privateKey = "0c7ebd0dcbdb5796ff0175757724cffeaa948794dc0cb649b2eb525e9e70e6cb")
 Sys.setenv(authId = "Tf8yFnwVxvekbvwXwsEzgwUVz4YBZMgjHEL")
 
@@ -15,19 +17,38 @@ system("docker ps -a")
 system("docker start fb2c5f749966")
 
 # Step 2: To enable authentication, set the environment variable fdb-auth=true:
-# sudo docker exec -it fb2c5f749966 bash, apt-get update && apt-get install vim nano, vim /opt/fluree/fdb/config/fdb.properties, fdb-auth=true"
+# sudo docker exec -it --user root fb2c5f749966 bash,
+#   apt-get update && apt-get install nano,
+#   nano /opt/fluree/fdb/config/fdb.properties,  fdb-auth=false"
+# docker stop fb2c5f749966
+# docker start fb2c5f749966
 # Step 3: Install nodejs and npm in the root directory of this project
 # Step 4: Install npm init -y,
 
-# create auth account
-transactObj <- createAuthObject(ledgerName = "authority/test",
-                                 authId = Sys.getenv("authId"),
-                                 authDoc = "Test 123")
-flureeTransact("authority/test", transactObj)
+# Generate Keypair
+
+# kp <- novaRush::generateKeyPair()
+# writeLines(kp, "kp.txt")
+kp <- readLines("kp.txt")
+authId <- jsonlite::fromJSON(kp)$authId
+privKey <- jsonlite::fromJSON(kp)$privKey
+pubKey <- jsonlite::fromJSON(kp)$pubKey
+
+# Find root id
+dfRole <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_role", signQuery = TRUE)
+
+# create auth object locally
+transactObj <- createAuthObject(id = authId,doc = "Test 123", roles = dfRole$`_id`[[1]])
+
+# Send to fluree
+flureeTransact(ledgerName = "cjp/een", transactObject = transactObj, signQuery = FALSE)
+
+dfAuth <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_auth", signQuery = FALSE) %>%
+  mutate(`_id` = as.character(`_id`))
 
 #creating collections 'tables' in fluree
-flureeTransact(ledgerName = "cjp/test",
-               transactObject = createCollectionObject(name  = "person",
+flureeTransact(ledgerName = "cjp/een",
+               transactObject = createCollectionObject(name  = "persons",
                                                        doc = "Collection to for all persons",
                                                        version = 1),
                signQuery = FALSE)
