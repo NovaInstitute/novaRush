@@ -12,8 +12,8 @@
 # Helper function to fetch data from Fluree
 flureeFetch <- function(path, method, body) {
   res <- httr::VERB(
-    method,
-    paste0(path),
+    verb = method,
+    url = paste0(path),
     body = body,
     encode = "json",
     content_type_json()
