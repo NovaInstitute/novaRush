@@ -8,8 +8,9 @@
 #' @export
 #' @import httr
 createLedger <- function(ledgerName = "rdataset/mtcars",
+                         createEndpoint = "create",
                          fluree_link = Sys.getenv("fluree_link")) {
   require(httr)
-  flureeFetch(path = paste0(fluree_link, "new-ledger"), method = "POST",
+  flureeFetch(path = paste0(fluree_link, createEndpoint), method = "POST",
               body = list(`ledger/id` = ledgerName))
 }
