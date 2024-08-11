@@ -21,7 +21,7 @@ const queryAsUser = () =>
     `", fluree_link, ledgerName,"/", endpoint,"`,
     signQuery(
       '", privateKey,"',
-      '", as.character(body),"',
+      '", jsonlite::toJSON(as.character(body)),"',
       '", endpoint,"',
       '",ledgerName,"',
       '", authId,"'
