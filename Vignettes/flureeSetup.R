@@ -36,7 +36,7 @@ k <- system("docker exec -t --user root fb2c5f749966 cat /var/lib/fluree/default
 authId <- "Texfia91G7PfrL7g3Dc6RK3enUBviVGrDvx"
 
 Sys.setenv(authId = authId)
-Sys.setenv(privateKey =k)
+Sys.setenv(privateKey = k)
 
 # Step 2: To enable authentication, set the environment variable fdb-auth=true:
 # sudo docker exec -it --user root fb2c5f749966 bash,  # f555564d120b ?
@@ -74,7 +74,7 @@ flureeTransact(ledgerName = "cjp/test",
                transactObject = createCollectionObject(name  = "chat",
                                                        doc = "Collection to for all chats",
                                                        version = 1),
-               signQuery = FALSE)
+               signQuery = TRUE)
 
 flureeTransact(ledgerName = "authority/test",
                transactObject = createCollectionObject(name  = "comment",
@@ -127,6 +127,7 @@ flureeTransact(ledgerName = "authority/test",
                         type = "string", multi = TRUE,
                         restrictcollection = "comment",
                         doc = "comments of the chat"))
+
 
 dfPredicates <- do.call("rbind.fill", lsPredicates) %>% jsonlite::toJSON(auto_unbox = TRUE)
 
