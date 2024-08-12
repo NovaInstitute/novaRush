@@ -6,6 +6,7 @@
 #' @param authId Character. The authId.
 #' @return character
 #' @export
+
 makeQuerySignature <- function(ledgerName,
                                privateKey = Sys.getenv("privateKey") ,
                                queryString,

@@ -5,6 +5,7 @@
 #' @return character
 #' @export
 #' @import httr
+
 prepareSchema <- function(predicateNames = NULL, dfData = NULL){
   if(is.null(predicateNames) & is.null(dfData)){
     stop("Please provide a list of predicate names or a data frame")

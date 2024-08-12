@@ -5,19 +5,41 @@ library(tibble)
 library(plyr)
 library(novaRush)
 
+# Generate Keypair ----------------------
+
+# # kp <- novaRush::generateKeyPair()
+# # writeLines(kp, "kp.txt")
+# kp <- readLines("kp.txt")
+# authId <- jsonlite::fromJSON(kp)$authId
+# privKey <- jsonlite::fromJSON(kp)$privKey
+# pubKey <- jsonlite::fromJSON(kp)$pubKey
+
+# Setup ----------------------
+
 Sys.setenv(fluree_link = "http://localhost:8090/fdb/") # "http://localhost:8091/fluree"
-Sys.setenv(privateKey = "0c7ebd0dcbdb5796ff0175757724cffeaa948794dc0cb649b2eb525e9e70e6cb")
-Sys.setenv(authId = "Tf8yFnwVxvekbvwXwsEzgwUVz4YBZMgjHEL")
+
+# Sys.setenv(authId = "Tf8yFnwVxvekbvwXwsEzgwUVz4YBZMgjHEL")
 
 # Step 1: Start docker container with: docker run -d --name fluree-ledger --network fluree-network  -e fdb-mode=dev -e fdb-open-api=false -p 8090:8090 fluree/ledger
 system("docker network ls") # check if network exists
 system("docker network create fluree-network") # create network
 system("docker run -d --name fluree-ledger --network fluree-network  -e fdb-mode=dev -e fdb-open-api=false -p 8090:8090 fluree/ledger")
+system("docker run -d --name fluree-server --network fluree-network
+       -e fdb-mode=dev
+       -e fdb-open-api=false
+       -e fdb-api-port=8090
+       -p 8095:8090 fluree/server:latest ")
 system("docker ps -a")
 system("docker start fb2c5f749966")
+k <- system("docker exec -t --user root fb2c5f749966 cat /var/lib/fluree/default-private-key.txt", intern = TRUE) # /var/lib/fluree/
+# Go into the UI and retrieve the AithId
+authId <- "Texfia91G7PfrL7g3Dc6RK3enUBviVGrDvx"
+
+Sys.setenv(authId = authId)
+Sys.setenv(privateKey = k)
 
 # Step 2: To enable authentication, set the environment variable fdb-auth=true:
-# sudo docker exec -it --user root fb2c5f749966 bash,
+# sudo docker exec -it --user root fb2c5f749966 bash,  # f555564d120b ?
 #   apt-get update && apt-get install nano,
 #   nano /opt/fluree/fdb/config/fdb.properties,  fdb-auth=false"
 # docker stop fb2c5f749966
@@ -25,39 +47,34 @@ system("docker start fb2c5f749966")
 # Step 3: Install nodejs and npm in the root directory of this project
 # Step 4: Install npm init -y,
 
-# Generate Keypair
-
-# kp <- novaRush::generateKeyPair()
-# writeLines(kp, "kp.txt")
-kp <- readLines("kp.txt")
-authId <- jsonlite::fromJSON(kp)$authId
-privKey <- jsonlite::fromJSON(kp)$privKey
-pubKey <- jsonlite::fromJSON(kp)$pubKey
-
 # Find root id
-dfRole <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_role", signQuery = TRUE)
+dfRole <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_role", signQuery = TRUE) %>%
+  rename_with(~ gsub("_", "", .x)) %>%
+  unnest(cols = c(`role/rules`)) %>%
+  mutate(across(where(is.numeric), as.character))
+
+dfAuth <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_auth", signQuery = TRUE) %>%
+  rename_with(~ gsub("_", "", .x)) %>%
+  mutate(across(where(is.numeric), as.character))
 
 # create auth object locally
-transactObj <- createAuthObject(id = authId,doc = "Test 123", roles = dfRole$`_id`[[1]])
+transactObj <- createAuthObject(id = authId, doc = "Test 123", roles = dfRole$`id`[[1]])
 
 # Send to fluree
-flureeTransact(ledgerName = "cjp/een", transactObject = transactObj, signQuery = FALSE)
-
-dfAuth <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_auth", signQuery = FALSE) %>%
-  mutate(`_id` = as.character(`_id`))
+flureeTransact(ledgerName = "cjp/een", transactObject = transactObj, signQuery = TRUE)
 
 #creating collections 'tables' in fluree
 flureeTransact(ledgerName = "cjp/een",
                transactObject = createCollectionObject(name  = "persons",
                                                        doc = "Collection to for all persons",
                                                        version = 1),
-               signQuery = FALSE)
+               signQuery = TRUE)
 
 flureeTransact(ledgerName = "cjp/test",
                transactObject = createCollectionObject(name  = "chat",
                                                        doc = "Collection to for all chats",
                                                        version = 1),
-               signQuery = FALSE)
+               signQuery = TRUE)
 
 flureeTransact(ledgerName = "authority/test",
                transactObject = createCollectionObject(name  = "comment",
@@ -110,6 +127,7 @@ flureeTransact(ledgerName = "authority/test",
                         type = "string", multi = TRUE,
                         restrictcollection = "comment",
                         doc = "comments of the chat"))
+
 
 dfPredicates <- do.call("rbind.fill", lsPredicates) %>% jsonlite::toJSON(auto_unbox = TRUE)
 
