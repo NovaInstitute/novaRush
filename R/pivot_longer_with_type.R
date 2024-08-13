@@ -1,12 +1,11 @@
 #' pivot_longer_with_type
-#'
 #' @param data
 #' @param cols
 #' @param ...
 #' @param names_to Character. What you want to call the attribute column. Default "name"
 #' @param tripplenames Logical. Default TRUE. If TRUE, name columns subject, predicate, object and type
 #'
-#' @return
+#' @return tibble with four columns:"subject", "predicate", "object", "type"
 #' @export
 #' @importFrom magrittr %<>%
 #' @imprt dplyr
