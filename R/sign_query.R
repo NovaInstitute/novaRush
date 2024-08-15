@@ -29,6 +29,10 @@ sign_query <- function(private_key,
     }
   }
 
+  if (class(transaction_data) != "json") {
+    transaction_data <- jsonlite::toJSON(transaction_data)
+  }
+
   # Combine the necessary components
   message <- paste0(tx_type, ledger, transaction_data)
 
@@ -36,7 +40,7 @@ sign_query <- function(private_key,
   hash <- openssl::sha256(charToRaw(message))
 
   # Sign the hashed message with the private key
-  signature <- openssl::signature_create(data = hash, key = private_key, hash = sha256)
+  signature <- openssl::signature_create(data = hash, key = private_key, hash = openssl::sha256)
 
   # Encode the signature in base64
   openssl::base64_encode(signature)
