@@ -4,7 +4,11 @@
 \alias{createSchema}
 \title{createSchema}
 \usage{
-createSchema(path, schema_list, fluree_link = Sys.getenv("fluree_link"))
+createSchema(
+  path = NULL,
+  schema_list = NULL,
+  fluree_link = Sys.getenv("fluree_link")
+)
 }
 \arguments{
 \item{path}{Character. The path to the Fluree database.}

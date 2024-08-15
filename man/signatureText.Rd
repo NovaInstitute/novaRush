@@ -4,7 +4,7 @@
 \alias{signatureText}
 \title{description: This function generates the signature text for the query}
 \usage{
-signatureText(ledgerName, privateKey, body, authId)
+signatureText(ledgerName, privateKey, endpoint, body, authId)
 }
 \arguments{
 \item{ledgerName}{Character. The name of the ledger.}
