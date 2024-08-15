@@ -32,10 +32,10 @@ post2fluree <- function(signature = NULL,
                         fluree_link = "http://localhost:8095/",
                         endpoint= "fluree/create") {
   URL <- glue::glue("{fluree_link}{endpoint}")
-  # test if it is a valid URL
-  if (RCurl::url.exists(URL, .header = TRUE) %>% `[`("statusMessage") == "Not Found" ) {
-    stop("Please provide a valid URL.")
-  }
+  ## test if it is a valid URL
+  # if (RCurl::url.exists(URL, .header = TRUE) %>% `[`("statusMessage") == "Not Found" ) {
+  #   stop("Please provide a valid URL.")
+  # }
 
   # Either signature or privateKey must be provided
   if (is.null(signature) & is.null(privateKey)) {
@@ -81,11 +81,11 @@ post2fluree <- function(signature = NULL,
 #' @param transaction_type Character. The type of transaction. Default is "insert".
 #' @param data Data frame with two columns: Key and Value. The data to be inserted or deleted.
 #' The first column is the key and the second column is the value.
-#' @example
-#' transaction_data <- list(`@context` = list(ex = "http://example.org/", schema = "http://schema.org/"),
-#' ledger = "cookbook/base",
-#' insert = structure(list(`@id` = "ex:freddy", `@type` = "ex:Yeti", `schema:age` = 4L, `schema:name` = "Freddy",  `ex:verified` = TRUE),
-#' class = "data.frame", row.names = 1L))
+#' @examples
+transaction_data <- list(`@context` = list(ex = "http://example.org/", schema = "http://schema.org/"),
+ledger = "cookbook/base",
+insert = structure(list(`@id` = "ex:freddy", `@type` = "ex:Yeti", `schema:age` = 4L, `schema:name` = "Freddy",  `ex:verified` = TRUE),
+class = "data.frame", row.names = 1L))
 
 makeTransaction <- function(id = NULL,
                             transaction_type = c("insert", "delete"),
