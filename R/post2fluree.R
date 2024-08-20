@@ -13,7 +13,7 @@
 #' @param tx_type Character. The type of transaction. Default is "transact" # check fluree docs for types
 #' @param ledger Character. The name of the ledger.
 #'
-#' @return Response from the POST request.
+#' @return Response from the POST request made to Fluree
 #' @export
 #'
 #' @examples
