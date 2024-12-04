@@ -6,6 +6,7 @@
 \usage{
 createLedger(
   ledgerName = "rdataset/mtcars",
+  createEndpoint = "create",
   fluree_link = Sys.getenv("fluree_link")
 )
 }
