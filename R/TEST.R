@@ -54,6 +54,7 @@ varnames <- kia_adapt$data$kia_adaptation %>%
 # "instanceid", "starttime", "endtime", "deviceid, "device_info", "duration", "village", "stand_number_1"
 
 predIRIs <- c(
+  "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
   "http://www.w3.org/ns/prov#startedAtTime",
   "http://www.w3.org/ns/prov#endedAtTime",
   "https://nova.org.za/nova-o#conductedWith",
@@ -65,6 +66,7 @@ predIRIs <- c(
 
 # TODO - autofill domains and ranges if possible from pred IRI?
 domains <- c(
+  "http://www.w3.org/2002/07/owl#Thing",
   "https://nova.org.za/nova-o#Survey", # NOTE: not the case in general, only for this dataframe
   "https://nova.org.za/nova-o#Survey",
   "https://nova.org.za/nova-o#Survey",
@@ -75,6 +77,7 @@ domains <- c(
 )
 
 ranges <- c(
+  "https://nova.org.za/nova-o#Survey",
   "http://www.w3.org/2001/XMLSchema#dateTime",
   "http://www.w3.org/2001/XMLSchema#dateTime",
   "http://www.w3.org/2001/XMLSchema#string",
@@ -86,9 +89,22 @@ ranges <- c(
 
 small_predlist <- mapPredicates(varnames, predIRIs, domains, ranges)
 
-# replace prefixes
+# replace long IRIs with prefixed IRIs
 geprefix <- replace_iris_with_prefixes(small_predlist)
 
 # -----------------------------------------------------------------------------
 # 3. MAP DATA
 # -----------------------------------------------------------------------------
+small_kia_data <- kia_data %>% # small subset of rows for development
+  select(1:9) %>% 
+  select(-devicephonenum) %>% 
+  head(n = 10)
+
+# create dataframe with correct predicate names
+triptib <- pivot_longer_with_type(small_kia_data) %>% 
+  left_join(pred_tb, by = join_by(predicate == varname)) %>% 
+  select(subject, `@id`, object)
+
+small_kia_trip <- rdf_from_df3(triptib, subject = "subject", predicate = "@id", object = "object")
+rdflib::rdf_serialize(small_kia_trip, format = "turtle", doc = "rdf_graph.ttl")
+

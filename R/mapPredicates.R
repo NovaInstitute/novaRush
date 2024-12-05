@@ -19,3 +19,12 @@ mapPredicates <- function(varnames, predIRIs, domains, ranges){
   }
   return(schema_list)
 }
+
+predicateTibble <- function(schema_list) {
+  pred_tb <- tibble(
+    schema_list = schema_list
+  ) %>%
+    unnest_wider(schema_list)
+  
+  return(pred_tb)
+}
