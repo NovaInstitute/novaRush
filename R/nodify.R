@@ -11,7 +11,7 @@
 #' A NULL value for both b) and c) simultaneously implies that the node is a blank node that can be assigned a random ID later in the data pipeline.
 #' @param data [data.frame] Data as a tibble
 #'
-#' @return data with ID columns appended. This function also creates a tibble containing the node specifications from @param node_spec
+#' @return [list] data with ID columns appended; a tibble containing the node specifications from @param node_spec and the variable name used to identify each node (i.e. the subject in each triple) 
 #' @export
 #'
 #' @examples 
@@ -34,7 +34,9 @@
 #' )
 #'
 #' node_spec <- list(survey_spec, hh_spec, hh_addr_spec)
-#' small_kia_data <- identify_nodes(node_spec, small_kia_data)
+#' result <- identify_nodes(node_spec, small_kia_data)
+#' small_kia_data <- result$data
+#' id_tb <- result$id_tb
 identify_nodes <- function(node_spec, data) {
   # create the specification
   id_tb <- node_spec %>% 
@@ -72,7 +74,7 @@ identify_nodes <- function(node_spec, data) {
     }
   }
 
-  return(data)
+  return(list(data = data, id_tb = id_tb))
 }
 
 #' Create a node ID by encrypting identifying variables 

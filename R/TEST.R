@@ -67,11 +67,16 @@ hh_addr_spec <- list(
   comb_id_col = NULL
 )
 
-node_spec <- list(survey_spec, hh_spec, hh_addr_spec)
-small_kia_data <- identify_nodes(node_spec, small_kia_data)
+intdev_spec <- list(
+  type = "https://nova.org.za/nova-o#InterviewDevice",
+  id_col = "deviceid",
+  comb_id_col = NULL
+)
 
-# create node mappings
-# TODO
+node_spec <- list(survey_spec, hh_spec, hh_addr_spec, intdev_spec)
+node_result <- identify_nodes(node_spec, small_kia_data)
+small_kia_data <- node_result$data
+id_tb <- node_result$id_tb
 
 # -----------------------------------------------------------------------------
 # 2.2 PREDICATE MAPPINGS
@@ -85,17 +90,19 @@ small_kia_data <- identify_nodes(node_spec, small_kia_data)
 # 4. variable name corresponding to this predicate
 # only 1. - 3. will be included in the eventual Fluree transaction
 
+# NOTE: predicates for variables that correspond to IDs, i.e. those variables that are used as subjects in triples,
+# are not specified manually, but rather automatically generated from node specifications from the function mapIDPredicates
+
 varnames <- kia_adapt$data$kia_adaptation %>% 
   select(1:9) %>% # small subset of columns for development
-  select(-devicephonenum) %>% # this column is all NAs
+  select(-devicephonenum,) %>% # this column is all NAs
+  select(-instanceid, -deviceid) %>% # exclude ID predicates, they are handled separately
   colnames()
-# "instanceid", "starttime", "endtime", "deviceid, "device_info", "duration", "village", "stand_number_1"
+# starttime", "endtime", "device_info", "duration", "village", "stand_number_1"
 
 predIRIs <- c(
-  "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
   "http://www.w3.org/ns/prov#startedAtTime",
   "http://www.w3.org/ns/prov#endedAtTime",
-  "https://nova.org.za/nova-o#conductedWith",
   "https://nova.org.za/nova-o#hasDeviceInfo",
   "http://purl.org/aiaontology#hasDuration", # TODO edit in aia-o later to have domain = Activity?
   "https://nova.org.za/nova-o#inVillage",
@@ -104,9 +111,7 @@ predIRIs <- c(
 
 # TODO - autofill domains and ranges if possible from pred IRI?
 domains <- c(
-  "http://www.w3.org/2002/07/owl#Thing",
   "https://nova.org.za/nova-o#Survey", # NOTE: not the case in general, only for this dataframe
-  "https://nova.org.za/nova-o#Survey",
   "https://nova.org.za/nova-o#Survey",
   "https://nova.org.za/nova-o#InterviewDevice",
   "https://nova.org.za/nova-o#Survey",
@@ -115,10 +120,8 @@ domains <- c(
 )
 
 ranges <- c(
-  "https://nova.org.za/nova-o#Survey",
   "http://www.w3.org/2001/XMLSchema#dateTime",
   "http://www.w3.org/2001/XMLSchema#dateTime",
-  "https://nova.org.za/nova-o#InterviewDevice",
   "http://www.w3.org/2001/XMLSchema#string",
   "https://www.w3.org/2006/time#Duration",
   "https://nova.org.za/nova-o#Village",
@@ -127,6 +130,10 @@ ranges <- c(
 
 # -----------------------------------------------------------------------------
 # 2.3 APPLY PREDICATE MAPPINGS
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# 2.3.1 NON-ID PREDICATES
 # -----------------------------------------------------------------------------
 
 # predicate mapping as list
@@ -139,6 +146,17 @@ geprefix <- replace_iris_with_prefixes(small_predlist)
 pred_tb <- predicateTibble(geprefix)
 
 # -----------------------------------------------------------------------------
+# 2.3.2 ID PREDICATES
+# -----------------------------------------------------------------------------
+
+small_id_predlist <- specIDPredicates(small_kia_data, id_tb)
+id_geprefix <- replace_iris_with_prefixes(small_id_predlist)
+small_id_tb <- predicateTibble(id_geprefix)
+
+# join id and non-id predicate mappings
+pred_tb <- rbind(pred_tb, small_id_tb)
+
+# -----------------------------------------------------------------------------
 # 3. MAP DATA
 # -----------------------------------------------------------------------------
 
@@ -147,7 +165,7 @@ small_kia_long <- pivot_longer_with_type(small_kia_data)
 
 triptib <- small_kia_long %>% 
   left_join(pred_tb, by = join_by(predicate == varname)) %>% 
-  select(subject, `@id`, object)
+  select(subject, `@id`, object) # TODO ADJUST THIS SELECTION
 
 # create triples
 small_kia_trip <- rdf_from_df3(triptib, subject = "subject", predicate = "@id", object = "object")

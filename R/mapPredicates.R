@@ -1,7 +1,7 @@
 #' Create specified predicate mappings from dataframe 
 #' 
 #' This function maps the columns of a dataframe to predicate specifications using conventions compatible with Fluree V3
-#' These predicates can be used to define a schema for Fluree transactions
+#' These predicates can be used to define a schema for Fluree transactions.
 #' Each predicate mapping specifies
 #' 1. @id: the IRI of the predicate in full. Inclusion of `@context` to incorporate ontology prefixes is handled later in the data pipeline
 #' 2. the domain of the predicate as IRI
@@ -16,19 +16,31 @@
 #' @param ranges [character] Complete range IRIs
 #' 
 #' @returns The predicate mappings as a list of named lists. Each list has entries:
-#' `@id` (predicate IRI), http://www.w3.org/2000/01/rdf-schema#domain, http://www.w3.org/2000/01/rdf-schema#range, and varname (column name corresponding to this predicate mapping)
+#' predIRI, http://www.w3.org/2000/01/rdf-schema#domain, http://www.w3.org/2000/01/rdf-schema#range, and varname (column name corresponding to this predicate mapping)
 #' @export
 mapPredicates <- function(varnames, predIRIs, domains, ranges){
   schema_list <- list()
   for(i in 1:length(varnames)){
     schema_list[[i]] <- list(
-      "@id" = predIRIs[i],
+      "predIRI" = predIRIs[i],
       "http://www.w3.org/2000/01/rdf-schema#domain" = domains[i],
       "http://www.w3.org/2000/01/rdf-schema#range" = ranges[i],
       "varname" = varnames[i]
     )
   }
   return(schema_list)
+}
+
+# TODO documentation
+specIDPredicates <- function(data, id_tb) {
+  id_varnames <- id_tb %>% select(var_id_name) %>% pull()
+  id_IRIs <- rep("http://www.w3.org/1999/02/22-rdf-syntax-ns#type", nrow(id_tb))
+  id_domains <- rep("http://www.w3.org/2002/07/owl#Thing", nrow(id_tb)) # TODO correct?
+  id_ranges <- id_tb %>% select(type) %>% pull()
+  
+  id_predlist <- mapPredicates(id_varnames, id_IRIs, id_domains, id_ranges)
+  
+  return(id_predlist)
 }
 
 #' Convert predicate mapping list to a tibble
