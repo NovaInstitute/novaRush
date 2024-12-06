@@ -20,6 +20,7 @@ mapPredicates <- function(varnames, predIRIs, domains, ranges){
   return(schema_list)
 }
 
+# TODO documentation
 predicateTibble <- function(schema_list) {
   pred_tb <- tibble(
     schema_list = schema_list

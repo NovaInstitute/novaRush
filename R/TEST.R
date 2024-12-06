@@ -15,7 +15,10 @@
 library(tidyverse)
 library(novaCTO)
 library(novaRush)
-library(novaFluree)
+# library(novaFluree)
+library(openssl)
+library(rlang)
+library(stringr)
 
 # load survey data
 kia_adapt <- novaCTO::readCTO("KiA_adaptation_ACTIVE")
@@ -31,15 +34,50 @@ repeats <- kia_adapt$repeats
 # to get variable names for later schema design
 kia_varnames <- kia_adapt$fromschema$kia_adaptation$name # (list)
 
+# select small subset of rows to use as example for development
+small_kia_data <- kia_data %>%
+  select(1:9, respondent_surname) %>% 
+  select(-devicephonenum) %>% 
+  head(n = 10)
+
 # -----------------------------------------------------------------------------
 # 2. CREATE SCHEMA
 # -----------------------------------------------------------------------------
 
-# approaches to schema design:
-# a) manually design a schema
-# b) AI augmentation with human moderation
+# -----------------------------------------------------------------------------
+# 2.1 SPECIFY NODES
+# -----------------------------------------------------------------------------
 
-# a) Use updated function mapPredicates.R to create predicate mappings
+# create node identification specification
+survey_spec <- list(
+  type = "https://nova.org.za/nova-o#Survey",
+  id_col = "instanceid",
+  comb_id_col = NULL
+)
+
+hh_spec <- list(
+  type = "https://nova.org.za/nova-o#Household",
+  id_col = NULL,
+  comb_id_col = c("village", "stand_number_1", "respondent_surname")
+)
+
+hh_addr_spec <- list(
+  type = "https://nova.org.za/nova-o#HouseholdAddress",
+  id_col = NULL,
+  comb_id_col = NULL
+)
+
+node_spec <- list(survey_spec, hh_spec, hh_addr_spec)
+small_kia_data <- identify_nodes(node_spec, small_kia_data)
+
+# create node mappings
+# TODO
+
+# -----------------------------------------------------------------------------
+# 2.2 PREDICATE MAPPINGS
+# -----------------------------------------------------------------------------
+
+# Use updated function mapPredicates.R to create predicate mappings
 # Each predicate mapping contains:
 # 1. @id: the predicate IRI
 # 2. domain
@@ -80,31 +118,40 @@ ranges <- c(
   "https://nova.org.za/nova-o#Survey",
   "http://www.w3.org/2001/XMLSchema#dateTime",
   "http://www.w3.org/2001/XMLSchema#dateTime",
-  "http://www.w3.org/2001/XMLSchema#string",
+  "https://nova.org.za/nova-o#InterviewDevice",
   "http://www.w3.org/2001/XMLSchema#string",
   "https://www.w3.org/2006/time#Duration",
   "https://nova.org.za/nova-o#Village",
   "http://www.w3.org/2001/XMLSchema#string"
 )
 
+# -----------------------------------------------------------------------------
+# 2.3 APPLY PREDICATE MAPPINGS
+# -----------------------------------------------------------------------------
+
+# predicate mapping as list
 small_predlist <- mapPredicates(varnames, predIRIs, domains, ranges)
 
 # replace long IRIs with prefixed IRIs
 geprefix <- replace_iris_with_prefixes(small_predlist)
 
+# predicate mapping as tibble
+pred_tb <- predicateTibble(geprefix)
+
 # -----------------------------------------------------------------------------
 # 3. MAP DATA
 # -----------------------------------------------------------------------------
-small_kia_data <- kia_data %>% # small subset of rows for development
-  select(1:9) %>% 
-  select(-devicephonenum) %>% 
-  head(n = 10)
 
 # create dataframe with correct predicate names
-triptib <- pivot_longer_with_type(small_kia_data) %>% 
+small_kia_long <- pivot_longer_with_type(small_kia_data)
+
+triptib <- small_kia_long %>% 
   left_join(pred_tb, by = join_by(predicate == varname)) %>% 
   select(subject, `@id`, object)
 
+# create triples
 small_kia_trip <- rdf_from_df3(triptib, subject = "subject", predicate = "@id", object = "object")
+
+# export graph for inspection
 rdflib::rdf_serialize(small_kia_trip, format = "turtle", doc = "rdf_graph.ttl")
 
