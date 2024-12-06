@@ -44,15 +44,14 @@ identify_nodes <- function(node_spec, data) {
     mutate(var_id_name = paste0(str_extract(type, "(?<=#)[^#]*$"), "_ID"))  %>% 
     select(-.)
   
+  print("Using the following node specification:")
   print(id_tb)
   
   # create ID variables one at a time
   for (vin in id_tb$var_id_name) {
-
     # get the relevant node specification
     var_info <- id_tb %>% filter(var_id_name == vin)
-    print(var_info)
-    
+
     # create ID variable:
     # a) if there is an identifying column
     if (!is.na(var_info$id_col)) {
@@ -72,13 +71,13 @@ identify_nodes <- function(node_spec, data) {
         mutate(!!vin := digest::digest(pick(everything()), algo = "md5"))
     }
   }
-  
+
   return(data)
 }
 
 #' Create a node ID by encrypting identifying variables 
 #' 
-#' This function courtesy of ChatGPT. It is used in @function identify_nodes.
+#' This function courtesy of ChatGPT. It is used in `identify_nodes`.
 #'
 #' @param data [data.frame]
 #' @param id_cols [character] Names of identifying columns
