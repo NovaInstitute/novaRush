@@ -3,7 +3,7 @@
 #' This function maps the columns of a dataframe to predicate specifications using conventions compatible with Fluree V3
 #' These predicates can be used to define a schema for Fluree transactions.
 #' Each predicate mapping specifies
-#' 1. @id: the IRI of the predicate in full. Inclusion of `@context` to incorporate ontology prefixes is handled later in the data pipeline
+#' 1. predIRI: the IRI of the predicate in full. Inclusion of `@context` to incorporate ontology prefixes is handled later in the data pipeline
 #' 2. the domain of the predicate as IRI
 #' 3. the range of the predicate as IRI
 #' 4. the corresponding column (variable) name in the dataframe
@@ -35,7 +35,7 @@ mapPredicates <- function(varnames, predIRIs, domains, ranges){
 specIDPredicates <- function(data, id_tb) {
   id_varnames <- id_tb %>% select(var_id_name) %>% pull()
   id_IRIs <- rep("http://www.w3.org/1999/02/22-rdf-syntax-ns#type", nrow(id_tb))
-  id_domains <- rep("http://www.w3.org/2002/07/owl#Thing", nrow(id_tb)) # TODO correct?
+  id_domains <- rep("http://www.w3.org/2002/07/owl#Thing", nrow(id_tb))
   id_ranges <- id_tb %>% select(type) %>% pull()
   
   id_predlist <- mapPredicates(id_varnames, id_IRIs, id_domains, id_ranges)

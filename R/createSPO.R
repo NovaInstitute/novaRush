@@ -26,8 +26,27 @@ pivotLongerSPO <- function(data, pred_tb) {
   long_data <- long_data %>%
     right_join(pred_tb, by = join_by(varname)) 
   
-  # add correct subjects according to specified rdfs:domain
+  # add correct subjects for custom classes (i.e. ID columns ending with _ID) 
+  sub_data <- addSubject(long_data, pred_tb)
   
+  # add class membership triples
+  class_data <- addClassMembership(long_data)
+  
+  long_data <- rbind(sub_data, class_data)
+  return(long_data)
+}
+
+
+#' Add SPO columns with correct subject
+#'
+#' Adjust dataframe to have correct subject per domain and range specifications in pred_tb
+#' 
+#' @param long_data 
+#' @param pred_tb A tibble containing columns predIRI, rdfs:domain, rdfs:range and varname (which contains name of the variable in data corresponding to this predicate)
+#'
+#' @return [data.frame]
+addSubject <- function(long_data, pred_tb) {
+  # add correct subjects according to specified rdfs:domain
   # select variable names for ID columns
   id_varnames <- pred_tb %>%
     select(varname) %>% 
@@ -38,10 +57,7 @@ pivotLongerSPO <- function(data, pred_tb) {
   
   df <- data.frame()
   for (vn in id_varnames$varname) {
-    print(paste("besig met", vn))
-    
-    classname <- str_split(vn, "_ID")[[1]][1] # select the first 
-    print(classname)
+    classname <- str_split(vn, "_ID")[[1]][1] # select the first substring as a string (and not a vector)
     
     # this snippet courtesy of Claude
     current <- long_data %>%
@@ -66,4 +82,22 @@ pivotLongerSPO <- function(data, pred_tb) {
     select(subject, predicate, object)
   
   return(df)
+}
+
+#' Add SPO columns that define class membership
+#'
+#' For each node, add a "<node_id> rdf:type <class>" triple. Helper function used in `pivotLongerSPO` 
+#' @param data [data.frame] Long dataframe
+#'
+#' @return dataframe with three columns: "subject", "predicate", "object"; predicate = "rdf:type"
+addClassMembership <- function(data) {
+  data <- data %>% 
+    filter(predIRI == "rdf:type") %>% # select rdf:type triples that indicate class membership
+    select(-subject) %>%  # prevent R from complaining about duplicate columns
+    rename(subject = object) %>% # create triples
+    mutate(predicate = "rdf:type") %>% 
+    rename(object = `rdfs:range`) %>% 
+    select(subject, predicate, object)
+  
+  return(data)
 }

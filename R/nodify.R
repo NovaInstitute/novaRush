@@ -46,7 +46,7 @@ identify_nodes <- function(node_spec, data) {
     mutate(var_id_name = paste0(str_extract(type, "(?<=#)[^#]*$"), "_ID"))  %>% 
     select(-.)
   
-  print("Using the following node specification:")
+  cat("Using the following node specification:\n")
   print(id_tb)
   
   # create ID variables one at a time
@@ -59,6 +59,8 @@ identify_nodes <- function(node_spec, data) {
     if (!is.na(var_info$id_col)) {
       # get the value of the identifying variable for each row as a vector
       id_val = data %>% pull(var_info$id_col)
+      
+      # create new ID variable
       data <- data %>%
         mutate(!!vin := !!id_val)
     # b) if an ID needs to be created from a combination of other columns

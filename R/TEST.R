@@ -84,7 +84,7 @@ id_tb <- node_result$id_tb
 
 # Use updated function mapPredicates.R to create predicate mappings
 # Each predicate mapping contains:
-# 1. @id: the predicate IRI
+# 1. predIRI: the predicate IRI
 # 2. domain
 # 3. range
 # 4. variable name corresponding to this predicate
@@ -140,6 +140,7 @@ ranges <- c(
 small_predlist <- mapPredicates(varnames, predIRIs, domains, ranges)
 
 # replace long IRIs with prefixed IRIs
+# note that further wrangling expects prefixed IRIs; do this step here
 geprefix <- replace_iris_with_prefixes(small_predlist)
 
 # predicate mapping as tibble
@@ -150,26 +151,39 @@ pred_tb <- predicateTibble(geprefix)
 # -----------------------------------------------------------------------------
 
 small_id_predlist <- specIDPredicates(small_kia_data, id_tb)
+
+# note that further wrangling expects prefixed IRIs; do this step here
 id_geprefix <- replace_iris_with_prefixes(small_id_predlist)
+
 small_id_tb <- predicateTibble(id_geprefix)
 
 # join id and non-id predicate mappings
 pred_tb <- rbind(pred_tb, small_id_tb)
 
 # -----------------------------------------------------------------------------
+# 2.3.3 MAP NODES TO ONE ANOTHER
+# -----------------------------------------------------------------------------
+
+# TODO
+
+# -----------------------------------------------------------------------------
 # 3. MAP DATA
 # -----------------------------------------------------------------------------
 
 # create dataframe with correct predicate names
-small_kia_long <- pivot_longer_with_type(small_kia_data)
-
-triptib <- small_kia_long %>% 
-  left_join(pred_tb, by = join_by(predicate == varname)) %>% 
-  select(subject, `@id`, object) # TODO ADJUST THIS SELECTION
+# NOTE: only adds triples with a corresponding <classname>_ID column, and rdf:type triples 
+small_kia_long <- pivotLongerSPO(small_kia_data, pred_tb)
 
 # create triples
-small_kia_trip <- rdf_from_df3(triptib, subject = "subject", predicate = "@id", object = "object")
+small_kia_trip <- rdf_from_df3(small_kia_long)
 
 # export graph for inspection
-rdflib::rdf_serialize(small_kia_trip, format = "turtle", doc = "rdf_graph.ttl")
+rdflib::rdf_serialize(small_kia_trip, format = "turtle", doc = "rdf_graph.ttl", base = "https://nova.org.za#")
 
+# -----------------------------------------------------------------------------
+# 4. CREATE A TRANSACTION
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# 5. TRANSACT TO A LEDGER
+# -----------------------------------------------------------------------------

@@ -38,7 +38,7 @@ replace_iris_with_prefixes <- function(data, add_context = NULL) {
     "prov" = "http://www.w3.org/ns/prov#",
     "rdfs" = "http://www.w3.org/2000/01/rdf-schema#",
     "time" = "https://www.w3.org/2006/time#", 
-    "vcard" = "http://www.w3.org/TR/vcard-rdf/#",
+    "vcard" = "https://www.w3.org/2006/vcard/ns#",
     "base" = "https://nova.org.za/nova-o"
   )
   
