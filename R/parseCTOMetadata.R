@@ -38,38 +38,43 @@ parseCTO <- function(data,
   int_spec <- list(
     type = "https://nova.org.za/nova-o#Interview",
     id_col = "instanceid",
-    comb_id_col = NULL
+    comb_id_col = NULL,
+    const_id = NULL
   )
   
   int_resp <- list(
     type = "https://nova.org.za/nova-o#InterviewResponse",
     id_col = NULL,
-    comb_id_col = NULL
+    comb_id_col = c("instanceid", "starttime", "endtime", "deviceid", "device_info", "duration"),
+    const_id = NULL
   )
   
-  # TODO what is the best way to handle this?
   survey_spec <- list(
     type = "https://nova.org.za/nova-o#Survey",
     id_col = NULL,
-    comb_id_col = NULL
+    comb_id_col = NULL,
+    const_id = "KiA_adaptation_Q"
   )
   
   hh_spec <- list(
     type = "https://nova.org.za/nova-o#Household",
     id_col = NULL,
-    comb_id_col = c("village", "stand_number_1", "respondent_surname")
+    comb_id_col = c("village", "stand_number_1", "respondent_surname"),
+    const_id = NULL
   )
   
   hh_addr_spec <- list(
     type = "https://nova.org.za/nova-o#HouseholdAddress",
     id_col = NULL,
-    comb_id_col = NULL
+    comb_id_col = c("village", "stand_number_1"),
+    const_id = NULL
   )
   
   intdev_spec <- list(
     type = "https://nova.org.za/nova-o#InterviewDevice",
     id_col = "deviceid",
-    comb_id_col = NULL
+    comb_id_col = NULL,
+    const_id = NULL
   )
   
   node_spec <- list(int_spec, int_resp, survey_spec, hh_spec, hh_addr_spec, intdev_spec)

@@ -25,15 +25,29 @@ pivotLongerSPO <- function(data, pred_tb) {
   # add correct predicate names
   long_data <- long_data %>%
     left_join(pred_tb, by = join_by(varname)) 
- 
+
+  # add predicate names that don't have corresponding variable names
+  long_data <- long_data %>%
+    select(subject) %>%
+    distinct() %>%
+    cross_join(pred_tib) %>% 
+    left_join(long_data) 
+  
   # add correct subjects for custom classes (i.e. ID columns ending with _ID)
   sub_data <- addSubject(long_data, pred_tb)
+  
+  # add correct objects for predicates that connect nodes, i.e. for which there is no corresponding column
+  obj_data <- addObject(sub_data, pred_tb)
 
   # add class membership triples
   class_data <- addClassMembership(long_data)
 
-  long_data <- rbind(sub_data, class_data)
-  return(long_data)
+  spo_data <- rbind(sub_data %>% filter(!is.na(object)), obj_data, class_data)
+  
+  spo_data <- spo_data %>% 
+    rename(predicate = predIRI) %>% 
+    select(subject, predicate, object)
+  return(spo_data)
 }
 
 
@@ -58,7 +72,7 @@ addSubject <- function(long_data, pred_tb) {
   df <- data.frame()
   for (vn in id_varnames$varname) {
     classname <- str_split(vn, "_ID")[[1]][1] # select the first substring as a string (and not a vector)
-    
+
     # this snippet courtesy of Claude
     current <- long_data %>%
       filter(str_ends(`rdfs:domain`, classname)) %>% 
@@ -77,9 +91,8 @@ addSubject <- function(long_data, pred_tb) {
     select(-subject) %>% 
     rename(
       subject = new_subject,
-      predicate = predIRI
-    ) %>%
-    select(subject, predicate, object)
+    ) %>% 
+    select(names(long_data))
   
   return(df)
 }
@@ -95,24 +108,49 @@ addClassMembership <- function(data) {
     filter(predIRI == "rdf:type") %>% # select rdf:type triples that indicate class membership
     select(-subject) %>%  # prevent R from complaining about duplicate columns
     rename(subject = object) %>% # create triples
-    mutate(predicate = "rdf:type") %>% 
-    rename(object = `rdfs:range`) %>% 
-    select(subject, predicate, object)
+    mutate(predIRI = "rdf:type") %>% 
+    mutate(object = `rdfs:range`)
   
   return(data)
 }
 
-# TODO documentation
-# connect nodes; predicates with no corresponding variable name
-mapNodes <- function(data, pred_tb) {
-  # does there exist such a class as is required by the domain and range definition of this predicate?
-  classnames <- pred_tb %>%
+addObject <- function(long_data, pred_tb) {
+  # add correct subjects according to specified rdfs:domain
+  # select variable names for ID columns
+  id_varnames <- pred_tb %>%
     select(varname) %>% 
     filter(pred_tb %>% 
              select(varname) %>% 
              pull() %>% 
-             str_ends("_ID")) %>% 
-    str_split("_ID")[[1]][1] %>% 
-    pull() #BEGIN HIER
+             str_ends("_ID"))
   
+  # only add objects for triples that have no object yet (NA)
+  objectify <- long_data %>% 
+    filter(is.na(object))
+  
+  df <- data.frame()
+  for (vn in id_varnames$varname) {
+    classname <- str_split(vn, "_ID")[[1]][1] # select the first substring as a string (and not a vector)
+
+    # this snippet courtesy of Claude
+    current <- objectify %>%
+      filter(str_ends(`rdfs:range`, classname)) %>% 
+      left_join(
+        objectify %>%
+          filter(varname == vn) %>%
+          select(subject, new_object = object),
+        by = "subject"
+      )
+    
+    df <- df %>% 
+      rbind(current)
+  }
+  
+  df <- df %>%
+    select(-object) %>% 
+    rename(
+      object = new_object
+    )
+  
+  return(df)
 }
