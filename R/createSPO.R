@@ -24,14 +24,14 @@ pivotLongerSPO <- function(data, pred_tb) {
   
   # add correct predicate names
   long_data <- long_data %>%
-    right_join(pred_tb, by = join_by(varname)) 
-  
-  # add correct subjects for custom classes (i.e. ID columns ending with _ID) 
+    left_join(pred_tb, by = join_by(varname)) 
+ 
+  # add correct subjects for custom classes (i.e. ID columns ending with _ID)
   sub_data <- addSubject(long_data, pred_tb)
-  
+
   # add class membership triples
   class_data <- addClassMembership(long_data)
-  
+
   long_data <- rbind(sub_data, class_data)
   return(long_data)
 }
@@ -100,4 +100,19 @@ addClassMembership <- function(data) {
     select(subject, predicate, object)
   
   return(data)
+}
+
+# TODO documentation
+# connect nodes; predicates with no corresponding variable name
+mapNodes <- function(data, pred_tb) {
+  # does there exist such a class as is required by the domain and range definition of this predicate?
+  classnames <- pred_tb %>%
+    select(varname) %>% 
+    filter(pred_tb %>% 
+             select(varname) %>% 
+             pull() %>% 
+             str_ends("_ID")) %>% 
+    str_split("_ID")[[1]][1] %>% 
+    pull() #BEGIN HIER
+  
 }

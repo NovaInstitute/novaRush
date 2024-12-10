@@ -78,7 +78,7 @@ parseCTO <- function(data,
   id_tb <- node_result$id_tb
   
   # create predicate specifications that map nodes to one another
-  variables <- c(starttime, endtime, devicephonenum, device_info, 
+  varnames <- c(starttime, endtime, devicephonenum, device_info, 
                 duration, geo_location, village, standnumber)
 
   # TODO autofill inverse properties?
@@ -136,17 +136,24 @@ parseCTO <- function(data,
     "https://nova.org.za/nova-o#HouseholdAddress"
   )
 
-  # apply predicate mappings - non-ID and ID predictates respectively
-  predlist <- mapPredicates(variables, predIRIs, domains, ranges)
+  # apply predicate mappings - non-ID and ID predicates respectively
+  
+  # pad varnames with NAs for predicates that have no corresponding column
+  length(varnames) <- length(predIRIs)
+  
+  predlist <- mapPredicates(varnames, predIRIs, domains, ranges)
   prefixed <- replace_iris_with_prefixes(predlist)
   pred_tib <- predicateTibble(prefixed)
   
-  id_predlist <- specIDPredicates(data, id_tb) # id_tb from identify_nodes
+  id_predlist <- specIDPredicates(id_data, id_tb) # id_tb from identify_nodes
   id_prefixed <- replace_iris_with_prefixes(id_predlist)
   pred_id_tb <- predicateTibble(id_prefixed)
   
   # join id and non-id predicate mappings
   pred_tib <- rbind(pred_tib, pred_id_tb)
   
-  return(pred_tib)
+  # map data
+  mapped <- pivotLongerSPO(id_data, pred_tib)
+  
+  return(mapped)
 }
