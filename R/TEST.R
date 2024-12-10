@@ -49,31 +49,42 @@ small_kia_data <- kia_data %>%
 # -----------------------------------------------------------------------------
 
 # create node identification specification
-survey_spec <- list(
-  type = "https://nova.org.za/nova-o#Survey",
+interview_spec <- list(
+  type = "https://nova.org.za/nova-o#Interview",
   id_col = "instanceid",
-  comb_id_col = NULL
+  comb_id_col = NULL,
+  const_id = NULL
 )
 
 hh_spec <- list(
   type = "https://nova.org.za/nova-o#Household",
   id_col = NULL,
-  comb_id_col = c("village", "stand_number_1", "respondent_surname")
+  comb_id_col = c("village", "stand_number_1", "respondent_surname"),
+  const_id = NULL
 )
 
 hh_addr_spec <- list(
   type = "https://nova.org.za/nova-o#HouseholdAddress",
   id_col = NULL,
-  comb_id_col = NULL
+  comb_id_col = c("village", "stand_number_1"),
+  const_id = NULL
 )
 
 intdev_spec <- list(
   type = "https://nova.org.za/nova-o#InterviewDevice",
   id_col = "deviceid",
-  comb_id_col = NULL
+  comb_id_col = NULL,
+  const_id = NULL
 )
 
-node_spec <- list(survey_spec, hh_spec, hh_addr_spec, intdev_spec)
+survey_spec <- list(
+  type = "https://nova.org.za/nova-o#Survey",
+  id_col = NULL,
+  comb_id_col = NULL,
+  const_id = "KiA_adaptation_Q"
+)
+
+node_spec <- list(interview_spec, hh_spec, hh_addr_spec, intdev_spec, survey_spec)
 node_result <- identify_nodes(node_spec, small_kia_data)
 small_kia_data <- node_result$data
 id_tb <- node_result$id_tb
