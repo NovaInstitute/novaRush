@@ -15,20 +15,21 @@
 #' @examples 
 #' pred_tb
 #' A tibble: 2 × 4
-#' predicate          rdfs:domain     rdfs:range       varname             
-#' <chr>              <chr>             <chr>              <chr>               
+#'   predicate          rdfs:domain       rdfs:range         varname             
+#'   <chr>              <chr>             <chr>              <chr>               
 #' 1 prov:startedAtTime :Survey           xsd:dateTime       starttime           
 #' 2 prov:endedAtTime   :Survey           xsd:dateTime       endtime
 #' 
 #' small_data
 #' A tibble: 2 × 3
-#' starttime           endtime             Interview_ID                             
-#' <dttm>              <dttm>              <chr>                                    
+#'   starttime           endtime             Interview_ID                             
+#'   <dttm>              <dttm>              <chr>                                    
 #' 1 2024-02-27 14:18:19 2024-02-27 14:41:43 uuid:fe690b51-ee58-4294-b7b6-9f941b47b741
 #' 2 2024-02-27 09:40:44 2024-02-27 09:59:54 uuid:0aa90b5e-14a7-46bc-a4cd-dc7306f03d61
 #' 
 #' pivotLongerSPO(small_data, pred_tb)
 #' @seealso [mapPredicates()], [predicateTibble()]
+#' 
 pivotLongerSPO <- function(data, pred_tb) {
   # preprocessing: convert all to character
   data <- mutate(data, across(everything(), ~as.character(.)))
@@ -49,22 +50,35 @@ pivotLongerSPO <- function(data, pred_tb) {
   long_data <- long_data %>%
     select(subject) %>%
     distinct() %>%
-    cross_join(pred_tib) %>% 
+    cross_join(pred_tb) %>% 
     left_join(long_data) 
   
   # add correct subjects
   sub_data <- addSubject(long_data, pred_tb)
-  
-  # add correct objects for predicates that connect nodes, i.e. for which there is no corresponding column in the data
-  obj_data <- addObject(sub_data, pred_tb)
 
   # add class membership triples
   class_data <- addClassMembership(long_data)
 
-  spo_data <- rbind(sub_data %>% filter(!is.na(object)), obj_data, class_data)
+  # add correct objects for predicates that connect nodes, i.e. for which there is no corresponding column in the data
+  obj_data <- addObject(long_data, pred_tb)
+  interim <- sub_data %>% 
+    filter(is.na(object)) %>% 
+    select(-object) %>% 
+    right_join(obj_data, by = c("inst_id", "predicate"))
   
-  spo_data <- spo_data %>% 
+  # select only SPO columns
+  sub_data <- sub_data %>% 
+    filter(!is.na(object)) %>% 
     select(subject, predicate, object)
+  
+  class_data <- class_data %>%
+    select(subject, predicate, object)
+  
+  interim <- interim %>% 
+    select(subject, predicate, object)
+  
+  spo_data <- rbind(sub_data, interim, class_data)
+  
   return(spo_data)
 }
 
@@ -135,11 +149,10 @@ addSubject <- function(long_data, pred_tb) {
   }
   
   df <- df %>%
-    select(-subject) %>% 
     rename(
+      inst_id = subject,
       subject = new_subject,
-    ) %>% 
-    select(names(long_data))
+    )
   
   return(df)
 }
@@ -170,8 +183,6 @@ addClassMembership <- function(data) {
 #' @param pred_tb A tibble containing columns `predicate`, `rdfs:domain`, `rdfs:range` and `varname`. The value of `varname` is the name of the column in `data` corresponding to each `predicate`.
 #'
 #' @return [data.frame] `long_data` with the correct object according to the domain of the predicate. Values are only added where the `object` column in `long_data` is empty.
-#' 
-#' @examples
 addObject <- function(long_data, pred_tb) {
   # select variable names for ID columns
   id_varnames <- pred_tb %>%
@@ -188,12 +199,12 @@ addObject <- function(long_data, pred_tb) {
   df <- data.frame()
   for (vn in id_varnames$varname) {
     classname <- str_split(vn, "_ID")[[1]][1] # select the first substring as a string (and not a vector)
-
+    
     # this snippet courtesy of Claude
     current <- objectify %>%
       filter(str_ends(`rdfs:range`, classname)) %>% 
       left_join(
-        objectify %>%
+        long_data %>%
           filter(varname == vn) %>%
           select(subject, new_object = object),
         by = "subject"
@@ -206,6 +217,7 @@ addObject <- function(long_data, pred_tb) {
   df <- df %>%
     select(-object) %>% 
     rename(
+      inst_id = subject,
       object = new_object
     )
   

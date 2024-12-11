@@ -3,7 +3,7 @@
 #' This function maps the columns of a dataframe to predicate specifications using conventions compatible with Fluree V3
 #' These predicates can be used to define a schema for Fluree transactions.
 #' Each predicate mapping specifies
-#' 1. predIRI: the IRI of the predicate in full. Inclusion of `@context` to incorporate ontology prefixes is handled later in the data pipeline
+#' 1. predicate: the IRI of the predicate in full. Inclusion of `@context` to incorporate ontology prefixes is handled later in the data pipeline
 #' 2. the domain of the predicate as IRI
 #' 3. the range of the predicate as IRI
 #' 4. the corresponding column (variable) name in the dataframe
@@ -11,18 +11,18 @@
 #' In future (post 12/2024), the goal is to automate this process to a greater degree.
 #'
 #' @param varnames [character] Column names corresponding to predicates
-#' @param predIRIs [character] Complete predicate IRIs
+#' @param predicates [character] Complete predicate IRIs
 #' @param domains [character] Complete domain IRIs
 #' @param ranges [character] Complete range IRIs
 #' 
 #' @returns The predicate mappings as a list of named lists. Each list has entries:
-#' predIRI, http://www.w3.org/2000/01/rdf-schema#domain, http://www.w3.org/2000/01/rdf-schema#range, and varname (column name corresponding to this predicate mapping)
+#' predicate, http://www.w3.org/2000/01/rdf-schema#domain, http://www.w3.org/2000/01/rdf-schema#range, and varname (column name corresponding to this predicate mapping)
 #' @export
 mapPredicates <- function(varnames, predIRIs, domains, ranges){
   schema_list <- list()
   for(i in 1:length(varnames)){
     schema_list[[i]] <- list(
-      "predIRI" = predIRIs[i],
+      "predicate" = predIRIs[i],
       "http://www.w3.org/2000/01/rdf-schema#domain" = domains[i],
       "http://www.w3.org/2000/01/rdf-schema#range" = ranges[i],
       "varname" = varnames[i]

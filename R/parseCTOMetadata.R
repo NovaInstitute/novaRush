@@ -23,6 +23,7 @@
 
 # TODO handle NULL parameter values
 parseCTO <- function(data,
+                     instanceid = "instanceid",
                      starttime = "starttime",
                      endtime = "endtime",
                      devicephonenum = "devicephonenum",

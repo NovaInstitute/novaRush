@@ -76,7 +76,9 @@ identify_nodes <- function(node_spec, data) {
       id_cols_vector <- as.character(unlist(var_info$comb_id_col))
       
       data <- data %>%
-        encrypt_ids(id_cols_vector, var_info$var_id_name)
+        rowwise() %>% 
+        mutate(!!vin := digest::digest(pick(all_of(id_cols_vector)), algo = "md5")) %>% 
+        ungroup()
       
     # c) if a constant ID can be used
     } else {
