@@ -79,7 +79,7 @@ replace_iris_with_prefixes <- function(data, add_context = NULL) {
   }
   
   # Process each list in the input
-  lapply(data, function(list_item) {
+  output <- lapply(data, function(list_item) {
     # Process each named element in the list
     processed_item <- lapply(names(list_item), function(name) {
       value <- list_item[[name]]
@@ -97,4 +97,12 @@ replace_iris_with_prefixes <- function(data, add_context = NULL) {
     # Flatten the list and convert back to a list
     do.call(c, processed_item)
   })
+  
+  
+  # convert context to a tibble for ease of use later in the data pipeline
+  ctx_tib <- tibble(
+    prefix = names(context),
+    IRI = unlist(context))
+  
+  return(list(output = output, context = ctx_tib))
 }

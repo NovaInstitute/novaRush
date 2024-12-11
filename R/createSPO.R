@@ -55,7 +55,7 @@ pivotLongerSPO <- function(data, pred_tb) {
   
   # add correct subjects
   sub_data <- addSubject(long_data, pred_tb)
-
+  
   # add class membership triples
   class_data <- addClassMembership(long_data)
 
