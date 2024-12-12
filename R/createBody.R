@@ -1,5 +1,6 @@
 #' Create Fluree transaction body from dataframe and context tibble
 #'
+#' Create the body for a Fluree transaction containing fields `@context`, `ledger`, and `insert`.
 #' Currently only supports insertion of data. 
 #' TODO: expand to accommodate queries
 #'

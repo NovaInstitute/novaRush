@@ -22,6 +22,50 @@
 # deviceinfo
 
 # TODO handle NULL parameter values
+
+
+#' Autofill standard triples for SurveyCTO triples
+#' 
+#' TODO not complete
+#' 
+#' This function:
+#'  
+#'  a) Constructs node (class) specifications compliant with [identify_nodes()] for the following classes from nova-o: 
+#'  `Interview`, `InterviewResponse`, `Survey`, `InterviewDevice`, `HouseholdAddress`, and `Household` 
+#'  
+#'  b) Constructs, where necessary, additional `<classname>_ID` variables used to identify nodes (instances of classes) above
+#'  
+#'  c) Constructs predicate mappings for the following predicates:
+#'  `http://www.w3.org/ns/prov#startedAtTime`,
+#' `http://www.w3.org/ns/prov#endedAtTime`,
+#' `https://www.w3.org/2006/vcard/ns#hasTelephone`,
+#' `https://nova.org.za/nova-o#hasDeviceInfo`,
+#' `http://purl.org/aiaontology#hasDuration`,
+#' `http://purl.org/aiaontology#hasLocation`,
+#' `https://nova.org.za/nova-o#inVillage`,
+#' `https://nova.org.za/nova-o#hasStandNumber`,
+#' `https://nova.org.za/nova-o#conductedWithDevice`,
+#' `https://nova.org.za/nova-o#isResponseOf`,
+#' `http://purl.org/aiaontology#usedToPerform`,
+#' `https://nova.org.za/nova-o#interviewWithHousehold`,
+#' `https://nova.org.za/nova-o#hasAddress`
+#'  
+#'  d) Maps `data` to SPO format using the above class specifications and predicates. 
+#'
+#' @param data [data.frame] The survey response data
+#' @param instanceid [string] Column in `data` that contains ID for interview
+#' @param starttime [string] Column in `data` that contains starting time for interview
+#' @param endtime [string] Column in `data` that contains ending time for interview
+#' @param devicephonenum  [string] Column in `data` that contains phone number for the device used to conduct the survey
+#' @param device_info [string] Column in `data` that contains information on the device used to conduct the interview
+#' @param duration [string] Column in `data` that contains duration of the interview
+#' @param geo_location [string] Column in `data` that contains location at which interview was conducted
+#' @param village [string] Column in `data` that contains the village respondent lives in
+#' @param standnumber [string] Column in `data` that contains the respondent's stand number
+#' @param survey [string] Identifier for the survey these responses form part of.
+#'
+#' @return [data.frame] Containing columns `subject`, `predicate`, `object`. This dataframe can be parsed to triples.
+#' @export
 parseCTO <- function(data,
                      instanceid = "instanceid",
                      starttime = "starttime",
@@ -151,7 +195,7 @@ parseCTO <- function(data,
   prefixed <- replace_iris_with_prefixes(predlist)
   pred_tib <- predicateTibble(prefixed)
   
-  id_predlist <- specIDPredicates(id_data, id_tb) # id_tb from identify_nodes
+  id_predlist <- specIDPredicates(id_tb) # id_tb from identify_nodes
   id_prefixed <- replace_iris_with_prefixes(id_predlist)
   pred_id_tb <- predicateTibble(id_prefixed)
   

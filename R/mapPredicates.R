@@ -1,23 +1,29 @@
-#' Create specified predicate mappings from dataframe 
+#' Create specified predicate mappings from dataframe
 #' 
-#' This function maps the columns of a dataframe to predicate specifications using conventions compatible with Fluree V3
+#' This function maps the columns of a dataframe to predicate specifications using conventions compatible with Fluree V3.  
 #' These predicates can be used to define a schema for Fluree transactions.
-#' Each predicate mapping specifies
-#' 1. predicate: the IRI of the predicate in full. Inclusion of `@context` to incorporate ontology prefixes is handled later in the data pipeline
-#' 2. the domain of the predicate as IRI
-#' 3. the range of the predicate as IRI
-#' 4. the corresponding column (variable) name in the dataframe
-#' This function just builds the predicate specification. The heavy lifting (the actual content of the specification) still has to be done manually -
-#' In future (post 12/2024), the goal is to automate this process to a greater degree.
-#'
-#' @param varnames [character] Column names corresponding to predicates
-#' @param predicates [character] Complete predicate IRIs
-#' @param domains [character] Complete domain IRIs
-#' @param ranges [character] Complete range IRIs
 #' 
-#' @returns The predicate mappings as a list of named lists. Each list has entries:
-#' predicate, http://www.w3.org/2000/01/rdf-schema#domain, http://www.w3.org/2000/01/rdf-schema#range, and varname (column name corresponding to this predicate mapping)
+#' Each predicate mapping specifies:
+#' 
+#' 1. **predicate**: the IRI of the predicate in full. Inclusion of `@context` to incorporate ontology prefixes is handled later in the data pipeline.  
+#' 2. **domain**: the domain of the predicate as an IRI.  
+#' 3. **range**: the range of the predicate as an IRI.  
+#' 4. **varname**: the corresponding column (variable) name in the dataframe.  
+#' 
+#' This function just builds the predicate specification.  
+#' The heavy lifting (the actual content of the specification) still has to be done manually.  
+#' 
+#' @param varnames [character] Column names corresponding to predicates.
+#' @param predicates [character] Complete predicate IRIs.
+#' @param domains [character] Complete domain IRIs.
+#' @param ranges [character] Complete range IRIs.
+#' 
+#' @return [list] The predicate mappings as a list of named lists. Each list has entries:  
+#' `predicate`, `http://www.w3.org/2000/01/rdf-schema#domain`,  
+#' `http://www.w3.org/2000/01/rdf-schema#range`, and `varname` (column name corresponding to this predicate mapping).  
+#' 
 #' @export
+
 mapPredicates <- function(varnames, predIRIs, domains, ranges){
   schema_list <- list()
   for(i in 1:length(varnames)){
@@ -31,8 +37,19 @@ mapPredicates <- function(varnames, predIRIs, domains, ranges){
   return(schema_list)
 }
 
-# TODO documentation
-specIDPredicates <- function(data, id_tb) {
+
+#' Create predicate mappings for rdf:type predicates
+#'
+#' Add a `rdf:type` predicate for each class implied by `id_tb`.
+#'
+#' @param id_tb [data.frame] Containing column `var_id_name` with the names of the columns that contain the identifiers for each class. 
+#' You can generate `id_tb` from node specifications by using `identify_nodes`.
+#'
+#' @return [list] The predicate mappings as a list of named lists. Each list has entries:  
+#' `predicate` (which will be `rdf:type`), `http://www.w3.org/2000/01/rdf-schema#domain`,  
+#' `http://www.w3.org/2000/01/rdf-schema#range`, and `varname` (column name corresponding to this predicate mapping).  
+#' @export
+specIDPredicates <- function(id_tb) {
   id_varnames <- id_tb %>% select(var_id_name) %>% pull()
   id_IRIs <- rep("http://www.w3.org/1999/02/22-rdf-syntax-ns#type", nrow(id_tb))
   id_domains <- rep("http://www.w3.org/2002/07/owl#Thing", nrow(id_tb))

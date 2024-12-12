@@ -1,19 +1,24 @@
 #' Identify RDF nodes from dataframe and provided schema
 #' 
 #' This function creates node specifications implied by a dataframe according to a specified schema and the Nova ontology.
-#' It amends @param data to include columns that are used as the ID (in RDF, the subject) for triples concerning each class. 
+#' It amends `data` to include columns that are used as the the subject for triples concerning each class. 
 #' 
 #' @param node_spec [list] Node specification as a list of named lists. There should be an entry for each class of entity implied by the dataframe.
 #' Each named list should have the following fields:
-#' a) rdf:type for each node according to nova-o
-#' b) the variable that can be used as ID for the node.
-#' c) if b) is NULL, which combination of columns can be used to create an ID for the node. The specified columns are hashed to create the ID.
-#' d) if both b) and c) are null, the constant identifier for this node. For example, the identifier for the single survey of which all responses form part.
+#' 
+#'  a) `type`: `rdf:type` for each node according to nova-o
+#'  
+#'  b) `id_col`: the variable that can be used as ID for the node.
+#'  
+#'  c) `comb_id_col`: if b) is NULL, which combination of columns can be used to create an ID for the node. The specified columns are hashed to create the ID.
+#'  
+#'  d) `const_id`: if both b) and c) are null, the constant identifier for this node. For example, the identifier for the single survey of which all responses form part.
+#' 
 #' Exactly one of b), c) or d) must be non-NULL
 #' 
-#' @param data [data.frame] Data as a tibble
+#' @param data [tibble]
 #'
-#' @return [list] data with ID columns appended; a tibble containing the node specifications from @param node_spec and the variable name used to identify each node (i.e. the subject in each triple) 
+#' @return [list] `data` with ID columns appended; a tibble containing the node specifications from `node_spec` + the variable name used to identify each node (i.e. the subject in each triple) 
 #' @export
 #'
 #' @examples 
