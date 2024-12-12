@@ -1,32 +1,6 @@
-# create node specifications and predicate mappings for metadata that is always (or mostly always) present for SurveyCTO surveys
-# output: SPO table
-
-# node specifications:
-# interview
-# interviewresponse
-# survey
-# int_dev
-# hh_addr
-# hh
-
-# predicate specifications:
-# startedattime
-# endedattime
-# duration
-# gps_location
-# hasinterviewresponse
-# conductedwithdevice
-# interviewwithhh
-# hhhasaddr
-# devicephonenum
-# deviceinfo
-
-# TODO handle NULL parameter values
-
-
 #' Autofill standard triples for SurveyCTO triples
 #' 
-#' TODO not complete
+#' TODO functional, but not exhaustive
 #' 
 #' This function:
 #'  
