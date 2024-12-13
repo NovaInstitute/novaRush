@@ -122,75 +122,57 @@ varnames <- kia_adapt$data$kia_adaptation %>%
   colnames()
 # starttime", "endtime", "device_info", "duration", "village", "stand_number_1"
 
-predIRIs <- c(
-  "http://www.w3.org/ns/prov#startedAtTime",
-  "http://www.w3.org/ns/prov#endedAtTime",
-  "https://nova.org.za/nova-o#hasDeviceInfo",
-  "http://purl.org/aiaontology#hasDuration",
-  "https://nova.org.za/nova-o#inVillage",
-  "https://nova.org.za/nova-o#hasStandNumber",
+pred_vn <- list(
+  "http://www.w3.org/ns/prov#startedAtTime" = "starttime",
+  "http://www.w3.org/ns/prov#endedAtTime" = "endtime",
+  "https://nova.org.za/nova-o#hasDeviceInfo" = "device_info",
+  "http://purl.org/aiaontology#hasDuration" = "duration",
+  "https://nova.org.za/nova-o#inVillage" = "village",
+  "https://nova.org.za/nova-o#hasStandNumber" = "stand_number_1",
   # predicates that map nodes to one another
-  "https://nova.org.za/nova-o#conductedWithDevice",
-  "https://nova.org.za/nova-o#isResponseOf",
-  # TODO technically the domain and range of this predicate are Instrument and Activity, respectively
-  "http://purl.org/aiaontology#usedToPerform",
-  "https://nova.org.za/nova-o#interviewWithHousehold",
-  "https://nova.org.za/nova-o#hasAddress"
-)
-
-# TODO - autofill domains and ranges if possible from pred IRI?
-domains <- c(
-  "https://nova.org.za/nova-o#Interview",
-  "https://nova.org.za/nova-o#Interview",
-  "https://nova.org.za/nova-o#InterviewDevice",
-  "https://nova.org.za/nova-o#Interview",
-  "https://nova.org.za/nova-o#HouseholdAddress",
-  "https://nova.org.za/nova-o#HouseholdAddress",
-  # predicates that map nodes to one another
-  "https://nova.org.za/nova-o#Interview",
-  "https://nova.org.za/nova-o#InterviewResponse",
-  "https://nova.org.za/nova-o#Survey",
-  "https://nova.org.za/nova-o#Interview",
-  "https://nova.org.za/nova-o#Household"
-  
-)
-
-ranges <- c(
-  "http://www.w3.org/2001/XMLSchema#dateTime",
-  "http://www.w3.org/2001/XMLSchema#dateTime",
-  "http://www.w3.org/2001/XMLSchema#string",
-  "https://www.w3.org/2006/time#Duration",
-  "https://nova.org.za/nova-o#Village",
-  "http://www.w3.org/2001/XMLSchema#string",
-  # predicates that map nodes to one another
-  "https://nova.org.za/nova-o#InterviewDevice",
-  "https://nova.org.za/nova-o#Interview",
-  "https://nova.org.za/nova-o#Interview",
-  "https://nova.org.za/nova-o#Household",
-  "https://nova.org.za/nova-o#HouseholdAddress"
+  "https://nova.org.za/nova-o#conductedWithDevice" = NA,
+  "https://nova.org.za/nova-o#isResponseOf" = NA,
+  "http://purl.org/aiaontology#usedToPerform" = NA,
+  "https://nova.org.za/nova-o#interviewWithHousehold" = NA,
+  "https://nova.org.za/nova-o#hasAddress" = NA
 )
 
 # -----------------------------------------------------------------------------
 # 2.3 APPLY PREDICATE MAPPINGS
 # -----------------------------------------------------------------------------
 
-# pad varnames with NAs for predicates that have no corresponding column
-length(varnames) <- length(predIRIs)
-
 # -----------------------------------------------------------------------------
 # 2.3.1 NON-ID PREDICATES
 # -----------------------------------------------------------------------------
 
-# TODO adjust replace_iris
+# autofill information as far as possible
+ontology_path = "../nova-o/nova-o.rdf" # REPLACE WITH YOURS
+autofill <- suppressMessages(getPredicateInfo(ontology_path, pred_vn, id_tb))
+pred_tb <- autofill$mapped 
+exceptions <- autofill$exceptions
 
-# predicate mapping as list
-pred_tb <- mapPredicates(varnames, predIRIs, domains, ranges)
+# address issues raised in "exceptions"
+# a) nova-o:Village is in the range of nova-o:inVillage - amend node specification
+# vill_spec <- list(
+#   type = "https://nova.org.za/nova-o#Village",
+#   id_col = NULL,
+#   comb_id_col = NULL,
+#   const_id = 
+# ) # TODO add to id_tb and update pred_tb
 
-# replace long IRIs with prefixed IRIs
-# note that further wrangling expects prefixed IRIs; do this step here
-pref_result <- prefixIRIs(pred_tb)
-geprefix <- pref_result$output
-context <- pref_result$context # used when creating Fluree transaction
+# b) aia:hasDuration has no domain or range specified - specify manually and update pred_tb
+varname <- c("duration")
+predIRI <- c("http://purl.org/aiaontology#hasDuration")
+domain <- c("https://nova.org.za/nova-o#Interview")
+range <- c("http://www.w3.org/2001/XMLSchema#int")
+amended <- mapPredicates(varname, predIRI, domain, range)
+
+pred_tb <- rbind(pred_tb, amended)
+
+# prefix verbose IRIs and extract context to use in body of Fluree transaction
+prefixed <- prefixIRIs(pred_tb)
+pred_tb <- prefixed$output
+context <- prefixed$context
 
 # -----------------------------------------------------------------------------
 # 2.3.2 ID PREDICATES
@@ -203,7 +185,7 @@ id_pref_result <- prefixIRIs(small_id_tb)
 id_geprefix <- id_pref_result$output
 
 # join id and non-id predicate mappings
-pred_tb <- rbind(geprefix, id_geprefix)
+pred_tb <- rbind(pred_tb, id_geprefix)
 
 # -----------------------------------------------------------------------------
 # 3. MAP DATA
@@ -226,11 +208,7 @@ rdflib::rdf_serialize(small_kia_trip, format = "turtle", doc = "rdf_graph.ttl", 
 # 4.1 CREATE A LEDGER
 # -----------------------------------------------------------------------------
 
-# Ensure you have a Fluree instance running (Docker command: docker run -d -p 58090:8090 --name my_fluree_server fluree/server)
-# and that the URL is saved in your `fluree_link` environment variable
-create_body <- createBody("nova/kia")
-resp <- createLedger(ledgerName = "nova/kia", body = create_body)
-jsonlite::prettify(resp)
+# <novaRush Fluree functionality here>
 
 # -----------------------------------------------------------------------------
 # 4.1 CREATE TRANSACTION BODY
@@ -242,4 +220,4 @@ insert_body <- createBody("nova/kia", small_kia_long %>% distinct, context)
 # 5. TRANSACT TO A LEDGER
 # -----------------------------------------------------------------------------
 
-flureeTransact("nova/kia", insert_body, signQuery = FALSE)
+# <novaRush Fluree functionality here>

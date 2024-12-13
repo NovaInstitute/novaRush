@@ -85,6 +85,10 @@ getPredicateInfo <- function(ontology_path,
     full_join(mapped) %>% 
     left_join(vn_res)
   
+  # amendment ii) - datatype properties that have (at least) a range specified
+  dtp_range <- checkDTPRange(ran_res, rdf_data, vn_res)
+  mapped <- mapped %>% full_join(dtp_range)
+  
   # exception i) - neither class nor unique subclass present in node spec
   exceptions <- sc_replace %>% 
     filter(is.na(new_domain) | is.na(new_range)) %>% 
@@ -97,17 +101,22 @@ getPredicateInfo <- function(ontology_path,
   exceptions <- exceptions %>% full_join(dr_excep)
   
   # exception iii) - varname = NA for datatype properties
-  dt_excep <- checkVNDataProp(rdf_data, pred_vn, vn_res)
+  dt_excep <- checkVNDataProp(rdf_data, vn_res, dom_res, ran_res)
   exceptions <- exceptions %>% full_join(dt_excep)
   
   # exception iv) - no vn and no domain
-  dm_excep <- checkVNDomain(pred_vn, dom_res, ran_res, vn_res)
+  dm_excep <- checkVNDomain(dom_res, ran_res, vn_res)
   exceptions <- exceptions %>% full_join(dm_excep)
+  
+  # rename columns in mapped to be compatible with mapPredicates
+  mapped <- mapped %>% 
+    rename("http://www.w3.org/2000/01/rdf-schema#domain" = domain,
+           "http://www.w3.org/2000/01/rdf-schema#range" = range)
   
   return(list(mapped = mapped, exceptions = exceptions))
 }
 
-#' Find exclucded classes
+#' Find excluded classes
 #' 
 #' Helper function for [getPredicateInfo()]
 #' Find classes in domain and/or range of the list of predicates but not in the node specifications.
@@ -132,7 +141,11 @@ excludedClasses <- function(dom_res,
     filter(!grepl("^http://www.w3.org/2001/XMLSchema#", range)) # exclude datatype properties
   
   # create list of classes
-  ex_classes <- exc_ran %>% full_join(exc_dom)
+  full_res <- dom_res %>% full_join(ran_res)
+  ex_classes <- exc_ran %>% 
+    full_join(exc_dom) %>% 
+    select(predicate) %>% 
+    left_join(full_res)
 }
 
 
@@ -258,13 +271,18 @@ checkDRObjectProp <- function(rdf_data,
 #'
 #' @param rdf_data [rdf] Parsed ontology data
 #' @param vn_res [tibble] Containing two columns: `predicate` and `varname` (possibly NA). 
+#' @param dom_res [tibble] Containing columns: `predicate` and `domain`. 
+#' The result of a SPARQL query to find the domains of all predicates in the list implied by `pred_vn`.
+#' @param ran_res [tibble] Containing columns: `predicate` and `range`. 
+#' The result of a SPARQL query to find the ranges of all predicates in the list implied by `pred_vn`.
 #'
 #' @return [tibble] Datatype properties in `pred_vn` for which no corresponding variable name was specified.
 checkVNDataProp <- function(rdf_data,
-                            vn_res) {
+                            vn_res, 
+                            dom_res,
+                            ran_res) {
   
   # get all datatype properties 
-  predicates <- names(pred_vn)
   predicate_filter <- paste(sprintf("<%s>", vn_res$predicate), collapse = ", ")
   
   dtp_q <- sprintf("
@@ -303,11 +321,45 @@ checkVNDomain <- function(dom_res,
                           ran_res, 
                           vn_res) {
   
-  no_domain <- full_join(dom_res, vn_res$predicate) %>% 
+  no_domain <- full_join(dom_res, vn_res %>% select(predicate)) %>% 
     filter(is.na(domain))
     
   dom_excep <- no_domain %>% 
     inner_join(vn_res %>% filter(is.na(varname))) %>% 
     left_join(ran_res) %>% 
     mutate(reason = "No domain found and no variable name specified")
+}
+
+#' Get datatype properties that have rdfs:range specified
+#'
+#' Helper function in [getPredicateInfo()]
+#'  
+#' @param ran_res [tibble] Containing columns: `predicate` and `range`. The result of a SPARQL query to find the ranges of all predicates in a list. 
+#' @param rdf_data [rdf] Parsed ontology data
+#' @param vn_res [tibble] Containing two columns: `predicate` and `varname` (possibly NA). 
+#'
+#' @return
+checkDTPRange <- function(ran_res,
+                          rdf_data,
+                          vn_res) {
+  # get all datatype properties 
+  predicate_filter <- paste(sprintf("<%s>", vn_res$predicate), collapse = ", ")
+  
+  dtp_q <- sprintf("
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+  SELECT ?predicate ?property
+  WHERE { ?predicate rdf:type ?property .
+    FILTER(?predicate IN (%s))
+  }
+  ", predicate_filter)
+  
+  dt_props <- rdf_query(rdf_data, dtp_q) %>% 
+    filter(property == "http://www.w3.org/2002/07/owl#DatatypeProperty")
+  
+  dtp_range <- dt_props %>% 
+    select(predicate) %>% 
+    inner_join(ran_res)
+  
+  return(dtp_range)
 }

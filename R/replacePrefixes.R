@@ -40,7 +40,7 @@ prefixIRIs <- function(data, add_context = NULL) {
     "rdfs" = "http://www.w3.org/2000/01/rdf-schema#",
     "time" = "https://www.w3.org/2006/time#", 
     "vcard" = "https://www.w3.org/2006/vcard/ns#",
-    "base" = "https://nova.org.za/nova-o"
+    "base" = "https://nova.org.za/nova-o#"
   )
   
   # add additional context
