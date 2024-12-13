@@ -189,3 +189,11 @@ response <- POST(
 
 # Output the results
 print(content(response, as = "text"))
+
+
+
+
+# Stop and remove the docker container
+system("docker stop node_test")
+system("docker rm node_test")
+
