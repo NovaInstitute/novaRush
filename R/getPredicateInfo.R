@@ -1,25 +1,3 @@
-# from a list of predicate names, autofill their domains and ranges as far as possible
-# ontology path is the path to a local ontology file - add functionality for hosted ontology later
-# this function courtesy of ChatGPT
-# for predicates with broad domains and ranges, e.g. usedToPerform, get the most specific subclass possible according to the node specifications
-
-# FOR TESTING
-pred_vn <- list(
-  "http://www.w3.org/ns/prov#startedAtTime" = list(varname = "startedattime"),
-  "http://purl.org/aiaontology#usedToPerform" = list(varname = NULL), 
-  "https://nova.org.za/nova-o#inVillage" = list(varname = "village"),
-  "https://nova.org.za/nova-o#hasDeviceInfo" = list(varname = "device_info"))
-
-pred_vn_simple <- list(
-  "http://www.w3.org/ns/prov#startedAtTime" = "startedattime",
-  "http://purl.org/aiaontology#usedToPerform" = NA, 
-  "https://nova.org.za/nova-o#inVillage" = "village",
-  "https://nova.org.za/nova-o#hasDeviceInfo" = "device_info",
-  "https://nova.org.za/nova-o#concernsDomain" = NA,
-  "http://www.w3.org/2006/vcard/ns#hasTelephone" = NA)
-
-ontology_path <- "../nova-o/nova-o.rdf"
-
 getPredicateInfo <- function(ontology_path,
                              pred_vn) {
   # load the ontology
@@ -57,14 +35,16 @@ getPredicateInfo <- function(ontology_path,
   ran_res <- rdf_query(rdf_data, ran_q)
   
   vn_res <- tibble(
-    predicate = names(pred_vn_simple),
-    varname = unlist(pred_vn_simple, use.names = FALSE))
+    predicate = names(pred_vn),
+    varname = unlist(pred_vn, use.names = FALSE))
   
-  ex_classes <- excludedClasses(dom_res, ran_res, id_tb)
+  ex_classes <- excludedClasses(dom_res, ran_res, id_tb) %>% left_join(vn_res)
   
   # "unproblematic" mappings thus far
-  # TODO hoe feature vn hier?
-  mapped <- dom_res %>% inner_join(ran_res) %>% anti_join(ex_classes)
+  mapped <- dom_res %>% 
+    inner_join(ran_res) %>% 
+    anti_join(ex_classes) %>% 
+    left_join(vn_res)
   
   # amendment i) - class is not present in the node spec but a (unique) subclass is
   sc_replace <- replaceSubclass(rdf_data, ex_classes, id_tb)
@@ -73,32 +53,32 @@ getPredicateInfo <- function(ontology_path,
     filter(!is.na(new_domain) & !is.na(new_range)) %>% 
     select(-domain, -range) %>% 
     rename(domain = new_domain, range = new_range) %>% 
-    rbind(mapped) # TODO mag dalk later verander na 'n join anders gaan hy kla oor die vn col
+    full_join(mapped) %>% 
+    left_join(vn_res)
   
   # exception i) - neither class nor unique subclass present in node spec
   exceptions <- sc_replace %>% 
     filter(is.na(new_domain) | is.na(new_range)) %>% 
-    select(-domain, -range) %>% 
-    rename(domain = new_domain, range = new_range) %>% 
+    select(-new_domain, -new_range) %>% 
     mutate(reason = "The class that corresponds to the domain and/or range of this predicate was not found in your node specifications.")
   
   # exception ii) - domain and/or range not found for object properties
-  dr_excep <- checkDRObjectProp(rdf_data, pred_vn, dom_res, ran_res)
+  dr_excep <- checkDRObjectProp(rdf_data, pred_vn, dom_res, ran_res) %>% 
+    left_join(vn_res)
   exceptions <- exceptions %>% full_join(dr_excep)
   
   # exception iii) - varname = NA for datatype properties
   dt_excep <- checkVNDataProp(rdf_data, pred_vn, vn_res)
   exceptions <- exceptions %>% full_join(dt_excep)
   
-  # TODO exception iv) - predicate not found in ontology
   # exception v) - no vn and no domain
   dm_excep <- checkVNDomain(pred_vn, dom_res, ran_res, vn_res)
-  exceptions <- exceptions %>% full_join(dom_excep)
+  exceptions <- exceptions %>% full_join(dm_excep)
   
   return(list(mapped = mapped, exceptions = exceptions))
 }
 
-# TODO excludedClasses
+# TODO documentation
 excludedClasses <- function(dom_res, 
                             ran_res,
                             id_tb) {
@@ -155,13 +135,23 @@ replaceSubclass <- function(rdf_data,
     mutate(uniq_sc = map(data, ~check_unique_sc(.x))) %>% 
     mutate(uniq_sc = unlist(uniq_sc))
   
+  # get only the unique subclasses
+  subclasses <- subclasses %>% 
+    filter(!is.na(uniq_sc))
+  
   # look for the classes from the class column of "subclasses" in the domain and/or range columns of "ex_classes" 
-  # and replace them with the "uniq_sc" value from "subclasses" 
+  # and replace them with the "uniq_sc" value from "subclasses"
   x <- ex_classes %>% 
     filter(domain %in% subclasses$class | range %in% subclasses$class) %>% 
     rowwise() %>% 
-    mutate(new_domain = first(subclasses %>% filter(class == domain) %>% select(uniq_sc) %>% pull())) %>% 
-    mutate(new_range = first(subclasses %>% filter(class == range) %>% select(uniq_sc) %>% pull()))
+    mutate(new_domain = first(subclasses %>% 
+                                filter(class == domain) %>% 
+                                select(uniq_sc) %>% 
+                                pull())) %>% 
+    mutate(new_range = first(subclasses %>% 
+                               filter(class == range) %>% 
+                               select(uniq_sc) %>% 
+                               pull()))
 
   ex_classes <- ex_classes %>% 
     left_join(x)
