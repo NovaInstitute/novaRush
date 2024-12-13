@@ -1,5 +1,34 @@
+#' Autofill predicate information
+#' 
+#' Given a list of predicate IRIs and the variable names they correspond to (possibly NA if there is no corresponding variable),
+#' autofill the domain and range of the predicate. If the domain and/or range class is not in the provided node/class specifications (`id_tb`),
+#' it attempts to find a (unique) subclass of the domain and/or range class that is. 
+#' 
+#' This function returns two tibbles: `mapped` and `exceptions`. `mapped` contains the "unproblematic" mappings 
+#' and `exceptions` those mappings that have problems and need to be specified manually. Manual specification can be done using [mapPredicates()].
+#' 
+#' There are four exceptions:
+#' 
+#'  1) Neither a class nor a unique subclass of that class is present in `id_tb`
+#'  
+#'  2) Domain and/or range not specified for an owl:ObjectProperty
+#'  
+#'  3) varname = NA for owl:DatatypeProperty
+#'  
+#'  4) No variable name and no domain provided
+#'
+#' @param ontology_path [string] Path to local ontology file, preferably in RDF/XML syntax (.rdf extension)
+#' @param pred_vn [list] Named list where the keys are the predicate IRIs and the values are variable names 
+#' (NA if no corresponding variable name in your data exists.)
+#' @param id_tb [tibble] Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
+#'
+#' @return [list] Named list with two entries: `mapped` and `exceptions`
+#' @export
+#'
+#' @examples
 getPredicateInfo <- function(ontology_path,
-                             pred_vn) {
+                             pred_vn,
+                             id_tb) {
   # load the ontology
   rdf_data <- rdf_parse(ontology_path)
   
@@ -71,14 +100,23 @@ getPredicateInfo <- function(ontology_path,
   dt_excep <- checkVNDataProp(rdf_data, pred_vn, vn_res)
   exceptions <- exceptions %>% full_join(dt_excep)
   
-  # exception v) - no vn and no domain
+  # exception iv) - no vn and no domain
   dm_excep <- checkVNDomain(pred_vn, dom_res, ran_res, vn_res)
   exceptions <- exceptions %>% full_join(dm_excep)
   
   return(list(mapped = mapped, exceptions = exceptions))
 }
 
-# TODO documentation
+#' Find exclucded classes
+#' 
+#' Helper function for [getPredicateInfo()]
+#' Find classes in domain and/or range of the list of predicates but not in the node specifications.
+#'
+#' @param dom_res [tibble] Containing columns: `predicate` and `domain`. The result of a SPARQL query to find the domains of all predicates in a list.
+#' @param ran_res [tibble] Containing columns: `predicate` and `range`. The result of a SPARQL query to find the ranges of all predicates in a list.
+#' @param id_tb [tibble] Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
+#'
+#' @return [tibble] Classes in domain and/or range of the list of predicates implied by `dom_res` and `ran_res` but not `id_tb`.
 excludedClasses <- function(dom_res, 
                             ran_res,
                             id_tb) {
@@ -97,7 +135,19 @@ excludedClasses <- function(dom_res,
   ex_classes <- exc_ran %>% full_join(exc_dom)
 }
 
-# TODO documentation
+
+#' Replace domain/range with unique subclass
+#' 
+#' Helper function for [getPredicateInfo()]
+#' For each class in the domain and/or range of a list of predicates 
+#' that are not in the node specifications (`id_tb`) for a dataset (`ex_classes`), 
+#' attempt to find a subclass of that class that is in `id_tb` such that this subclass is unique (no conflicts).
+#'
+#' @param rdf_data [rdf] Parsed ontology data
+#' @param ex_classes [tibble] Generated with [excludedClasses()]
+#' @param id_tb [tibble] Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
+#'
+#' @return
 replaceSubclass <- function(rdf_data, 
                           ex_classes, 
                           id_tb) {
@@ -159,8 +209,19 @@ replaceSubclass <- function(rdf_data,
   return(ex_classes)
 }
 
-# TODO documentation
-# check that the domain and range of object properties are specified
+#' Check: domain and range of object properties specified
+#' 
+#' Helper function in [getPredicateInfo()].
+#'
+#' @param rdf_data [rdf] Parsed ontology
+#' @param pred_vn [list] Named list where the keys are the predicate IRIs and the values are variable names 
+#' (NA if no corresponding variable name in your data exists.)
+#' @param dom_res [tibble] Containing columns: `predicate` and `domain`. 
+#' The result of a SPARQL query to find the domains of all predicates in the list implied by `pred_vn`.
+#' @param ran_res [tibble] Containing columns: `predicate` and `range`. 
+#' The result of a SPARQL query to find the ranges of all predicates in the list implied by `pred_vn`.
+#'
+#' @return [tibble] Object properties in `pred_vn` for which no domain and/or range could be specified by querying the ontology in `rdf_data`.
 checkDRObjectProp <- function(rdf_data, 
                               pred_vn,
                               dom_res,
@@ -191,14 +252,20 @@ checkDRObjectProp <- function(rdf_data,
     mutate(reason = "Domain and/or range for owl:ObjectProperty not specified.")
 }
 
-# check that a variable name is associated with each datatype property
+#' Check: Variable name is associated with each datatype property
+#'
+#' Helper function in [getPredicateInfo()].
+#'
+#' @param rdf_data [rdf] Parsed ontology data
+#' @param vn_res [tibble] Containing two columns: `predicate` and `varname` (possibly NA). 
+#'
+#' @return [tibble] Datatype properties in `pred_vn` for which no corresponding variable name was specified.
 checkVNDataProp <- function(rdf_data,
-                            pred_vn,
                             vn_res) {
   
   # get all datatype properties 
   predicates <- names(pred_vn)
-  predicate_filter <- paste(sprintf("<%s>", predicates), collapse = ", ")
+  predicate_filter <- paste(sprintf("<%s>", vn_res$predicate), collapse = ", ")
   
   dtp_q <- sprintf("
   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -223,14 +290,20 @@ checkVNDataProp <- function(rdf_data,
   return(dt_excep)
 }
 
-# check that each property that has no domain has an associated variable name
-checkVNDomain <- function(pred_vn,
-                          dom_res, 
+#' Check: each property that has no domain has associated variable name
+#'
+#' Helper function for [getPredicateInfo()].
+#'
+#' @param dom_res [tibble] Containing columns: `predicate` and `domain`. The result of a SPARQL query to find the domains of all predicates in a list.
+#' @param ran_res [tibble] Containing columns: `predicate` and `range`. The result of a SPARQL query to find the ranges of all predicates in a list. 
+#' @param vn_res [tibble] Containing two columns: `predicate` and `varname` (possibly NA).  
+#'
+#' @return [tibble] Predicates for which no domain could be specified from `dom_res` and no variable name was supplied.
+checkVNDomain <- function(dom_res, 
                           ran_res, 
                           vn_res) {
   
-  pred_tib <- tibble(predicate = names(pred_vn))
-  no_domain <- full_join(dom_res, pred_tib) %>% 
+  no_domain <- full_join(dom_res, vn_res$predicate) %>% 
     filter(is.na(domain))
     
   dom_excep <- no_domain %>% 
