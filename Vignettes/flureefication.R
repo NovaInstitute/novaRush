@@ -245,3 +245,4 @@ insert_body <- createBody("nova/kia", small_kia_long %>% distinct, context)
 # -----------------------------------------------------------------------------
 
 # <novaRush Fluree functionality here>
+

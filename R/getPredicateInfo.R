@@ -23,9 +23,6 @@
 #' @param id_tb [tibble] Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
 #'
 #' @return [list] Named list with two entries: `mapped` and `exceptions`
-#' @export
-#'
-#' @examples
 getPredicateInfo <- function(ontology_path,
                              pred_vn,
                              id_tb) {
@@ -160,7 +157,7 @@ excludedClasses <- function(dom_res,
 #' @param ex_classes [tibble] Generated with [excludedClasses()]
 #' @param id_tb [tibble] Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
 #'
-#' @return
+#' @return [tibble] Containing columns `new_domain` and `new_range` (possibly NA)
 replaceSubclass <- function(rdf_data, 
                           ex_classes, 
                           id_tb) {
@@ -338,7 +335,7 @@ checkVNDomain <- function(dom_res,
 #' @param rdf_data [rdf] Parsed ontology data
 #' @param vn_res [tibble] Containing two columns: `predicate` and `varname` (possibly NA). 
 #'
-#' @return
+#' @return [tibble] Datatype properties that have (at least) a range specified
 checkDTPRange <- function(ran_res,
                           rdf_data,
                           vn_res) {

@@ -4,12 +4,18 @@
 \alias{checkVNDataProp}
 \title{Check: Variable name is associated with each datatype property}
 \usage{
-checkVNDataProp(rdf_data, vn_res)
+checkVNDataProp(rdf_data, vn_res, dom_res, ran_res)
 }
 \arguments{
 \item{rdf_data}{\link{rdf} Parsed ontology data}
 
 \item{vn_res}{\link{tibble} Containing two columns: \code{predicate} and \code{varname} (possibly NA).}
+
+\item{dom_res}{\link{tibble} Containing columns: \code{predicate} and \code{domain}.
+The result of a SPARQL query to find the domains of all predicates in the list implied by \code{pred_vn}.}
+
+\item{ran_res}{\link{tibble} Containing columns: \code{predicate} and \code{range}.
+The result of a SPARQL query to find the ranges of all predicates in the list implied by \code{pred_vn}.}
 }
 \value{
 \link{tibble} Datatype properties in \code{pred_vn} for which no corresponding variable name was specified.

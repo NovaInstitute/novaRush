@@ -13,6 +13,9 @@ replaceSubclass(rdf_data, ex_classes, id_tb)
 
 \item{id_tb}{\link{tibble} Class specifications for your data. You can use \code{\link[=identify_nodes]{identify_nodes()}} to generate this tibble.}
 }
+\value{
+\link{tibble} Containing columns \code{new_domain} and \code{new_range} (possibly NA)
+}
 \description{
 Helper function for \code{\link[=getPredicateInfo]{getPredicateInfo()}}
 For each class in the domain and/or range of a list of predicates

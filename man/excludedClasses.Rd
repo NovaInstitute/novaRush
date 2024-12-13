@@ -2,7 +2,7 @@
 % Please edit documentation in R/getPredicateInfo.R
 \name{excludedClasses}
 \alias{excludedClasses}
-\title{Find exclucded classes}
+\title{Find excluded classes}
 \usage{
 excludedClasses(dom_res, ran_res, id_tb)
 }
