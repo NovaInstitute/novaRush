@@ -153,12 +153,36 @@ exceptions <- autofill$exceptions
 
 # address issues raised in "exceptions"
 # a) nova-o:Village is in the range of nova-o:inVillage - amend node specification
+vill_spec <- list(
+  type = "https://nova.org.za/nova-o#Village",
+  id_col = "village",
+  comb_id_col = NULL,
+  const_id = NULL
+)
+
+# update node specifications and predicate mappings
+node_spec <- list(vill_spec, int_spec, int_resp, survey_spec, hh_spec, hh_addr_spec, intdev_spec)
+node_result <- identify_nodes(node_spec, small_kia_data)
+small_kia_data <- node_result$data
+id_tb <- node_result$id_tb
+
+autofill <- suppressMessages(getPredicateInfo(ontology_path, pred_vn, id_tb))
+pred_tb <- autofill$mapped 
+exceptions <- autofill$exceptions
+
+# later - replace village name (string) with actual IRI
 # vill_spec <- list(
 #   type = "https://nova.org.za/nova-o#Village",
 #   id_col = NULL,
 #   comb_id_col = NULL,
-#   const_id = 
-# ) # TODO add to id_tb and update pred_tb
+#   const_id <- function(vec) {
+#     vec <- vec %>%
+#       str_replace("^Mulati$", "https://census2011.adrianfrith.com/place/962069") %>%
+#       str_replace("^Sedan$", "https://census2011.adrianfrith.com/place/962074")
+#     
+#     return(vec)
+#   }
+
 
 # b) aia:hasDuration has no domain or range specified - specify manually and update pred_tb
 varname <- c("duration")
