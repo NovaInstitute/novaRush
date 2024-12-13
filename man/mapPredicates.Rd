@@ -16,7 +16,7 @@ mapPredicates(varnames, predIRIs, domains, ranges)
 \item{predicates}{\link{character} Complete predicate IRIs.}
 }
 \value{
-\link{list} The predicate mappings as a list of named lists. Each list has entries:
+\link{tibble} The predicate mappings as a tibble with columns:
 \code{predicate}, \verb{http://www.w3.org/2000/01/rdf-schema#domain},
 \verb{http://www.w3.org/2000/01/rdf-schema#range}, and \code{varname} (column name corresponding to this predicate mapping).
 }

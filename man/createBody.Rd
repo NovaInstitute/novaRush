@@ -4,7 +4,7 @@
 \alias{createBody}
 \title{Create Fluree transaction body from dataframe and context tibble}
 \usage{
-createBody(ledger, data, context)
+createBody(ledger = NULL, data = NULL, context = NULL)
 }
 \arguments{
 \item{ledger}{\link{string} The name of the ledger into which to transact the data}

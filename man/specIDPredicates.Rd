@@ -11,7 +11,7 @@ specIDPredicates(id_tb)
 You can generate \code{id_tb} from node specifications by using \code{identify_nodes}.}
 }
 \value{
-\link{list} The predicate mappings as a list of named lists. Each list has entries:
+\link{tibble} Containing columns:
 \code{predicate} (which will be \code{rdf:type}), \verb{http://www.w3.org/2000/01/rdf-schema#domain},
 \verb{http://www.w3.org/2000/01/rdf-schema#range}, and \code{varname} (column name corresponding to this predicate mapping).
 }

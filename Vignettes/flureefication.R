@@ -181,32 +181,29 @@ length(varnames) <- length(predIRIs)
 # 2.3.1 NON-ID PREDICATES
 # -----------------------------------------------------------------------------
 
+# TODO adjust replace_iris
+
 # predicate mapping as list
-small_predlist <- mapPredicates(varnames, predIRIs, domains, ranges)
+pred_tb <- mapPredicates(varnames, predIRIs, domains, ranges)
 
 # replace long IRIs with prefixed IRIs
 # note that further wrangling expects prefixed IRIs; do this step here
-pref_result <- replace_iris_with_prefixes(small_predlist)
+pref_result <- prefixIRIs(pred_tb)
 geprefix <- pref_result$output
 context <- pref_result$context # used when creating Fluree transaction
-
-# predicate mapping as tibble
-pred_tb <- predicateTibble(geprefix)
 
 # -----------------------------------------------------------------------------
 # 2.3.2 ID PREDICATES
 # -----------------------------------------------------------------------------
 
-small_id_predlist <- specIDPredicates(id_tb)
+small_id_tb <- specIDPredicates(id_tb)
 
 # note that further wrangling expects prefixed IRIs; do this step here
-id_pref_result <- replace_iris_with_prefixes(small_id_predlist)
+id_pref_result <- prefixIRIs(small_id_tb)
 id_geprefix <- id_pref_result$output
 
-small_id_tb <- predicateTibble(id_geprefix)
-
 # join id and non-id predicate mappings
-pred_tb <- rbind(pred_tb, small_id_tb)
+pred_tb <- rbind(geprefix, id_geprefix)
 
 # -----------------------------------------------------------------------------
 # 3. MAP DATA
@@ -232,7 +229,7 @@ rdflib::rdf_serialize(small_kia_trip, format = "turtle", doc = "rdf_graph.ttl", 
 # Ensure you have a Fluree instance running (Docker command: docker run -d -p 58090:8090 --name my_fluree_server fluree/server)
 # and that the URL is saved in your `fluree_link` environment variable
 create_body <- createBody("nova/kia")
-resp <- createLedger(ledgerName = "nova/kia")
+resp <- createLedger(ledgerName = "nova/kia", body = create_body)
 jsonlite::prettify(resp)
 
 # -----------------------------------------------------------------------------

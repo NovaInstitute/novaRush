@@ -46,7 +46,7 @@ parseCTO(
 \link{data.frame} Containing columns \code{subject}, \code{predicate}, \code{object}. This dataframe can be parsed to triples.
 }
 \description{
-TODO not complete
+TODO functional, but not exhaustive
 }
 \details{
 This function:
