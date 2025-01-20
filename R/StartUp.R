@@ -2,12 +2,8 @@
 initializeEnvironmentVariables = function(config = list()) {
   checkConfiguration(config)
   
-  Sys.setenv(isFlureeHosted = config$isFlureeHosted)
-  Sys.setenv(create = config$create)
-  Sys.setenv(host = config$host)
-  Sys.setenv(ledger = config$ledger)
-  Sys.setenv(signMessages = config$signMessages)
-  Sys.setenv(apiKey = config$apiKey)
+  json_list <- toJSON(config, auto_unbox = TRUE)
+  Sys.setenv(config = json_list)
   
   privateKey <- config$privateKey
   if (!is.null(privateKey)) {
@@ -16,7 +12,6 @@ initializeEnvironmentVariables = function(config = list()) {
   
   Sys.setenv(connected = FALSE)
 }
-
 
 checkConfiguration = function(config, isConnecting = FALSE) {
   isFlureeHosted <- config$isFlureeHosted
@@ -60,20 +55,32 @@ checkConfiguration = function(config, isConnecting = FALSE) {
 }
 
 updateConfiguration = function(newConfig = list()) {
-  mergedConfig <- modifyList(Sys.getenv(config), newConfig)
-  if (!is.null(newConfig$defaultContext) && !is.null(self$config$defaultContext)) {
-    mergedConfig$defaultContext <- mergeContexts(self$config$defaultContext, newConfig$defaultContext)
+  config <- fromJSON(Sys.getenv("config"))
+  mergedConfig <- modifyList(config, newConfig)
+  if (!is.null(newConfig$defaultContext) && !is.null(config$defaultContext)) {
+    mergedConfig$defaultContext <- mergeContexts(config$defaultContext, newConfig$defaultContext)
   }
   
-  self$checkConfig(mergedConfig)
-  self$config <- mergedConfig
-  return(self)
+  checkConfiguration(mergedConfig)
+  json_list <- toJSON(mergedConfig, auto_unbox = TRUE)
+  Sys.setenv(config = json_list)
 }
 
-setKeys = function(privateKey) {
-  publicKey <- flureeCrypto::public_key_from_private(privateKey)
-  accountId <- flureeCrypto::account_id_from_public(publicKey)
-  did <- sprintf('did:fluree:%s', accountId)
+
+connect = function() {
+  config <- fromJSON(Sys.getenv("config"))
+  checkConfiguration(config, TRUE)
+  Sys.setenv(connected = TRUE)
   
-  Sys.setenv(privateKey = privateKey, publicKey = publicKey, did = did)
+  tryCatch({
+    if (isTRUE(config$create)) {
+      createLedger()
+    }
+    #TODO:  #self$testLedger()
+    
+  }, error = function(err) {
+    Sys.setenv(connected = FALSE)
+    stop(err)
+  })
 }
+
