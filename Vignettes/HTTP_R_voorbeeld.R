@@ -22,6 +22,24 @@ transaction_data <- toJSON(list(
   )
 ), auto_unbox = TRUE)
 
+transaction_data2 <- toJSON(list(
+  `@context` = list(
+    ex = "http://example.org/",
+    schema = "http://schema.org/"
+  ),
+  ledger = "cookbook/base2",
+  insert = list(
+    list(
+      `@id` = "ex:Frederick",
+      `@type` = "ex:Yeti",
+      `schema:age` = 5,
+      `schema:name` = "Frederick",
+      `ex:verified` = FALSE
+    )
+  )
+), auto_unbox = TRUE)
+
+
 # Signing the transaction
 tx_type <- "transact"
 ledger <- "cookbook/base"
@@ -40,3 +58,24 @@ response <- POST(
 
 # Print the response
 print(content(response, "text"))
+
+ij <- '{
+"@id": "http://example.com/iris/080533cd71b12f5b3a820d68e6d2a8f0",
+"@type": "http://example.com/irisvocab/#iris",
+"http://example.com/irisvocab/#Petal.Length": "4.9",
+"http://example.com/irisvocab/#Petal.Width": "1.8",
+"http://example.com/irisvocab/#Sepal.Length": "6.3",
+"http://example.com/irisvocab/#Sepal.Width": "2.7",
+"http://example.com/irisvocab/#Species": "virginica"
+}'
+
+
+t2 <- list(`@context` = list(ex = "http://example.org/",
+                             schema = "http://schema.org/"),
+           ledger = "cjp/een",
+           insert = as.data.frame(purrr::simplify(fromJSON(ij)))
+           )
+
+
+
+
