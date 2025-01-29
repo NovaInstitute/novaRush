@@ -9,9 +9,8 @@
 #' 
 #' @export
 transact = function(transaction) {
-  print('In transaction method...')
   connected <- as.logical(Sys.getenv("connected"))
-  if (is.null(connected) || !connected) {
+  if (!isTRUE(connected)) {
     stop("You must connect before transacting. Try running connect() before transacting", call. = FALSE)
   }
   
@@ -36,6 +35,23 @@ transact = function(transaction) {
   }
 }
 
+
+delete = function(id) {
+  print('In delete method...')
+  connected <- as.logical(Sys.getenv("connected"))
+  if (!isTRUE(connected)) {
+    stop("You must connect before transacting. Try using $connect()$delete() instead", call. = FALSE)
+  }
+  
+  config <- fromJSON(Sys.getenv("config"))
+  idAlias <- findIdAlias(config$defaultContext)
+  resultingTransaction <- handleDelete(id, idAlias)
+  resultingTransaction$ledger <- config$ledger
+  
+  print("successful past delete")
+  transact(transaction = resultingTransaction)
+}
+
 #' Send a transaction
 #' 
 #' @description
@@ -53,7 +69,7 @@ sendTransaction = function(config) {
     contentType <- 'application/json'
   }
   
-  transaction <- fromJSON(Sys.getenv("transaction"))
+  transaction <- fromJSON(Sys.getenv("transaction"), simplifyVector = F, simplifyDataFrame = T, simplifyMatrix = F)
   
   params <- generateFetchParams(config, 'transact', contentType)
   url <- params$url
@@ -62,18 +78,18 @@ sendTransaction = function(config) {
   if (nzchar(signedTransaction)) {
     params$body <- signedTransaction
   } else {
-    params$body <- toJSON(transaction, auto_unbox = TRUE, pretty = TRUE)
+    params$body <- toJSON(transaction, auto_unbox = T, pretty = F)
   }
   
-  print(url)
-  print(params$config$headers$`Content-Type`)
-  print(params$body)
   response <- POST(
     url = url,
     add_headers(`Content-Type` = params$config$headers$`Content-Type`),
     body = params$body,
     encode = "raw"
   )
+  
+  Sys.unsetenv("query")
+  Sys.unsetenv("signedQuery")
   
   print(content(response, as = "text"))
 }
@@ -105,7 +121,7 @@ signTransaction = function(transaction = NULL, privateKey = NULL) {
     stop("privateKey must be provided in either the transaction or the config")
   }
   
-  input <- toJSON(transaction, auto_unbox = TRUE, pretty = FALSE)
+  input <- toJSON(transaction, auto_unbox = T, pretty = F)
   signedTransaction <- flureeCrypto:::serialize_jws(as.character(input), key)
   
   Sys.setenv(signedTransaction = signedTransaction)
