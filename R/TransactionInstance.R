@@ -27,6 +27,8 @@ TransactionInstance <- R6Class("TransactionInstance",
     #' 
     #' @param transaction (`list()`)\cr
     #'   The transaction to be sent to the Fluree instance.
+    #' @param config (`list()`)\cr
+    #'   Configuration parameters of the instance.
     initialize = function(transaction, config) {
 
       self$transaction <- transaction
@@ -59,7 +61,7 @@ TransactionInstance <- R6Class("TransactionInstance",
       url <- params$url
       fetchOptions <- params$config
       
-      if (isTRUE(self$signedTransaction)) {
+      if (nzchar(self$signedTransaction)) {
         params$body <- self$signedTransaction
       } else {
         params$body <- toJSON(self$transaction, auto_unbox = TRUE, pretty = TRUE)

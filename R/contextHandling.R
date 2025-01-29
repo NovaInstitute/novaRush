@@ -1,7 +1,24 @@
+
+#' Set the default context
+#' 
+#' @description
+#' The default context set here will be used for all queries and transactions.
+#' Unlike `addToContext()` this method does not merge new context elements 
+#' with existing ones, instead it will replace the existing 
+#' `defaultContext` entirely.
+#' 
+#' @export
 setContext = function(context) {
   updateConfiguration(list(defaultContext = context))                     
 }
 
+# TODO: Fix this function to work for functional implementation
+#' Add to the default context
+#' 
+#' @description
+#' This function adds to the already existing `defaultContext`.
+#' 
+#' @export
 addToContext = function(context) {
   if (!is.null(self$config$defaultContext)) {
     newContext <- mergeContexts(self$config$defaultContext, context)
@@ -12,6 +29,16 @@ addToContext = function(context) {
   return(self)
 }
 
+# TODO: Fix this function to work for functional implementation
+#' Get the context
+#' 
+#' @description
+#' This function extracts the `defaultContext` from the `config` of the current
+#' Fluree instance.
+#' 
+#' @return (`list()`)
+#' 
+#' @export
 getContext = function() {
   return(self$config$defaultContext)
 }
@@ -61,3 +88,36 @@ mergeContexts <- function(context1, context2) {
   stop("Unsupported context types provided.")  # Catch invalid inputs
 }
 
+#' Find the alias of the id field
+#' 
+#' @description
+#' This function looks up if any alias for '@id' has been defined within the
+#' `defaultContext` of the current instance. If none is found the default value:
+#' '@id' is used.
+#' 
+#' @param context (`list()`)\cr
+#'   The default context of the Fluree instance.
+#' 
+#' @return (`string`)
+#' 
+#' @export
+findIdAlias = function(context) {
+  if (is.character(context)) {
+    return("@id")
+  } else if (is.list(context)) {
+    if ("@id" %in% names(context)) {
+      return(context[["@id"]])
+    }
+    for (key in names(context)) {
+      if (is.list(context[[key]])) {
+        result <- findIdAlias(context[[key]])
+        if (result != "@id") {
+          return(result)
+        }
+      }
+    }
+    return("@id")
+  } else {
+    stop("Unsupported context type provided.")
+  }
+}

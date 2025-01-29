@@ -106,7 +106,18 @@ FlureeInstance <- R6Class("FlureeInstance",
       return(self)
     },
     
-# TODO:  testLedgers() function
+    testLedgers = function() {
+      qry <- '{
+          "where": {
+             "@id": "?s",
+             "?p": "?o",
+           },
+           "select": ["?s"],
+           "limit": 1
+      }'
+      queryInstance = self$query(qry)
+      return(queryInstance$send())
+    },
 
     #' @description
     #' This will test the connection to the host and create the ledger if needed.
@@ -121,7 +132,7 @@ FlureeInstance <- R6Class("FlureeInstance",
         if (isTRUE(self$config$create)) {
           self$create()
         }
-#TODO:  #self$testLedger()
+        #self$testLedger()
         
       }, error = function(err) {
         self$connected <- FALSE
@@ -142,6 +153,8 @@ FlureeInstance <- R6Class("FlureeInstance",
     #'   The list representation of a transaction to be entered into the 
     #'   new ledger (optional).
     create = function(ledgerName = NULL, transaction = NULL) {
+      
+      print("test error 1")
       config <- self$config
       
       isFlureeHosted <- config$isFlureeHosted
@@ -153,10 +166,13 @@ FlureeInstance <- R6Class("FlureeInstance",
       privateKey <- config$privateKey
       apiKey <- config$apiKey
         
+      print("test error 2")
       url <- paste0('http://', host)
       if (!is.null(port)) {
+        print("test error 3")
         url <- paste(url, sep = ":", port)
       }
+      print("test error 4")
       url <- paste0(url, "/fluree/create")
         
       body <- list(
@@ -164,8 +180,10 @@ FlureeInstance <- R6Class("FlureeInstance",
         insert = list(message = "success")
       )
         
+      print("test error 5")
       if (!is.null(transaction)) {
         body <- modifyList(body, transaction)
+        print("test error 6")
       }
 
       header = 'application/json'
@@ -174,6 +192,7 @@ FlureeInstance <- R6Class("FlureeInstance",
       if (isTRUE(signMessages) && !is.null(privateKey)) {
         finalBody <- flureeCrypto:::serialize_jws(finalBody, privateKey)
         header = 'application/jwt'
+        print("test error 7")
       }
         
       response <- POST(
@@ -183,6 +202,7 @@ FlureeInstance <- R6Class("FlureeInstance",
         encode = "raw"
       )
         
+      print("test error 8")
       if (http_error(response)) {
         stop("Failed to create ledger: ", content(response, "text"))
       }
@@ -232,9 +252,46 @@ FlureeInstance <- R6Class("FlureeInstance",
 
 # TODO:  handle upsert
 
-# TODO:  handle delete
+    #' @description
+    #' Create a new instance of the TransactionInstance class.
+    #' This new TransactionInstance is then configured to perform a delete on an
+    #' entry in the Fluree database.
+    #' 
+    #' @param id (`list()`)\cr
+    #'   A list of entries to be deleted (could also be a single string value).
+    #' @return [TransactionInstance].
+    delete = function(id) {
+      print('In delete method...')
+      if (!self$connected) {
+        stop("You must connect before transacting. Try using $connect()$delete() instead", call. = FALSE)
+      }
+      
+      idAlias <- findIdAlias(self$config$defaultContext)
+      resultingTransaction <- handleDelete(id, idAlias)
+      resultingTransaction$ledger <- self$config$ledger
+      
+      return(TransactionInstance$new(transaction = resultingTransaction, config = self$config))
+    },
 
-# TODO:  handle history
+    #' @description
+    #' Create a new instance of the HistoryInstance class.
+    #' This new HistoryInstance can then be used to transact with the Fluree database.
+    #' 
+    #' @param query (`list()`)\cr
+    #'   Representation of the transaction to send to the active Fluree instance.
+    #' @return [HistoryQueryInstance].
+    history = function(query) {
+      print('In history method...')
+      if (!self$connected) {
+        stop("You must connect before querying history. Try using $connect()$transact() instead", call. = FALSE)
+      }
+      
+      if (is.null(query$from)) {
+        query$from <- self$config$ledger
+      }
+      return(HistoryQueryInstance$new(query, self$config))
+    },
+
     
     #' @description
     #' Add a private key to the Fluree instance.
