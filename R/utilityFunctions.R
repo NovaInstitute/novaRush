@@ -93,7 +93,7 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
     url = url,
     config = list(
       method = "POST",
-      headers = headers
+      headers = header
     )
   )
   return(params)
