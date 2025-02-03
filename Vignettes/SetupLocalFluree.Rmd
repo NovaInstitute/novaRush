@@ -1,5 +1,5 @@
 ---
-title: "Local Fluree setup"
+title: "LOCAL FLUREE SETUP"
 author: "Christiaan Pauw, Tshepo Sotiya, Jaco Human"
 date: "`r Sys.Date()`"
 output: 
@@ -11,30 +11,462 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+-------------------------------------------------------------------------------
+
 # Purpose and scope of this document
 
-This document ....
+This document serves as a guide explaining the contents of the "flureeSetup.R" script. 
+In essence this script sets up a local instance of the fluree/ledger
+docker image, but more detail about each code chunk will be given within this markdown document.
 
-# Download Docker image
+The document covers the following: 
 
+1. Setting up a docker network and running an instance of the fluree/ledger container.
+2. Creating a new ledger for capturing data.
+2. Instructions on how to add an authorization key to the ledger to ensure data security.
+3. Elementary examples of executing fluree ledger transactions. 
 
-```{r message=FALSE}
+-------------------------------------------------------------------------------
+
+## Before starting
+
+The following resources are useful for a more comprehensive outline of how to use 
+*Docker* and *Fluree* and all of the associated command line prompts (the relevant ones
+will be highlighted in this document).
+
+ - [**Docker documentation**](https://github.com/aartum/FlureeImplementationAIAO/blob/main/README.md#docker-img) 
+ - [**Fluree documentation**](https://github.com/aartum/FlureeImplementationAIAO/blob/main/PDF's/Fluree%20Cheat%20Sheet.pdf)
+
+-------------------------------------------------------------------------------
+
+## Required packages 
+
+The first step would be to ensure that all of the required packages are installed 
+and loaded.  See the following code block for all the required packages. 
+
+```{r message=FALSE, warning=FALSE}
 library(rjson)
 library(httr)
 library(jsonlite)
 library(tibble)
 library(plyr)
-library(novaRush)
-
-Sys.setenv(fluree_link = "http://localhost:8090/fdb/") # "http://localhost:8091/fluree"
-Sys.setenv(privateKey = "0c7ebd0dcbdb5796ff0175757724cffeaa948794dc0cb649b2eb525e9e70e6cb")
-Sys.setenv(authId = "Tf8yFnwVxvekbvwXwsEzgwUVz4YBZMgjHEL")
 ```
 
-Check if the network exists
+### Building the novaRush package
+
+For first time users the `novaRush` package together with all its associated dependencies and helper functions needs to be built locally before it can be used.
+
+To do this run the following in the R console:
+(the code chunk is given as a comment since it only needs to be done once)
+
+```{r }
+#install.packages('remotes') 
+# only necessary to run this if the 'remotes' package had not yet been previously installed 
+
+#remotes::install_github("NovaInstitute/novaRush") 
+# this only needs to be done once, after which the package forms part of your RStudio library
+```
+
+If/after the package has been built successfully make sure to execute the following:
+```{r message=FALSE}
+library(novaRush)
+```
+
+Now that all the required packages have been loaded,  we move on to setting up the 
+docker environment.
+
+-------------------------------------------------------------------------------
+
+# Generate a keypair
+
+The following code chunk makes use of the `generateKeyPair()` helper function within the `novaRush` package to generate a private and public key which are stored in respective variables together with a corresponding authorization ID.
+
 
 ```{r}
-system("docker network ls", intern = TRUE)
+# kp <- novaRush::generateKeyPair()
+# writeLines(kp, "kp.txt")
+# kp <- readLines("kp.txt")
+# authId <- jsonlite::fromJSON(kp)$authId
+# privKey <- jsonlite::fromJSON(kp)$privKey
+# pubKey <- jsonlite::fromJSON(kp)$pubKey
 ```
 
+-------------------------------------------------------------------------------
+
+# Docker  
+
+### Environment variables
+
+The following code chunk associates an *environment variable* with a corresponding *string value*.
+These variables can then be used later on each time one of the string values needs to be referenced.
+(this is done for the sake of efficiency)
+
+```{r message=FALSE}
+Sys.setenv(fluree_link = "http://localhost:8090/fdb/") # "http://localhost:8091/fluree"
+```
+
+### Docker commands 
+
+**Create a new network if one doesn't already exist**
+```{r}
+system("docker network ls") # view existing containers on the current Docker host
+system("docker network create fluree-network") # create a new network called "fluree-network" if it doesn't already exist
+```
+
+**Run the fluree/ledger and fluree/server docker images**
+
+* `-d` : this runs the container in detached mode (in the background) so the current terminal session remains usable. This also allows the user to exit the terminal session without stopping the container.
+* `--name` : this is followed by a unique name for the container (which can then be used in the future to reference this specific container in `start` or `stop` commands for example). 
+* `--network` : after which we specify the network on which to run the ledger or server container. In this case we run the containers on the network that was created in the code chunk above. 
+* `-e` : set environment variables. In this case set `fdb-mode` to `dev` which runs a standalone version of Fluree, with a query engine and ledger running together. Also set the variable `fdb-open-api` to `false` which determines that all requests must be signed and the associated *auth id* of the signature determines which query/read permissions are allowed.  
+* `-p` : used for port mapping. In the case of the `fluree/ledger` container the default port is "8090", but can be changed by modifying the port before the ":".  (`8091:8090` would for example map the default port "8090" in the container to port "8091" of the host). Similarly the `fluree/server` container port is mapped onto port "8095" of the host.
+
+```{r}
+# run the fluree/ledger image
+system("docker run -d --name fluree-ledger --network fluree-network  -e fdb-mode=dev -e fdb-open-api=false -p 8090:8090 fluree/ledger")
+
+# run the fluree/server image
+system("docker run -d --name fluree-server --network fluree-network -e fdb-mode=dev -e fdb-open-api=false -e fdb-api-port=8090 -p 8095:8090 fluree/server:latest ")
+```
+
+The command given above automatically pulls the latest version of the `fluree/ledger` docker image from docker hub if this has not yet been done. The same can be said for the `fluree/server` image, but in this case the version ("latest") was specified.
+
+The run command will automatically start the containers. 
+
+The docker container is now running on the port 8090 and this is also where the *admin UI* can be reached  ("http://localhost:8090/fluree")
+
+**More useful docker commands**
+
+*The following command can be used to display relevant information of all the containers on the Docker host* 
+
+```{r}
+system("docker ps -a")
+
+# Alternatively the following command can be used to only display the containers currently active
+#system("docker ps")
+# If no information is returned after running this command then there are no containers currently in use and one can be started using the start command as given in the code chunk below.
+```
+
+
+
+*The following commands stop and start the containers respectively*
+```{r}
+system("docker stop fluree-ledger")
+system("docker start fluree-ledger")
+
+system("docker stop fluree-server")
+system("docker start fluree-server")
+```
+
+Note: if different names were chosen for the respective containers, then these should be substituted accordingly. 
+
+
+
+*The next command is used to obtain the default private key associated with the `fluree/ledger` container*
+```{r}
+k <- system("docker exec -t --user root fluree-ledger cat /var/lib/fluree/default-private-key.txt", intern = TRUE) # /var/lib/fluree/
+```
+
+-------------------------------------------------------------------------------
+
+# Retrieve AuthID
+
+To do this we make use of the Admin UI which can be accessed from "http://localhost:8090/fluree"
+
+1. Go to http://localhost:8090/fluree
+2. Add a new test ledger if one hasn't yet been added 
+3. Go to "Permissions"
+4. Click on the "Auth in Ledger" button
+5. Copy the string value of the "Auth Id (Name)" record and paste this value in the code chunk to save it in the variable `authId`
+
+```{r}
+authId <- "Tf3URWkMqZ9nhhoJS7cTvaFM5Sf8tgE59zq"
+```
+
+
+Store the *authId* and *private key* as environment variables 
+```{r}
+Sys.setenv(authId = authId)
+Sys.setenv(privateKey = k)
+```
+
+
+-------------------------------------------------------------------------------
+
+# Enable authentication
+
+**Step 1: ** Firstly set the environment variable "fdb-auth=true" to allow changes to be made
+
+```{r}
+
+```
+
+**Step 2: ** Run the following commands in the CLI
+
+``` 
+sudo docker exec -it --user root fb2c5f749966 bash,  # f555564d120b ?
+apt-get update && apt-get install nano,
+nano /opt/fluree/fdb/config/fdb.properties,  fdb-auth=false"
+
+docker stop fb2c5f749966
+docker start fb2c5f749966
+```
+
+**Step 3: ** Install node.js and npm in the root directory of this project
+
+The following is an example of how this could be done from the Mac Terminal, for other operating systems or versions find the documentation [here](https://nodejs.org/en/download/package-manager).
+
+```
+# installs nvm (Node Version Manager)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+# download and install Node.js (you may need to restart the terminal)
+nvm install 20
+
+# verifies the right Node.js version is in the environment
+node -v # should print `v20.16.0`
+
+# verifies the right npm version is in the environment
+npm -v # should print `10.8.1`
+```
+
+**Step 4: ** Install npm init -y
+
+```
+npm init -y
+
+```
+This instruction is used to create a new package .json file for the Node.js package. 
+After running this command the following output is obtained: 
+
+```
+{
+  "name": "novarush",
+  "version": "1.0.0",
+  "description": "listLedgers listUsers signQuery createLedger prepareSchema prepareData deleteLedger createUser",
+  "main": "index.js",
+  "directories": {
+    "man": "man"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
+
+```
+
+
+**Find the root ID**
+```{r}
+dfRole <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_role", signQuery = TRUE) %>%
+  rename_with(~ gsub("_", "", .x)) %>%
+  unnest(cols = c(`role/rules`)) %>%
+  mutate(across(where(is.numeric), as.character))
+
+dfAuth <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_auth", signQuery = TRUE) %>%
+  rename_with(~ gsub("_", "", .x)) %>%
+  mutate(across(where(is.numeric), as.character))
+```
+
+
+**Create an auth object locally**
+```{r}
+transactObj <- createAuthObject(id = authId, doc = "Test 123", roles = dfRole$`id`[[1]])
+```
+
+
+**Send the object to Fluree**
+```{r}
+flureeTransact(ledgerName = "cjp/een", transactObject = transactObj, signQuery = TRUE)
+```
+
+-------------------------------------------------------------------------------
+
+## Transacting in Fluree
+
+Ledger creation, data additions, deletions and modifications are all done by means of Fluree transactions. 
+
+### Create collections 
+
+These are the "tables" in which data can be stored in Fluree. 
+
+```{r}
+flureeTransact(ledgerName = "cjp/een",
+               transactObject = createCollectionObject(name  = "persons",
+                                                       doc = "Collection to for all persons",
+                                                       version = 1),
+               signQuery = TRUE)
+
+flureeTransact(ledgerName = "cjp/test",
+               transactObject = createCollectionObject(name  = "chat",
+                                                       doc = "Collection to for all chats",
+                                                       version = 1),
+               signQuery = TRUE)
+
+flureeTransact(ledgerName = "authority/test",
+               transactObject = createCollectionObject(name  = "comment",
+                                                       doc = "Collection to for all comments",
+                                                       version = 1),
+               signQuery = FALSE)
+
+flureeTransact(ledgerName = "authority/test",
+               transactObject = createCollectionObject(name  = "artist",
+                                                       doc = "Collection to for all artists",
+                                                       version = 1),
+               signQuery = FALSE)
+```
+
+### Create predicates 
+
+Simply put predicates are the "columns" of the data tables.  They describe the properties that the collections have. 
+
+
+
+In the code chunk below predicates for a **person** are transacted to the **authority/test** ledger. 
+```{r}
+ lsPredicates <- list(createPredicateObject(name = "person/handle",
+                        type = "string",
+                        doc = "Handle of the person",
+                        unique = TRUE),
+
+  createPredicateObject(name = "person/follows",
+                        restrictcollection = "artist",
+                        type = "ref", multi = TRUE,
+                        doc = "follows of the person"),
+
+  createPredicateObject(name = "person/favNums",
+                        type = "int", multi = TRUE,
+                        doc = "favNums of the person"),
+
+  createPredicateObject(name = "person/favArtists",
+                        type = "ref", multi = TRUE,
+                        restrictcollection = "artist",
+                        doc = "favourite artists of the person"))
+dfPredicates <- do.call("rbind.fill", lsPredicates) %>% jsonlite::toJSON(auto_unbox = TRUE)
+
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfPredicates,
+               signQuery = FALSE)
+```
+
+
+
+
+Now create predicates for the **chat** collection and transact these to the **authority/test** ledger.
+```{r}
+ lsPredicates <- list(createPredicateObject(name = "chat/person",
+                        type = "ref",
+                        restrictcollection = "person",
+                        doc = "the person chatting"),
+
+  createPredicateObject(name = "chat/instant",
+                        type = "instant",
+                        doc = "instant of the chat"),
+
+  createPredicateObject(name = "chat/comments",
+                        type = "string", multi = TRUE,
+                        restrictcollection = "comment",
+                        doc = "comments of the chat"))
+
+
+dfPredicates <- do.call("rbind.fill", lsPredicates) %>% jsonlite::toJSON(auto_unbox = TRUE)
+
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfPredicates,
+               signQuery = FALSE)
+```
+
+
+
+
+Create predicates for **comment** and add these to the **authority/test** ledger.
+```{r}
+lsPredicates <- list(createPredicateObject(name = "comment/person",
+                                             type = "ref",
+                                             restrictcollection = "person",
+                                             doc = "person commenting"),
+
+                        createPredicateObject(name = "comment/message",
+                        type = "string",
+                        doc = "message of the comment"))
+dfPredicates <- do.call("rbind.fill", lsPredicates) %>% jsonlite::toJSON(auto_unbox = TRUE)
+flureeTransact(ledgerName = "authority/test",
+                 transactObject = dfPredicates,
+                 signQuery = FALSE)
+```
+
+
+
+Create predicates for **artist** and add these to the **authority/test** ledger.
+```{r}
+lsPredicates <- createPredicateObject(name = "artist/name",
+                                             type = "string", unique = TRUE,
+                                             doc = "name of the artist") %>% jsonlite::toJSON(auto_unbox = TRUE)
+
+
+flureeTransact(ledgerName = "authority/test",
+                transactObject = lsPredicates,
+                signQuery = FALSE)
+```
+
+
+
+### Fetching records from Fluree
+
+Once the ledgers have been populated the records in each ledger can be fetched from Fluree by means of the `getAllEntityRecords()` helper function.
+
+```{r}
+# fetch all the collection entries
+getAllEntityRecords("authority/test", "_collection", signQuery = FALSE)
+
+# fetch all the predicate entries
+getAllEntityRecords("authority/test", "_predicate", signQuery = FALSE)
+```
+
+
+
+### Add sample data 
+
+```{r}
+# make a list of person objects
+lsPeople <- list(createPersonObject(fullname = "Jane Doe", handle = "jdoe"),
+createPersonObject(fullname = "Zach Smith", handle = "zsmith"))
+
+dfPeople <- do.call("rbind.fill", lsPeople) %>%  jsonlite::toJSON(auto_unbox = TRUE)
+
+# transact these objects to the Fluree ledger "authority/test"
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfPeople,
+               signQuery = FALSE)
+
+# add the "fullName" and "handle" predicates to the ledger 
+lsPredicates  <- createPredicateObject(name = "person/fullName",
+                      type = "string", multi = TRUE,
+                      doc = "favNums of the person")
+dfPredicates <- lsPredicates %>% jsonlite::toJSON(auto_unbox = TRUE)
+
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfPredicates,
+               signQuery = FALSE)
+```
+
+-------------------------------------------------------------------------------
+
+#Write a transaction to create the 3 new people with the following information
+# A person with the full name, Alton Brown, handle, aBrown, and favorite numbers: 89 and 7
+# A person with the full name, Oprah Winfrey, handle, oWinfrey, and favorite numbers: 2, 6 and 908
+# A person with the full name, Roger Goodell, handle, rGood, and favorite numbers: 2
+lsPeople <- list(createPersonObject(fullname = "Alton Brown", handle = "aBrown", favnums = list(89, 7)) ,
+                 createPersonObject(fullname = "Oprah Winfrey", handle = "oWinfrey", favnums = jsonlite::toJSON(c(2, 6, 908))),
+                 createPersonObject(fullname = "Roger Goodell", handle = "rGood", favnums = jsonlite::toJSON(c(2))))
+dfPeople <- do.call("rbind.fill", lsPeople) %>%  jsonlite::toJSON(auto_unbox = TRUE)
+
+flureeTransact(ledgerName = "authority/test",
+               transactObject = dfPeople,
+               signQuery = FALSE)
+
+getAllEntityRecords("authority/test", "person", signQuery = FALSE)
 

@@ -14,9 +14,11 @@ flureePK2pem(k, file_path = "private_key.pem", writePEM = TRUE)
 \item{writePEM}{Logical. If TRUE, the PEM file will be saved to the file_path.
 If FALSE, returns the key as class  "key" "ecdsa". Default is TRUE.}
 }
+
 \value{
 Writes to file_path and returns a message
 }
+
 \description{
 Function to convert a Fluree private key to a PEM file.
 }

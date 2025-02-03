@@ -7,6 +7,7 @@
 pivot_longer_with_type(data, names_to = "name", tripplenames = TRUE, ...)
 }
 \arguments{
+
 \item{data}{data.frame}
 
 \item{names_to}{Character. What you want to call the attribute column. Default "name"}
@@ -17,11 +18,14 @@ pivot_longer_with_type(data, names_to = "name", tripplenames = TRUE, ...)
 }
 \value{
 tibble with four columns:"subject", "predicate", "object", "type"
+
 }
 \description{
 pivot_longer_with_type
 }
+
 \examples{
 df1 = pivot_longer_with_type(iris)
 df1 \%>\% select(predicate, type) \%>\% distinct()
 }
+
