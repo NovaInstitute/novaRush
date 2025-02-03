@@ -2,7 +2,7 @@
 #' Transaction configuration
 #' 
 #' @description
-#' This function configures the transaction instance. System variables are set,
+#' This function configures the transaction as follows: system variables are set,
 #' the default context is configured and if applicable the transaction is signed.
 #' 
 #' @param transaction A list representing the body of the transaction to be sent
@@ -36,8 +36,21 @@ transact = function(transaction) {
 }
 
 
+#' Delete subjects by id
+#' 
+#' @description
+#' Delete is not an API endpoint in Fluree. This function merely transforms
+#' a single or list of subject identifiers ( @id ) into a where/delete transaction
+#' that deletes the subject and all facts about the subject.
+#' 
+#' Delete assumes that all facts for the provided subjects should be retracted
+#' from the database.
+#' 
+#' @param id (`list()`)\cr
+#'   The subject identifier/identifiers to retract from the Fluree instance.
+#' 
+#' @export
 delete = function(id) {
-  print('In delete method...')
   connected <- as.logical(Sys.getenv("connected"))
   if (!isTRUE(connected)) {
     stop("You must connect before transacting. Try using $connect()$delete() instead", call. = FALSE)
@@ -48,7 +61,36 @@ delete = function(id) {
   resultingTransaction <- handleDelete(id, idAlias)
   resultingTransaction$ledger <- config$ledger
   
-  print("successful past delete")
+  transact(transaction = resultingTransaction)
+}
+
+
+#' Upsert into the Fluree database
+#' 
+#' @description
+#' Upsert is not an API endpoint in Fluree. This function merely transforms
+#' an upsert transaction into an insert/where/delete transaction.
+#' 
+#' Upsert assumes that the facts provided in the transaction should be treated
+#' as the true & accurate state of the data after the transaction is processed.
+#' i.e. the facts in the transaction should be inserted (if new) and should
+#' replace existing facts (if they already exist on those subjects & properties).
+#' 
+#' @param transaction (`list()`)\cr
+#'   The upsert transaction to send to the Fluree instance.
+#'   
+#' @export
+upsert = function(transaction) {
+  connected <- as.logical(Sys.getenv("connected"))
+  if (!isTRUE(connected)) {
+    stop("You must connect before transacting. Try using $connect()$upsert() instead", call. = FALSE)
+  }
+  
+  config <- fromJSON(Sys.getenv("config"))
+  idAlias <- findIdAlias(config$defaultContext)
+  resultingTransaction <- handleUpsert(transaction, idAlias)
+  resultingTransaction$ledger <- config$ledger
+  
   transact(transaction = resultingTransaction)
 }
 

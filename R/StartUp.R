@@ -1,15 +1,18 @@
 
-#' Initialize the Fluree Instance
+#' Set the configuration for the Fluree instance
 #' 
 #' @description
-#' This function checks the validity of the configuration parameters after which
-#' it will save these parameters to the system environment for future use.
+#' This function validates the configuration parameters.
+#' Once checked the configuration parameters are added to the system environment.
 #' 
 #' @param config (`list()`)\cr
 #'   The parameters to configure the Fluree instance with.
 #' 
+#' @examples
+#' config <- list(host = "localhost", port = "58090", ledger = "test", create = TRUE)
+#' 
 #' @export
-initializeEnvironmentVariables = function(config = list()) {
+setConfiguration = function(config = list()) {
   checkConfiguration(config)
   
   json_list <- toJSON(config, auto_unbox = TRUE)
@@ -20,7 +23,7 @@ initializeEnvironmentVariables = function(config = list()) {
     setKeys(privateKey)
   }
   
-  Sys.setenv(connected = FALSE)
+  Sys.setenv(connected = TRUE)
 }
 
 #' Check the configuration parameters

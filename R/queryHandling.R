@@ -9,7 +9,6 @@
 #' 
 #' @export
 query = function(query) {
-  print('In query method...')
   
   connected <- as.logical(Sys.getenv("connected"))
   if (!isTRUE(connected)) {
@@ -30,7 +29,6 @@ query = function(query) {
   }
   
   json_qry <- toJSON(query, auto_unbox = T)
-  print(json_qry)
   Sys.setenv(query = json_qry)
   
   if (isTRUE(config$signMessages)) {
@@ -96,7 +94,6 @@ sendQuery = function(config) {
 #' 
 #' @export
 history = function(query) {
-  print('In history method...')
   
   connected <- as.logical(Sys.getenv("connected"))
   if (!isTRUE(connected)) {
@@ -113,7 +110,6 @@ history = function(query) {
   }
   
   json_qry <- toJSON(query, auto_unbox = T)
-  print(json_qry)
   Sys.setenv(query = json_qry)
   
   if (isTRUE(config$signMessages)) {

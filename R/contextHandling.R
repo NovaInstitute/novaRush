@@ -102,6 +102,11 @@ mergeContexts <- function(context1, context2) {
 #' 
 #' @export
 findIdAlias = function(context) {
+  
+  if (is.null(context)) {
+    return("@id")
+  }
+  
   if (is.character(context)) {
     return("@id")
   } else if (is.list(context)) {
