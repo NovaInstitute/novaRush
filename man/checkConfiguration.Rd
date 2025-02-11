@@ -11,9 +11,9 @@ checkConfiguration(config, isConnecting = FALSE)
 The parameters to configure the Fluree instance with.}
 
 \item{isConnecting}{(\code{logical})\cr
-This determines whether the instance is attempting to establish a connection to the host.}
+If TRUE the instance is attempting to establish a connection to the host.}
 }
 \description{
 This function performs a check on all the configuration parameters to ensure
-validity and that they are used in the correct combination.
+validity and that they are used in correct combination.
 }

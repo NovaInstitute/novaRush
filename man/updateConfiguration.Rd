@@ -15,6 +15,11 @@ Update the configuration parameters of the current Fluree instance.
 The existing \code{config} (stored in the system environment) will be merged with
 the new one and all existing fields will be replaced with the new ones if
 applicable; except for the \code{defaultContext} field. Instead of replacing the
-\code{defaultContext} the new and old contexts are merged to form the new \code{defaultContext}.
-The new merged \code{config} will then be added to the system environment again.
+\code{defaultContext} the old and new contexts are merged to form the updated \code{defaultContext}.
+The new merged \code{config} will then be added back as an environment variable.
+}
+\examples{
+newConfig <- list(ledger = "ledger2", port = "8090")
+updateConfiguration(newConfig)
+
 }

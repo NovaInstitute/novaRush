@@ -4,12 +4,21 @@
 \alias{sendQuery}
 \title{Send a query}
 \usage{
-sendQuery(config)
+sendQuery(queryVariables)
 }
 \arguments{
-\item{config}{A list of configuration parameters for the query}
+\item{queryVariables}{(\code{list()})\cr
+A list representing the query specifications.}
+}
+\value{
+A character string containing the response content.
 }
 \description{
-This function makes use of httr to send the query to the Fluree instance.
-The response is then given as output.
+This function makes use of \code{httr} to send the configured query to the
+Fluree instance.
+}
+\examples{
+queryInstance <- query(exampleQuery)
+sendQuery(queryInstance)
+
 }

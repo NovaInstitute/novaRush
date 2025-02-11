@@ -4,12 +4,21 @@
 \alias{sendTransaction}
 \title{Send a transaction}
 \usage{
-sendTransaction(config)
+sendTransaction(transactionVariables)
 }
 \arguments{
-\item{config}{A list of configuration parameters for the transaction}
+\item{transactionVariables}{(\code{list()})\cr
+A list representing the transaction specifications.}
+}
+\value{
+A character string containing the response content.
 }
 \description{
-This function makes use of httr to send the transaction to the Fluree instance.
-The response is then given as output.
+This function makes use of \code{httr} to send the configured transaction to the
+Fluree instance.
+}
+\examples{
+transactionInstance <- transact(exampleData)
+sendTransaction(transactionInstance)
+
 }

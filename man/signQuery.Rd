@@ -4,14 +4,27 @@
 \alias{signQuery}
 \title{Sign a query}
 \usage{
-signQuery(query = NULL, privateKey = NULL)
+signQuery(queryVariables = NULL, privateKey = NULL)
 }
 \arguments{
-\item{query}{A list representing the query to be signed}
+\item{queryVariables}{(\code{list()})\cr
+A list representing the query to be signed.}
 
-\item{privateKey}{The hexadecimal string representation of the private key to be used for signing}
+\item{privateKey}{(\code{character})\cr
+The hexadecimal string representation of the private key to be used for signing.
+If a private key is not explicitly provided, the one stored as an environment variable
+will be used (if one had been configured).}
+}
+\value{
+A list containing everything needed to query the Fluree database.
+This includes all the necessary parameters as well as the signed query itself.
 }
 \description{
 This function is used to sign a query which can then be sent to the Fluree
 instance as a JWT (JSON Web Token).
+}
+\examples{
+queryInstance <- query(exampleQuery)
+signedQueryInstance <- signQuery(queryInstance)
+
 }

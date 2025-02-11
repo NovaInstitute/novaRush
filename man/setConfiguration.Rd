@@ -15,6 +15,7 @@ This function validates the configuration parameters.
 Once checked the configuration parameters are added to the system environment.
 }
 \examples{
-config <- list(host = "localhost", port = "58090", ledger = "test", create = TRUE)
+config <- list(host = "localhost", port = "58090", ledger = "ledger1", create = TRUE)
+setConfiguration(config)
 
 }

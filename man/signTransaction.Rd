@@ -4,14 +4,27 @@
 \alias{signTransaction}
 \title{Sign a transaction}
 \usage{
-signTransaction(transaction = NULL, privateKey = NULL)
+signTransaction(transactionVariables = NULL, privateKey = NULL)
 }
 \arguments{
-\item{transaction}{A list representing the transaction to be signed}
+\item{transactionVariables}{(\code{list()})\cr
+A list representing the transaction to be signed.}
 
-\item{privateKey}{The hexadecimal string representation of the private key to be used for signing}
+\item{privateKey}{(\code{character})\cr
+The hexadecimal string representation of the private key to be used for signing.
+If a private key is not explicitly provided, the one stored as an environment variable
+will be used (if one had been configured).}
+}
+\value{
+A list containing everything needed to transact with Fluree.
+This includes all the necessary parameters as well as the signed transaction itself.
 }
 \description{
 This function is used to sign a transaction which can then be sent to the Fluree
 instance as a JWT (JSON Web Token).
+}
+\examples{
+transactionInstance <- transact(exampleData)
+signedTransactionInstance <- signTransaction(transactionInstance)
+
 }

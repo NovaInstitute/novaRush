@@ -4,12 +4,51 @@
 \alias{query}
 \title{Query configuration}
 \usage{
-query(query)
+query(query, signQuery = NULL, privateKey = NULL)
 }
 \arguments{
-\item{query}{A list representing the body of the query to be made}
+\item{query}{(\code{list()})\cr
+The list representation of the query body to be sent.
+Note alternatively the query can simply be passed as a JSON \code{character} string.}
+
+\item{signQuery}{(\code{logical})\cr
+Determines whether the given query should be signed or not.}
+
+\item{privateKey}{(\code{character})\cr
+The hexstring representation of the private key to use for message signing.}
+}
+\value{
+A list containing everything needed to query the Fluree database.
+This includes all the necessary parameters as well as the signed/unsigned query itself.
 }
 \description{
-This function configures the query instance. System variables are set,
-the default context is configured and if applicable the query is signed.
+This function configures the query instance. The default context is configured
+and if applicable the query is signed.
+The function returns a list containing all the information necessary to interact
+with the Fluree instance via \code{sendQuery()}.
+}
+\examples{
+# Existing data:
+#  [
+#    { "@id": "freddy", "name": "Freddy" },
+#    { "@id": "alice", "name": "Alice" }
+#  ]
+
+exampleQuery <- '{
+     "select": {
+       "?s": ["*"]
+     },
+     "where": {
+       "@id": "?s",
+       "name": "?name"
+     }
+}'
+
+queryInstance <- query(exampleQuery)
+
+# OR ALTERNATIVELY
+
+queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
+queryInstance <- query(queryList)
+
 }

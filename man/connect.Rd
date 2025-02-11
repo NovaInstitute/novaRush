@@ -11,3 +11,16 @@ This function checks that a connection to the running Fluree instance can be
 established. The connection needs to be made before any transactions or
 queries can be sent.
 }
+\examples{
+config <- list(
+   host = 'localhost', 
+   port = 58090, 
+   ledger = 'policy-view-age', 
+   create = TRUE, 
+   privateKey = key_get("privateKey", keyring = "Fluree"))
+
+setConfiguration(config = config)
+
+connect()
+
+}

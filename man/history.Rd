@@ -4,12 +4,24 @@
 \alias{history}
 \title{History query configuration}
 \usage{
-history(query)
+history(query, signQuery = NULL, privateKey = NULL)
 }
 \arguments{
-\item{query}{A list representing the body of the history query to be made}
+\item{query}{(\code{list()})\cr
+The list representation of the history query body to be sent.
+Note alternatively the history query can simply be passed as a JSON \code{character} string.}
+
+\item{signQuery}{(\code{logical})\cr
+Determines whether the given history query should be signed or not.}
+
+\item{privateKey}{(\code{character})\cr
+The hexstring representation of the private key to use for message signing.}
+}
+\value{
+A list containing everything needed to query the Fluree database.
+This includes all the necessary parameters as well as the signed/unsigned history query itself.
 }
 \description{
-This function configures the history query instance. System variables are set,
-the default context is configured and if applicable the history query is signed.
+This function configures the history query instance. The default context is
+configured and if applicable the history query is signed.
 }

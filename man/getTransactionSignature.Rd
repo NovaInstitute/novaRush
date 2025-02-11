@@ -4,13 +4,20 @@
 \alias{getTransactionSignature}
 \title{Get the signed transaction}
 \usage{
-getTransactionSignature()
+getTransactionSignature(transactionVariables = NULL)
 }
 \value{
-String representation of the JWT of the signed transaction
+Character string representing the JWT of the signed transaction.
 }
 \description{
 This function returns the JWT representation of the signed transaction.
-Note this function can only be used if a private key has been configured and
-the transaction has already been signed.
+Note this function can only be used if a private key had been configured and
+the transaction has been signed.
+}
+\examples{
+transactionInstance <- transact(exampleData)
+signedTransactionInstance <- signTransaction(transactionInstance)
+
+sig <- getTransactionSignature(signedTransactionInstance)
+
 }

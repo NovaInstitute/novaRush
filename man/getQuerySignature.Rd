@@ -4,13 +4,20 @@
 \alias{getQuerySignature}
 \title{Get the signed query}
 \usage{
-getQuerySignature()
+getQuerySignature(queryVariables = NULL)
 }
 \value{
-String representation of the signed query as a JWT
+Character string representing the JWT of the signed query.
 }
 \description{
 This function returns the JWT representation of the signed query.
-Note this function can only be used if a private key has been configured and
-the query has already been signed.
+Note this function can only be used if a private key had been configured and
+the query has been signed.
+}
+\examples{
+queryInstance <- query(exampleQuery)
+signedQueryInstance <- signQuery(queryInstance)
+
+sig <- getQuerySignature(signedQueryInstance)
+
 }

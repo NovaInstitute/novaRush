@@ -8,7 +8,8 @@ upsert(transaction)
 }
 \arguments{
 \item{transaction}{(\code{list()})\cr
-The upsert transaction to send to the Fluree instance.}
+The upsert transaction to send to the Fluree instance.
+Note alternatively the transaction can simply be passed as a JSON \code{character} string.}
 }
 \description{
 Upsert is not an API endpoint in Fluree. This function merely transforms
@@ -18,4 +19,40 @@ Upsert assumes that the facts provided in the transaction should be treated
 as the true & accurate state of the data after the transaction is processed.
 i.e. the facts in the transaction should be inserted (if new) and should
 replace existing facts (if they already exist on those subjects & properties).
+}
+\examples{
+# Existing data:
+#  [
+#    { "@id": "freddy", "name": "Freddy" },
+#    { "@id": "alice", "name": "Alice" }
+#  ]
+
+upsertData <- '{
+   "insert": [
+      {
+        "@id": "freddy",
+        "name": "Freddy the Yeti"
+      },
+      {
+        "@id": "alice",
+        "age": "25"
+      }
+   ]
+}'
+
+upsertInstance <- upsert(upsertData)
+
+# OR ALTERNATIVELY
+
+dataList <- fromJSON(upsertData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
+upsertInstance <- transact(dataList)
+
+sendTransaction(upsertInstance)
+
+# New data state after txn:
+#  [
+#    { "@id": "freddy", "name": "Freddy the Yeti" },
+#    { "@id": "alice", "name": "Alice", "age": 25 }
+#  ]
+
 }

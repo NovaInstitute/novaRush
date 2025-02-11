@@ -1,4 +1,18 @@
 
+#' Process an entity and build a structured map
+#' 
+#' @description
+#' Recursively processes an entity, extracting nested entities and structuring them
+#' into a map where each entity is keyed by its ID.
+#' 
+#' @param entity (`list`)\cr
+#'   The entity to process.
+#' @param map (`list`)\cr
+#'   A map to store processed entities.
+#' @param idAlias (`character`)\cr
+#'   The alias used for the @id field in the context of the Fluree instance.
+#' 
+#' @return (`list`)
 processEntity = function(entity, map, idAlias) {
   
   if (!(idAlias %in% names(entity))) {
@@ -37,11 +51,33 @@ processEntity = function(entity, map, idAlias) {
   return(map)
 }
 
-
+#' Flatten a transaction
+#' 
+#' @description
+#' Calls `flattenEntity` to process the transaction into a structured map.
+#' 
+#' @param txn (`list`)\cr
+#'   The transaction to flatten.
+#' @param idAlias (`character`)\cr
+#'   The alias used for the @id field in the context of the Fluree instance.
+#' 
+#' @return (`list`)
 flattenTxn = function(txn, idAlias) {
   return(flattenEntity(txn,idAlias))
 }
 
+#' Flatten an entity into a structured map
+#' 
+#' @description
+#' Processes an entity (or a list of entities) and structures it into a map
+#' where each entity is stored with its ID as a key.
+#' 
+#' @param input (`list`)\cr
+#'   The entity or list of entities to flatten.
+#' @param idAlias (`character`)\cr
+#'   The alias used for the @id field in the context of the Fluree instance.
+#' 
+#' @return (`list`)
 flattenEntity = function(input, idAlias) {
   map <- list()
   
@@ -55,6 +91,18 @@ flattenEntity = function(input, idAlias) {
   return(map)
 }
 
+#' Convert a flattened transaction to a where-delete format
+#' 
+#' @description
+#' Converts a structured transaction map into a format used for deletion,
+#' producing `where` and `delete` clauses.
+#' 
+#' @param flattenedTxn (`list`)
+#'   The structured transaction map.
+#' @param idAlias (`character`)
+#'   The alias used for the @id field in the context of the Fluree instance.
+#' 
+#' @return (`list`) A list with `where` and `delete` keys.
 convertTxnToWhereDelete <- function(flattenedTxn, idAlias) {
   whereClause <- list()
   deleteClause <- list()
