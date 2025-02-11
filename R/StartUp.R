@@ -1,15 +1,21 @@
 
-#' Initialize the Fluree Instance
+#' Set the configuration for the Fluree instance
 #' 
 #' @description
-#' This function checks the validity of the configuration parameters after which
-#' it will save these parameters to the system environment for future use.
+#' This function validates the configuration parameters.
+#' Once checked the configuration parameters are added to the system environment.
 #' 
 #' @param config (`list()`)\cr
 #'   The parameters to configure the Fluree instance with.
 #' 
+#' @examples
+#' config <- list(host = "localhost", port = "58090", ledger = "ledger1", create = TRUE)
+#' setConfiguration(config)
+#' 
+#' @importFrom jsonlite toJSON
+#' 
 #' @export
-initializeEnvironmentVariables = function(config = list()) {
+setConfiguration = function(config = list()) {
   checkConfiguration(config)
   
   json_list <- toJSON(config, auto_unbox = TRUE)
@@ -27,14 +33,13 @@ initializeEnvironmentVariables = function(config = list()) {
 #' 
 #' @description
 #' This function performs a check on all the configuration parameters to ensure
-#' validity and that they are used in the correct combination.
+#' validity and that they are used in correct combination.
 #' 
 #' @param config (`list()`)\cr
 #'   The parameters to configure the Fluree instance with.
 #' @param isConnecting (`logical`)\cr
-#'   This determines whether the instance is attempting to establish a connection to the host.
+#'   If TRUE the instance is attempting to establish a connection to the host.
 #' 
-#' @export
 checkConfiguration = function(config, isConnecting = FALSE) {
   isFlureeHosted <- config$isFlureeHosted
   create <- config$create
@@ -45,8 +50,8 @@ checkConfiguration = function(config, isConnecting = FALSE) {
   apiKey <- config$apiKey
   
     if (isConnecting) {
-      if (!is.null(isFlureeHosted) && isFlureeHosted) {
-        if (!is.null(create) && create) {
+      if (isTRUE(isFlureeHosted)) {
+        if (isTRUE(create)) {
           stop("Cannot create a ledger through the Fluree hosted service API", call. = FALSE)
         }
       } else {
@@ -65,13 +70,13 @@ checkConfiguration = function(config, isConnecting = FALSE) {
     
     if (!is.null(isFlureeHosted) && isFlureeHosted) {
       if (!is.null(host)) {
-        stop("Host should not be set when using the Fluree hosted service")
+        stop("Host should not be set when using the Fluree hosted service", call. = FALSE)
       }
       if (!is.null(port)) {
-        stop("Port should not be set when using the Fluree hosted service")
+        stop("Port should not be set when using the Fluree hosted service", call. = FALSE)
       }
       if (is.null(apiKey) && is.null(privateKey)) {
-        stop("Either an apiKey or a privateKey is required for signing messages when using the Fluree hosted service")
+        stop("Either an apiKey or a privateKey is required for signing messages when using the Fluree hosted service", call. = FALSE)
       }
     }
 }
@@ -83,11 +88,17 @@ checkConfiguration = function(config, isConnecting = FALSE) {
 #' The existing `config` (stored in the system environment) will be merged with
 #' the new one and all existing fields will be replaced with the new ones if
 #' applicable; except for the `defaultContext` field. Instead of replacing the
-#' `defaultContext` the new and old contexts are merged to form the new `defaultContext`.
-#' The new merged `config` will then be added to the system environment again.
+#' `defaultContext` the old and new contexts are merged to form the updated `defaultContext`.
+#' The new merged `config` will then be added back as an environment variable.
 #' 
 #' @param newConfig (`list()`)\cr
 #'   The new parameters to configure the Fluree instance with.
+#' 
+#' @examples
+#' newConfig <- list(ledger = "ledger2", port = "8090")
+#' updateConfiguration(newConfig)
+#' 
+#' @importFrom jsonlite fromJSON
 #' 
 #' @export
 updateConfiguration = function(newConfig = list()) {
@@ -110,6 +121,18 @@ updateConfiguration = function(newConfig = list()) {
 #' established. The connection needs to be made before any transactions or
 #' queries can be sent.
 #' 
+#' @examples
+#' config <- list(
+#'    host = 'localhost', 
+#'    port = 58090, 
+#'    ledger = 'policy-view-age', 
+#'    create = TRUE, 
+#'    privateKey = key_get("privateKey", keyring = "Fluree"))
+#' 
+#' setConfiguration(config = config)
+#' 
+#' connect()
+#' 
 #' @export
 connect = function() {
   config <- fromJSON(Sys.getenv("config"))
@@ -120,11 +143,22 @@ connect = function() {
     if (isTRUE(config$create)) {
       createLedger()
     }
-    #TODO:  #self$testLedger()
+    testLedger()
     
   }, error = function(err) {
     Sys.setenv(connected = FALSE)
     stop(err)
   })
+}
+
+
+#' @description
+#' This function is used within the `connect()` method to test that the ledger was
+#' created successfully and that it can be interacted with.
+#' 
+testLedger = function() {
+  print("Testing ledger")
+  qry <- query(list(where = list("@id" = "?s", "?p" = "?o"), select = list("?s"), limit = 1))
+  query(query = qry)
 }
 

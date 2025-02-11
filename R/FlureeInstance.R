@@ -249,16 +249,45 @@ FlureeInstance <- R6Class("FlureeInstance",
       return(TransactionInstance$new(transaction, self$config))
     },
 
-
-# TODO:  handle upsert
+    #' @description
+    #' Create a new TransactionInstance for upserting with the Fluree database.
+    #' 
+    #' Upsert is not an API endpoint in Fluree. This function merely transforms
+    #' an upsert transaction into an insert/where/delete transaction.
+    #' 
+    #' Upsert assumes that the facts provided in the transaction should be treated
+    #' as the true & accurate state of the data after the transaction is processed.
+    #' i.e. the facts in the transaction should be inserted (if new) and should
+    #' replace existing facts (if they already exist on those subjects & properties).
+    #' 
+    #' @param transaction (`list()`)\cr
+    #'   The upsert transaction to send to the Fluree instance.
+    #' @return [TransactionInstance].
+    upsert = function(transaction) {
+      print('In upsert method...')
+      if (!self$connected) {
+        stop("You must connect before transacting. Try using $connect()$upsert() instead", call. = FALSE)
+      }
+      
+      idAlias <- findIdAlias(self$config$defaultContext)
+      resultingTransaction <- handleUpsert(transaction, idAlias)
+      resultingTransaction$ledger <- self$config$ledger
+      
+      return(TransactionInstance$new(transaction = resultingTransaction, config = self$config))
+    },
 
     #' @description
-    #' Create a new instance of the TransactionInstance class.
-    #' This new TransactionInstance is then configured to perform a delete on an
-    #' entry in the Fluree database.
+    #' Create a new TransactionInstance for deleting subjects by @id in the Fluree database.
+    #' 
+    #' Delete is not an API endpoint in Fluree. This function merely transforms
+    #' a single or list of subject identifiers ( @id ) into a where/delete transaction
+    #' that deletes the subject and all facts about the subject.
+    #' 
+    #' Delete assumes that all facts for the provided subjects should be retracted
+    #' from the database.
     #' 
     #' @param id (`list()`)\cr
-    #'   A list of entries to be deleted (could also be a single string value).
+    #'   The subject identifier/identifiers to retract from the Fluree instance.
     #' @return [TransactionInstance].
     delete = function(id) {
       print('In delete method...')

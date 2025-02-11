@@ -2,21 +2,62 @@
 #' Query configuration
 #' 
 #' @description
-#' This function configures the query instance. System variables are set,
-#' the default context is configured and if applicable the query is signed.
+#' This function configures the query instance. The default context is configured 
+#' and if applicable the query is signed.
+#' The function returns a list containing all the information necessary to interact
+#' with the Fluree instance via `sendQuery()`.
 #' 
-#' @param query A list representing the body of the query to be made
+#' @param query (`list()`)\cr
+#'    The list representation of the query body to be sent.
+#'    Note alternatively the query can simply be passed as a JSON `character` string.
+#' @param signQuery (`logical`)\cr
+#'   Determines whether the given query should be signed or not.
+#' @param privateKey (`character`)\cr
+#'   The hexstring representation of the private key to use for message signing.
+#' 
+#' @return A list containing everything needed to query the Fluree database.
+#' This includes all the necessary parameters as well as the signed/unsigned query itself.
+#' 
+#' @examples
+#' # Existing data:
+#' #  [
+#' #    { "@id": "freddy", "name": "Freddy" },
+#' #    { "@id": "alice", "name": "Alice" }
+#' #  ]
+#' 
+#' exampleQuery <- '{
+#'      "select": {
+#'        "?s": ["*"]
+#'      },
+#'      "where": {
+#'        "@id": "?s",
+#'        "name": "?name"
+#'      }
+#' }'
+#' 
+#' queryInstance <- query(exampleQuery)
+#' 
+#' # OR ALTERNATIVELY
+#' 
+#' queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
+#' queryInstance <- query(queryList)
 #' 
 #' @export
-query = function(query) {
-  print('In query method...')
-  
+query = function(query, signQuery = NULL, privateKey = NULL) {
   connected <- as.logical(Sys.getenv("connected"))
   if (!isTRUE(connected)) {
     stop("You must connect before querying. Try running connect() before querying", call. = FALSE)
   }
   
   config <- fromJSON(Sys.getenv("config"))
+  
+  if (class(query) == "character") {
+    if (!validate(query)) {
+      stop("Please provide a valid JSON query string", call. = FALSE)
+    }
+    query <- fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+  }
+  
   if (is.null(query$from)) {
     query$from <- config$ledger
   }
@@ -29,44 +70,48 @@ query = function(query) {
     query[['@context']] <- mergeContexts(defaultContext, queryContext)
   }
   
-  json_qry <- toJSON(query, auto_unbox = T)
-  print(json_qry)
-  Sys.setenv(query = json_qry)
+  body <- list(contentType = 'application/json', qry = query)
   
-  if (isTRUE(config$signMessages)) {
-    signQuery(query)
+  if (isTRUE(config$signMessages) || isTRUE(signQuery)) {
+    body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), privateKey))
   }
+  
+  return(list(configuration = config, query = body))
 }
 
 #' Send a query
 #' 
 #' @description
-#' This function makes use of httr to send the query to the Fluree instance. 
-#' The response is then given as output.
+#' This function makes use of `httr` to send the configured query to the 
+#' Fluree instance.
 #' 
-#' @param config A list of configuration parameters for the query
+#' @param queryVariables (`list()`)\cr
+#'   A list representing the query specifications.
+#' 
+#' @return A character string containing the response content.
+#' 
+#' @examples
+#' queryInstance <- query(exampleQuery)
+#' sendQuery(queryInstance)
 #' 
 #' @export
-sendQuery = function(config) {
-  signedQuery <- Sys.getenv("signedQuery")
-  if (nzchar(signedQuery)) {
-    contentType <- 'application/jwt'
-  } else {
-    contentType <- 'application/json'
-  }
+sendQuery = function(queryVariables) {
+  config <- queryVariables$configuration
+  body <- queryVariables$query
   
-  query <- fromJSON(Sys.getenv("query"), simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+  contentType <- body$contentType
+  
+  if (contentType == 'application/json') {
+    query <- toJSON(body$qry, auto_unbox = TRUE, pretty = FALSE)
+  } else {
+    query <- body$qry
+  }
   
   params <- generateFetchParams(config, 'query', contentType)
   url <- params$url
   fetchOptions <- params$config
   
-  if (nzchar(signedQuery)) {
-    params$body <- signedQuery
-  } else {
-    params$body <- toJSON(query, auto_unbox = T, pretty = F)
-    
-  }
+  params$body <- query
   
   response <- POST(
     url = url,
@@ -75,13 +120,10 @@ sendQuery = function(config) {
     encode = "raw"
   )
   
-  Sys.unsetenv("query")
-  Sys.unsetenv("signedQuery")
+  json_response <- fromJSON(content(response, as = "text"))
+  pretty_json <- toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
   
-  json_response <- content(response, as = "text")
-  pretty_json <- fromJSON(json_response)
-  
-  cat(toJSON(pretty_json, pretty = T, auto_unbox = T))
+  return(pretty_json)
 }
 
 
@@ -89,14 +131,22 @@ sendQuery = function(config) {
 #' History query configuration
 #' 
 #' @description
-#' This function configures the history query instance. System variables are set,
-#' the default context is configured and if applicable the history query is signed.
+#' This function configures the history query instance. The default context is 
+#' configured and if applicable the history query is signed.
 #' 
-#' @param query A list representing the body of the history query to be made
+#' @param query (`list()`)\cr
+#'    The list representation of the history query body to be sent.
+#'    Note alternatively the history query can simply be passed as a JSON `character` string.
+#' @param signQuery (`logical`)\cr
+#'   Determines whether the given history query should be signed or not.
+#' @param privateKey (`character`)\cr
+#'   The hexstring representation of the private key to use for message signing.
+#' 
+#' @return A list containing everything needed to query the Fluree database.
+#' This includes all the necessary parameters as well as the signed/unsigned history query itself.
 #' 
 #' @export
-history = function(query) {
-  print('In history method...')
+history = function(query, signQuery = NULL, privateKey = NULL) {
   
   connected <- as.logical(Sys.getenv("connected"))
   if (!isTRUE(connected)) {
@@ -104,52 +154,65 @@ history = function(query) {
   }
   
   config <- fromJSON(Sys.getenv("config"))
+  
+  if (class(query) == "character") {
+    if (!validate(query)) {
+      stop("Please provide a valid JSON query string", call. = FALSE)
+    }
+    query <- fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+  }
+  
   if (is.null(query$from)) {
     query$from <- config$ledger
   }
   
   if (is.null(query$history) && is.null(query[['commit-details']])) {
-    stop('either the history or commit-details key is required', call. = FALSE)
+    stop('Either the history or commit-details key is required', call. = FALSE)
   }
   
-  json_qry <- toJSON(query, auto_unbox = T)
-  print(json_qry)
-  Sys.setenv(query = json_qry)
+  body <- list(contentType = 'application/json', qry = query)
   
-  if (isTRUE(config$signMessages)) {
-    signQuery(query)
+  if (isTRUE(config$signMessages) || isTRUE(signQuery)) {
+    body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), privateKey))
   }
+  
+  return(list(configuration = config, query = body))
 }
 
 #' Send a history query
 #' 
 #' @description
-#' This function makes use of httr to send the history query to the Fluree instance. 
-#' The response is then given as output.
+#' This function makes use of `httr` to send the configured query to the 
+#' Fluree instance.
 #' 
-#' @param config A list of configuration parameters for the query
+#' @param queryVariables (`list()`)\cr
+#'   A list representing the history query specifications.
+#' 
+#' @return A character string containing the response content.
+#' 
+#' @examples
+#' historyQueryInstance <- history(exampleHistoryQuery)
+#' sendHistoryQuery(historyQueryInstance)
 #' 
 #' @export
-sendHistoryQuery = function(config) {
-  signedQuery <- Sys.getenv("signedQuery")
-  if (nzchar(signedQuery)) {
-    contentType <- 'application/jwt'
-  } else {
-    contentType <- 'application/json'
-  }
+sendHistoryQuery = function(queryVariables) {
   
-  history_query <- fromJSON(Sys.getenv("query"), simplifyVector = F, simplifyDataFrame = F, simplifyMatrix = F)
+  config <- queryVariables$configuration
+  body <- queryVariables$query
+  
+  contentType <- body$contentType
+  
+  if (contentType == 'application/json') {
+    query <- toJSON(body$qry, auto_unbox = TRUE, pretty = FALSE)
+  } else {
+    query <- body$qry
+  }
   
   params <- generateFetchParams(config, 'history', contentType)
   url <- params$url
   fetchOptions <- params$config
   
-  if (nzchar(signedQuery)) {
-    params$body <- signedQuery
-  } else {
-    params$body <- toJSON(history_query, auto_unbox = T, pretty = F)
-    
-  }
+  params$body <- query
   
   response <- POST(
     url = url,
@@ -158,13 +221,10 @@ sendHistoryQuery = function(config) {
     encode = "raw"
   )
   
-  Sys.unsetenv("query")
-  Sys.unsetenv("signedQuery")
+  json_response <- fromJSON(content(response, as = "text"))
+  pretty_json <- toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
   
-  json_response <- content(response, as = "text")
-  pretty_json <- fromJSON(json_response)
-
-  cat(toJSON(pretty_json, pretty = T, auto_unbox = T))
+  return(pretty_json)
 }
 
 
@@ -174,14 +234,25 @@ sendHistoryQuery = function(config) {
 #' This function is used to sign a query which can then be sent to the Fluree
 #' instance as a JWT (JSON Web Token).
 #' 
-#' @param query A list representing the query to be signed
-#' @param privateKey The hexadecimal string representation of the private key to be used for signing
+#' @param queryVariables (`list()`)\cr
+#'   A list representing the query to be signed.
+#' @param privateKey (`character`)\cr
+#'   The hexadecimal string representation of the private key to be used for signing.
+#'   If a private key is not explicitly provided, the one stored as an environment variable
+#'   will be used (if one had been configured).
+#' 
+#' @return A list containing everything needed to query the Fluree database.
+#' This includes all the necessary parameters as well as the signed query itself.
+#' 
+#' @examples
+#' queryInstance <- query(exampleQuery)
+#' signedQueryInstance <- signQuery(queryInstance)
 #' 
 #' @export
-signQuery = function(query = NULL, privateKey = NULL) {
+signQuery = function(queryVariables = NULL, privateKey = NULL) {
   
-  if (is.null(query)) {
-    query <- fromJSON(Sys.getenv("query"))
+  if (is.null(queryVariables)) {
+    stop("Please provide the query to be signed", call. = FALSE)
   }
   
   if (!is.null(privateKey)) {
@@ -192,13 +263,26 @@ signQuery = function(query = NULL, privateKey = NULL) {
   }
   
   if (is.null(key)) {
-    stop("privateKey must be provided in either the transaction or the config")
+    stop("privateKey must be provided either as a parameter or in the configuration", call. = FALSE)
   }
   
-  input <- toJSON(query, auto_unbox = TRUE, pretty = FALSE)
+  config <- queryVariables$configuration
+  body <- queryVariables$query
+  
+  contentType <- body$contentType
+  
+  if (contentType == 'application/jwt') {
+    stop("The provided query has already been signed", call. = FALSE)
+  } else {
+    input <- toJSON(body$qry, auto_unbox = TRUE, pretty = FALSE)
+  }
+  
   signedQuery <- flureeCrypto:::serialize_jws(as.character(input), key)
   
-  Sys.setenv(signedQuery = signedQuery)
+  body$contentType <- 'application/jwt'
+  body$qry <- signedTransaction
+  
+  return(list(configuration = config, query = body))
 }
 
 
@@ -206,14 +290,32 @@ signQuery = function(query = NULL, privateKey = NULL) {
 #' 
 #' @description
 #' This function returns the JWT representation of the signed query.
-#' Note this function can only be used if a private key has been configured and 
-#' the query has already been signed.
+#' Note this function can only be used if a private key had been configured and 
+#' the query has been signed.
 #' 
-#' @returns String representation of the signed query as a JWT
+#' @returns Character string representing the JWT of the signed query.
+#' 
+#' @examples
+#' queryInstance <- query(exampleQuery)
+#' signedQueryInstance <- signQuery(queryInstance)
+#' 
+#' sig <- getQuerySignature(signedQueryInstance)
 #' 
 #' @export
-getQuerySignature = function() {
-  signedQry <- Sys.getenv("signedQuery")
+getQuerySignature = function(queryVariables = NULL) {
+  if (is.null(queryVariables)) {
+    stop("Please provide a valid query instance", call. = FALSE)
+  }
+  
+  body <- queryVariables$query
+  contentType <- body$contentType
+  
+  if (contentType != "application/jwt") {
+    stop("The provided query has not yet been signed. Sign the query using 'signQuery()'
+         before attempting to extract the signature", call. = FALSE)
+  }
+  
+  signedQry <- body$qry
   return(signedQry)
 }
 
@@ -221,12 +323,33 @@ getQuerySignature = function() {
 #' 
 #' @description
 #' This function returns the query body as a JSON string.
+#' If the query instance has already been signed,  the signature is deserialized
+#' before returning the raw JSON string.
 #' 
 #' @returns JSON string representation of the query body
 #' 
+#' @examples
+#' queryInstance <- query(exampleQuery)
+#' 
+#' qry <- getQueryText(queryInstance)
+#' 
 #' @export
-getTransactionText = function() {
-  Qry <- Sys.getenv("query")
+getQueryText = function(queryVariables = NULL) {
+  if (is.null(queryVariables)) {
+    stop("Please provide a valid query instance", call. = FALSE)
+  }
+  
+  body <- queryVariables$query
+  contentType <- body$contentType
+  
+  if (contentType == "application/jwt") {
+    jwt <- body$qry
+    desrialized <- flureeCrypto:::deserialize_jws(jwt)
+    Qry <- toJSON(desrialized$payload, auto_unbox = TRUE, pretty = TRUE)
+  } else {
+    Qry <- toJSON(body$qry, auto_unbox = TRUE, pretty = TRUE)
+  }
+  
   return(Qry)
 }
 
