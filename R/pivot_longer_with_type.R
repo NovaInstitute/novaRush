@@ -9,49 +9,65 @@
 #' @export
 #' @importFrom magrittr %<>%
 #' @import dplyr
+#' @import tibble
 #' @examples
 #' df1 = pivot_longer_with_type(iris)
-#' df1 %>% select(predicate, type) %>% distinct()
+#' df1 %>% dplyr::select(predicate, type) %>% dplyr::distinct()
 
 pivot_longer_with_type <- function(data, names_to = "name", tripplenames = TRUE, ...) {
 
 # Get original data types
 types <- sapply(data, class)
-dftypes <- tibble(name = names(types), type = types)
+dftypes <- dplyr::tibble(name = names(types), type = types)
 names(dftypes)[1] <- names_to
 
 # Create ID as hash of content
 data %<>%
-  rowwise() %>%
-  mutate(ID = digest::digest(pick(everything()), algo = "md5")) %>%
-  select(ID, everything() )
+  dplyr::rowwise() %>%
+  dplyr::mutate(ID = digest::digest(pick(everything()), algo = "md5")) %>%
+  dplyr::select(ID, everything() )
 
 # Make all character
-data <- mutate(data, across(everything(), ~as.character(.)))
+data <- dplyr::mutate(data, across(everything(), ~as.character(.)))
 
 # Pivot longer
-res <- pivot_longer(data, cols = -c(ID), names_to = names_to, ...) %>%
-  left_join(dftypes)
+res <- tidyr::pivot_longer(data, cols = -c(ID), names_to = names_to, ...) %>%
+  dplyr::left_join(dftypes)
 if (tripplenames) {names(res) <- c("subject", "predicate", "object", "type")}
-res %>% dplyr::mutate(type = case_when(
+res %>% dplyr::mutate(type = dplyr::case_when(
   type == "character" ~ "string",
   type ==  "numeric" ~ "double",
   type == "logical" ~ "boolean",
-  type == "factor" ~ "string",
-  type ==  "Date" ~ "date",
-  type == "POSIXct" ~ "date",
-  type == "POSIXt" ~ "date",
-  type ==  "integer" ~ "integer",
-  type ==  "list" ~ "array",
-  TRUE ~ "string"))
+  type == "factor" ~ "tag",
+  type ==  "Date" ~ "instant",
+  type == "POSIXct" ~ "instant",
+  type == "POSIXt" ~ "instant",
+  type ==  "integer" ~ "int",
+  type ==  "list" ~ "json",
+  TRUE ~ NA_character_))
 
 }
 
+#' pivot_wider_by_type
+#'
+#' @param res data.frame
+#' @param subject Character. Name of column in res with subject. Default "subject"
+#' @param predicate Character. Name of column in res with predicate. Default "predicate"
+#' @param object Character. Name of column in res with object Default "object"
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+#' df1 = pivot_longer_with_type(iris)
+#' df1 %>% dplyr::select(predicate, type) %>% dplyr::distinct()
+#' df2 = pivot_wider_by_type(df1)
+
 pivot_wider_by_type <- function(res, subject = "subject", predicate = "predicate", object = "object") {
 
-  dftypes <- res %>% select(predicate, type) %>%
-    distinct() %>%
-    dplyr::mutate(type = case_when(
+  dftypes <- res %>% dplyr::select(predicate, type) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(type = dplyr::case_when(
     type == "string" ~ "character",
     type == "double" ~ "numeric",
     type == "boolean" ~ "logical",
@@ -61,10 +77,10 @@ pivot_wider_by_type <- function(res, subject = "subject", predicate = "predicate
     type ==  "array" ~ "list",
     TRUE ~ "string"))
 
-  res %>% distinct() %>% select(-type) %>%
-    pivot_wider(id_cols = all_of(subject), names_from = predicate, values_from = object) %>%
-    mutate(across(all_of(dftypes$predicate),
-                  ~ map2(.x, dftypes$type[dftypes$predicate == cur_column()], function(col, type) {
+  res %>% dplyr::distinct() %>% dplyr::select(-type) %>%
+    tidyr::pivot_wider(id_cols = all_of(subject), names_from = predicate, values_from = object) %>%
+    dplyr::mutate(across(all_of(dftypes$predicate),
+                  ~ purrr::map2(.x, dftypes$type[dftypes$predicate == dplyr::cur_column()], function(col, type) {
                     switch(type,
                            "character" = as.character(col),
                            "integer" = as.integer(col),
