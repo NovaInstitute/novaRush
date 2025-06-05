@@ -2,12 +2,15 @@
 % Please edit documentation in R/keyHandling.R
 \name{generateKeyPair}
 \alias{generateKeyPair}
-\title{Generate a new key pair.}
+\title{Generate a New Key Pair}
 \usage{
 generateKeyPair()
 }
+\value{
+A list containing the generated keys (the first element being the
+private key and the second being the public key).
+}
 \description{
-This method makes use of the flureeCrypto package to generate a new private key.
-The public key and DID are then derived from the private key and these are added
-to the \code{config} of the current Fluree instance.
+This method uses the \code{flureeCrypto} package to generate a new public and
+private key pair.
 }

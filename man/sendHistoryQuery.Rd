@@ -2,7 +2,7 @@
 % Please edit documentation in R/queryHandling.R
 \name{sendHistoryQuery}
 \alias{sendHistoryQuery}
-\title{Send a history query}
+\title{Send a History Query}
 \usage{
 sendHistoryQuery(queryVariables)
 }
@@ -14,8 +14,8 @@ A list representing the history query specifications.}
 A character string containing the response content.
 }
 \description{
-This function makes use of \code{httr} to send the configured query to the
-Fluree instance.
+This function makes use of the \code{httr} package to send the configured history
+query to the Fluree \verb{/history} API endpoint.
 }
 \examples{
 historyQueryInstance <- history(exampleHistoryQuery)

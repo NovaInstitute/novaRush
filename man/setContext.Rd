@@ -2,13 +2,31 @@
 % Please edit documentation in R/contextHandling.R
 \name{setContext}
 \alias{setContext}
-\title{Set the default context}
+\title{Set the Default Context}
 \usage{
-setContext(context)
+setContext(currentConfig, context)
+}
+\arguments{
+\item{currentConfig}{(\code{list()})\cr
+The existing Fluree configuration parameters.}
+
+\item{context}{(\code{list()})\cr
+The new default context to set.}
+}
+\value{
+The updated configuration list.
 }
 \description{
 The default context set here will be used for all queries and transactions.
 Unlike \code{addToContext()} this method does not merge new context elements
-with existing ones, instead it will replace the existing
-\code{defaultContext} entirely.
+with existing ones, instead it will replace the existing \code{defaultContext}
+entirely.
+}
+\examples{
+config <- setConfig(ledger = "test1")
+c <- list("f" = "https://ns.flur.ee/ledger#", "ex" = "http://example.org/",
+          "schema" = "http://schema.org/")
+config <- setContext(config, c)
+
+
 }

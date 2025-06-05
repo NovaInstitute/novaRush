@@ -73,7 +73,7 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
   if (isTRUE(isFlureeHosted))  {
     url <- "https://data.flur.ee"
   } else {
-    url <- paste0("http://", host)
+    url <- paste0("https://", host)
     if (!is.null(port)) {
       url <- paste0(url, ":", port)
     }
@@ -98,6 +98,18 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
   )
   return(params)
 }
+
+deep_merge <- function(x, y) {
+  for (name in names(y)) {
+    if (is.list(x[[name]]) && is.list(y[[name]])) {
+      x[[name]] <- deep_merge(x[[name]], y[[name]])
+    } else {
+      x[[name]] <- y[[name]]
+    }
+  }
+  x
+}
+
 
 #' @description
 #' This helper function provides a null-coalescing operator, which returns 

@@ -4,8 +4,25 @@
 \alias{addToContext}
 \title{Add to the default context}
 \usage{
-addToContext(context)
+addToContext(currentConfig, context)
+}
+\arguments{
+\item{currentConfig}{The current configuration list.}
+
+\item{context}{The new context elements to add.}
+}
+\value{
+The updated configuration list.
 }
 \description{
-This function adds to the already existing \code{defaultContext}.
+This function adds to the already existing \code{defaultContext} by merging new
+context elements with the existing ones.
+}
+\examples{
+config <- setConfig(ledger = "test1")
+c <- list("f" = "https://ns.flur.ee/ledger#", "ex" = "http://example.org/",
+          "schema" = "http://schema.org/")
+config <- setContext(config, c)
+config <- addToContext(config, list("rdfs" = ""))
+
 }

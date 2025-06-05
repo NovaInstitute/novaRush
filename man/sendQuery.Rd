@@ -2,20 +2,21 @@
 % Please edit documentation in R/queryHandling.R
 \name{sendQuery}
 \alias{sendQuery}
-\title{Send a query}
+\title{Send a Query}
 \usage{
 sendQuery(queryVariables)
 }
 \arguments{
 \item{queryVariables}{(\code{list()})\cr
-A list representing the query specifications.}
+A list representing the query specifications. This specification is the
+result of the \code{query()} function call.}
 }
 \value{
-A character string containing the response content.
+A character string containing the JSON response content.
 }
 \description{
-This function makes use of \code{httr} to send the configured query to the
-Fluree instance.
+This function makes use of the \code{httr} package to send the configured query to
+the Fluree \verb{/query} API endpoint.
 }
 \examples{
 queryInstance <- query(exampleQuery)

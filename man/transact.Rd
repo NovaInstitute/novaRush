@@ -4,7 +4,13 @@
 \alias{transact}
 \title{Transaction configuration}
 \usage{
-transact(transaction, signTransaction = NULL, privateKey = NULL)
+transact(
+  config = NULL,
+  ledger = NULL,
+  transaction,
+  signTransaction = NULL,
+  privateKey = NULL
+)
 }
 \arguments{
 \item{transaction}{(\code{list()})\cr

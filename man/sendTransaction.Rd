@@ -2,7 +2,7 @@
 % Please edit documentation in R/transactionHandling.R
 \name{sendTransaction}
 \alias{sendTransaction}
-\title{Send a transaction}
+\title{Send a Transaction}
 \usage{
 sendTransaction(transactionVariables)
 }
@@ -14,8 +14,8 @@ A list representing the transaction specifications.}
 A character string containing the response content.
 }
 \description{
-This function makes use of \code{httr} to send the configured transaction to the
-Fluree instance.
+This function makes use of \code{httr} package to send the configured transaction
+to the Fluree \verb{/transact} API endpoint.
 }
 \examples{
 transactionInstance <- transact(exampleData)

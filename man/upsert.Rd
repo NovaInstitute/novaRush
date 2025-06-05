@@ -2,9 +2,9 @@
 % Please edit documentation in R/transactionHandling.R
 \name{upsert}
 \alias{upsert}
-\title{Upsert into the Fluree database}
+\title{Upsert Into a Fluree Database}
 \usage{
-upsert(transaction)
+upsert(config, transaction)
 }
 \arguments{
 \item{transaction}{(\code{list()})\cr

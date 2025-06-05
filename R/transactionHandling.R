@@ -39,36 +39,52 @@
 #' dataList <- fromJSON(exampleData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' transactionInstance <- transact(dataList)
 #' 
+#' @importFrom jsonlite validate
+#' @importFrom jsonlite fromJSON
+#' 
 #' @export
-transact = function(transaction, signTransaction = NULL, privateKey = NULL) {
-  connected <- as.logical(Sys.getenv("connected"))
-  if (!isTRUE(connected)) {
-    stop("You must connect before transacting. Try running connect() before attempting to transact", call. = FALSE)
+transact = function(config = NULL, ledger = NULL, transaction, signTransaction = NULL, privateKey = NULL) {
+  ledgerName <- ledger %||% config$ledger
+  if (is.null(ledgerName)) {
+    stop("Please provide a ledger name. Either as argument or within the config.")
+  }
+  if (is.null(config)) {
+    config = setConfig(ledger = ledger)
   }
   
-  config <- fromJSON(Sys.getenv("config"))
-  
-  if (class(transaction) == "character") {
-    if (!validate(transaction)) {
+  if (is.character(transaction)) {
+    if (!jsonlite::validate(transaction)) {
       stop("Please provide a valid JSON transaction string", call. = FALSE)
     }
-    transaction <- fromJSON(transaction, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+    transaction <- jsonlite::fromJSON(transaction, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
   }
   
   if (is.null(transaction$ledger)) {
-    transaction$ledger <- config$ledger
+    transaction$ledger <- ledgerName
   }
   
   defaultContext <- config$defaultContext %||% list()
   transactionContext <- transaction[["@context"]] %||% list()
   
-  if (!is.null(defaultContext) || !is.null(transactionContext)) {
+  if (length(defaultContext) > 0 || length(transactionContext) > 0) {
     transaction[['@context']] <- mergeContexts(defaultContext, transactionContext)
+  }
+  
+  if (!is.null(signQuery)) {
+    shouldSign = signQuery
+  } else if (!is.null(config$signMessages)) {
+    shouldSign = config$signMessages
+  } else {
+    shouldSign = FALSE
   }
   
   body <- list(contentType = 'application/json', txn = transaction)
   
-  if (isTRUE(config$signMessages) || isTRUE(signTransaction)) {
+  if (isTRUE(shouldSign)) {
+    key <- privateKey %||% getKey()
+    if (is.null(key)) {
+      stop("Please provide a private key for signing.  Either as argument or set one using `setKey()`.")
+    }
     body <- list(contentType = 'application/jwt', txn = signTransaction(list(configuration = config, transaction = body), privateKey))
   }
   
@@ -76,7 +92,7 @@ transact = function(transaction, signTransaction = NULL, privateKey = NULL) {
 }
 
 
-#' Delete subjects by id
+#' Delete Subjects by ID
 #' 
 #' @description
 #' Delete is not an API endpoint in Fluree. This function merely transforms
@@ -87,7 +103,9 @@ transact = function(transaction, signTransaction = NULL, privateKey = NULL) {
 #' from the database.
 #' 
 #' @param id (`list()`)\cr
-#'   The subject identifier/identifiers to retract from the Fluree instance.
+#'   The subject identifier/identifiers to retract from the Fluree database.
+#' 
+#' @returns And instance of a delete transaction (as a list).
 #' 
 #' @examples
 #' # Existing data:
@@ -105,13 +123,7 @@ transact = function(transaction, signTransaction = NULL, privateKey = NULL) {
 #' #  ]
 #' 
 #' @export
-delete = function(id) {
-  connected <- as.logical(Sys.getenv("connected"))
-  if (!isTRUE(connected)) {
-    stop("You must connect before transacting. Try running connect() before attempting to delete", call. = FALSE)
-  }
-  
-  config <- fromJSON(Sys.getenv("config"))
+delete = function(config, id) {
   idAlias <- findIdAlias(config$defaultContext)
   resultingTransaction <- handleDelete(id, idAlias)
   resultingTransaction$ledger <- config$ledger
@@ -120,7 +132,7 @@ delete = function(id) {
 }
 
 
-#' Upsert into the Fluree database
+#' Upsert Into a Fluree Database
 #' 
 #' @description
 #' Upsert is not an API endpoint in Fluree. This function merely transforms
@@ -170,17 +182,13 @@ delete = function(id) {
 #' #    { "@id": "alice", "name": "Alice", "age": 25 }
 #' #  ]
 #' 
+#' @importFrom jsonlite validate
+#' 
 #' @export
-upsert = function(transaction) {
-  connected <- as.logical(Sys.getenv("connected"))
-  if (!isTRUE(connected)) {
-    stop("You must connect before transacting. Try running connect() before attempting to upsert", call. = FALSE)
-  }
-  
-  config <- fromJSON(Sys.getenv("config"))
+upsert = function(config, transaction) {
   
   if (class(transaction) == "character") {
-    if (!validate(transaction)) {
+    if (!jsonlite::validate(transaction)) {
       stop("Please provide a valid JSON string", call. = FALSE)
     }
     transaction <- fromJSON(transaction, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
@@ -193,11 +201,11 @@ upsert = function(transaction) {
   transact(transaction = resultingTransaction)
 }
 
-#' Send a transaction
+#' Send a Transaction
 #' 
 #' @description
-#' This function makes use of `httr` to send the configured transaction to the 
-#' Fluree instance.
+#' This function makes use of `httr` package to send the configured transaction
+#' to the Fluree `/transact` API endpoint.
 #' 
 #' @param transactionVariables (`list()`)\cr
 #'   A list representing the transaction specifications.
@@ -220,24 +228,33 @@ sendTransaction = function(transactionVariables) {
   
   if (contentType == 'application/json') {
     transaction <- toJSON(body$txn, auto_unbox = TRUE, pretty = FALSE)
-  } else {
+  } else if (contentType == 'application/jwt') {
     transaction <- body$txn
+  } else {
+    stop("Unsupported content type: ", contentType)
   }
   
   params <- generateFetchParams(config, 'transact', contentType)
   url <- params$url
   fetchOptions <- params$config
   
-  params$body <- transaction
+  headers <- add_headers(`Content-Type` = contentType)
   
   response <- POST(
     url = url,
-    add_headers(`Content-Type` = params$config$headers$`Content-Type`),
-    body = params$body,
+    headers,
+    body = charToRaw(transaction),
     encode = "raw"
   )
   
-  return(content(response, as = "text"))
+  resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
+  if (httr::http_error(response)) {
+    stop("Transaction failed: ", resp_text)
+  }
+  
+  json_response <- jsonlite::fromJSON(resp_text, simplifyDataFrame = FALSE)
+  pretty_json <- jsonlite::toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
+  return(pretty_json)
 }
 
 #' Sign a transaction

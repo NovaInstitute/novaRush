@@ -2,25 +2,28 @@
 % Please edit documentation in R/ledgerCreation.R
 \name{createLedger}
 \alias{createLedger}
-\title{Create a new ledger}
+\title{Create a New Ledger}
 \usage{
-createLedger(ledgerName = NULL, config = NULL, transaction = NULL)
+createLedger(
+  config = NULL,
+  ledgerName = NULL,
+  transaction = NULL,
+  signMessage = FALSE,
+  privateKey = NULL
+)
 }
 \arguments{
-\item{ledgerName}{(\code{string})\cr
-The name of the ledger to be created.}
-
 \item{config}{(\code{list})\cr
 The configuration parameters of the Fluree instance.}
+
+\item{ledgerName}{(\code{string})\cr
+The name of the ledger to be created. If NULL, use \code{config$ledger}.}
 
 \item{transaction}{(\code{list})\cr
 The body of the initial transaction to add to the new ledger.}
 }
 \description{
-This function creates a new ledger with the specified name. If a name is not
-explicitly provided, the previously configured ledger name (stored in the
-system environment) will be used. The same applies to the \code{config} parameters
-of the Fluree instance. As for the \code{transaction} parameter if no
-initial transaction is provided a default transaction will be sent to the newly
-created ledger.
+This function creates a new ledger with the specified name.
+If no \code{config} is provided, the default parameters will be used.
+If no initial transaction is provided, a default transaction will be sent.
 }

@@ -1,94 +1,118 @@
 
-#' Set the default context
+#' Set the Default Context
 #' 
 #' @description
 #' The default context set here will be used for all queries and transactions.
 #' Unlike `addToContext()` this method does not merge new context elements 
-#' with existing ones, instead it will replace the existing 
-#' `defaultContext` entirely.
+#' with existing ones, instead it will replace the existing `defaultContext`
+#' entirely.
+#' 
+#' @param currentConfig (`list()`)\cr
+#'   The existing Fluree configuration parameters.
+#' @param context (`list()`)\cr
+#'   The new default context to set.
+#' 
+#' @returns The updated configuration list.
+#' 
+#' @examples
+#' config <- setConfig(ledger = "test1")
+#' c <- list("f" = "https://ns.flur.ee/ledger#", "ex" = "http://example.org/",
+#'           "schema" = "http://schema.org/")
+#' config <- setContext(config, c)
+#' 
 #' 
 #' @export
-setContext = function(context) {
-  updateConfiguration(list(defaultContext = context))                     
+setContext = function(currentConfig, context) {
+  currentConfig$defaultContext <- context
+  return(currentConfig)                     
 }
 
-# TODO: Fix this function to work for functional implementation
 #' Add to the default context
 #' 
 #' @description
-#' This function adds to the already existing `defaultContext`.
+#' This function adds to the already existing `defaultContext` by merging new
+#' context elements with the existing ones.
+#' 
+#' @param currentConfig The current configuration list.
+#' @param context The new context elements to add.
+#' 
+#' @returns The updated configuration list.
+#' 
+#' @examples
+#' config <- setConfig(ledger = "test1")
+#' c <- list("f" = "https://ns.flur.ee/ledger#", "ex" = "http://example.org/",
+#'           "schema" = "http://schema.org/")
+#' config <- setContext(config, c)
+#' config <- addToContext(config, list("rdfs" = ""))
 #' 
 #' @export
-addToContext = function(context) {
-  if (!is.null(self$config$defaultContext)) {
-    newContext <- mergeContexts(self$config$defaultContext, context)
-    self$config$defaultContext = newContext
+addToContext = function(currentConfig, context) {
+  if (!is.null(currentConfig$defaultContext)) {
+    newContext <- mergeContexts(currentConfig$defaultContext, context)
+    currentConfig$defaultContext = newContext
   } else {
-    self$config$defaultContext = context
+    currentConfig$defaultContext = context
   }
-  return(self)
+  return(currentConfig)
 }
 
-# TODO: Fix this function to work for functional implementation
-#' Get the context
-#' 
-#' @description
-#' This function extracts the `defaultContext` from the `config` of the current
-#' Fluree instance.
-#' 
-#' @return (`list()`)
-#' 
-#' @export
-getContext = function() {
-  return(self$config$defaultContext)
-}
 
 #' Merge Two Contexts
+#' 
+#' @description
+#' Merges a new context into a base context
+#' Supports strings, lists, and named lists.
 #'
-#' Merges a new context into a base context, supporting strings, lists, and named lists (objects).
-#'
-#' @param context1 The base context, which can be a string, a list, or a named list.
-#' @param context2 The new context to merge, which can also be a string, a list, or a named list.
-#' @return A merged context. If both contexts are strings, they are combined into a list.
+#' @param context1 The base context.\cr
+#'  Which can be a string, a list, or a named list.
+#' @param context2 The new context to merge,\cr
+#'  Which can also be a string, a list, or a named list.
+#' 
+#' @returns The merged context.\cr
+#' If both contexts are strings, they are combined into a list.
+#' 
 #' @examples
-#' merge_contexts("https://example.org/context1", "https://example.org/context2")
-#' merge_contexts("https://example.org/context1", list("https://example.org/context2"))
-#' merge_contexts(list("https://example.org/context1"), list("https://example.org/context2"))
-#' merge_contexts(list("https://example.org/context1"), list(a = "https://example.org/context2"))
+#' mergeContexts("https://example.org/context1", "https://example.org/context2")
+#' mergeContexts("https://example.org/context1", list("https://example.org/context2"))
+#' mergeContexts(list("https://example.org/context1"), list("https://example.org/context2"))
+#' mergeContexts(list("https://example.org/context1"), list(a = "https://example.org/context2"))
+#' 
 mergeContexts <- function(context1, context2) {
-  if (is.character(context1) && length(context1) == 1) {  # context1 is a single string
+  if (is.character(context1) && length(context1) == 1) {
     if (is.character(context2) && length(context2) == 1) {
-      return(list(context1, context2))  # Combine two strings into a list
+      return(list(context1, context2))
     } else if (is.list(context2)) {
-      return(c(list(context1), context2))  # Add string to the beginning of the list
+      return(c(list(context1), context2))
     } else {
-      if (length(context2) == 0) return(context1)  # context2 is an empty object
-      return(list(context1, context2))  # Combine string with named list
+      if (length(context2) == 0) return(context1)
+      return(list(context1, context2))
     }
-  } else if (is.list(context1)) {  # context1 is a list (array in JS terms)
+    
+  } else if (is.list(context1)) {
     if (is.character(context2) && length(context2) == 1) {
-      return(c(context1, list(context2)))  # Append string to list
+      return(c(context1, list(context2)))
     } else if (is.list(context2)) {
-      return(c(context1, context2))  # Concatenate two lists
+      return(c(context1, context2))
     } else {
-      if (length(context2) == 0) return(context1)  # context2 is an empty object
-      return(c(context1, list(context2)))  # Append named list to the list
+      if (length(context2) == 0) return(context1)
+      return(c(context1, list(context2)))
     }
-  } else {  # context1 is a named list (object in JS terms)
-    if (length(context1) == 0) return(context2)  # context1 is an empty object
+    
+  } else {
+    if (length(context1) == 0) return(context2)
     if (is.character(context2) && length(context2) == 1) {
-      return(list(context1, context2))  # Combine named list with string
+      return(list(context1, context2))
     } else if (is.list(context2)) {
-      return(c(list(context1), context2))  # Add named list to the beginning of the list
+      return(c(list(context1), context2))
     } else {
-      return(modifyList(context1, context2))  # Merge two named lists
+      return(modifyList(context1, context2))
     }
   }
   
-  stop("Unsupported context types provided.")  # Catch invalid inputs
+  stop("Unsupported context types provided.")
 }
 
-#' Find the alias of the id field
+#' Find the Alias of the ID Field
 #' 
 #' @description
 #' This function looks up if any alias for '@id' has been defined within the
@@ -100,7 +124,6 @@ mergeContexts <- function(context1, context2) {
 #' 
 #' @return (`string`)
 #' 
-#' @export
 findIdAlias = function(context) {
   
   if (is.null(context)) {

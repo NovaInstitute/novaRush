@@ -1,19 +1,26 @@
 
-#' Query configuration
+#' Query Configuration
 #' 
 #' @description
-#' This function configures the query instance. The default context is configured 
-#' and if applicable the query is signed.
-#' The function returns a list containing all the information necessary to interact
-#' with the Fluree instance via `sendQuery()`.
+#' This function configures the query instance. 
+#' The default context is added and if applicable the query is signed.
+#' The function returns a list referred to as `queryVariables` which is a single
+#' structure containing all the information necessary to interact with the
+#' Fluree instance via `sendQuery()`.
 #' 
+#' @param config (`list()`)\cr
+#'   The configuration list for the Fluree instance.
+#' @param ledger (`character`)\cr
+#'   The name of the ledger to query.
 #' @param query (`list()`)\cr
-#'    The list representation of the query body to be sent.
-#'    Note alternatively the query can simply be passed as a JSON `character` string.
+#'   The list representation of the query body to be sent.
+#'   Alternatively the query can simply be passed as a JSON `character` string.
 #' @param signQuery (`logical`)\cr
 #'   Determines whether the given query should be signed or not.
+#'   This will override the value set in `config$signMessages`.
 #' @param privateKey (`character`)\cr
 #'   The hexstring representation of the private key to use for message signing.
+#'   Overrides `getKey()` if provided.
 #' 
 #' @return A list containing everything needed to query the Fluree database.
 #' This includes all the necessary parameters as well as the signed/unsigned query itself.
@@ -42,57 +49,79 @@
 #' queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' queryInstance <- query(queryList)
 #' 
+#' @importFrom jsonlite validate
+#' @importFrom jsonlite fromJSON
 #' @export
-query = function(query, signQuery = NULL, privateKey = NULL) {
-  connected <- as.logical(Sys.getenv("connected"))
-  if (!isTRUE(connected)) {
-    stop("You must connect before querying. Try running connect() before querying", call. = FALSE)
+query = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateKey = NULL) {
+  ledgerName <- ledger %||% config$ledger
+  if (is.null(ledgerName)) {
+    stop("Please provide a ledger name. Either as argument or within the config.")
   }
-  
-  config <- fromJSON(Sys.getenv("config"))
-  
-  if (class(query) == "character") {
-    if (!validate(query)) {
+  if (is.null(config)) {
+    config = setConfig(ledger = ledger)
+  }
+
+  if (is.character(query)) {
+    if (!jsonlite::validate(query)) {
       stop("Please provide a valid JSON query string", call. = FALSE)
     }
-    query <- fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+    query <- jsonlite::fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
   }
   
   if (is.null(query$from)) {
-    query$from <- config$ledger
+    query$from <- ledgerName
   }
   
   # merge contexts if applicable
   defaultContext <- config$defaultContext %||% list()
   queryContext <- query[["@context"]] %||% list()
   
-  if (!is.null(defaultContext) || !is.null(queryContext)) {
+  if (length(defaultContext) > 0 || length(queryContext) > 0) {
     query[['@context']] <- mergeContexts(defaultContext, queryContext)
+  }
+  
+  if (!is.null(signQuery)) {
+    shouldSign = signQuery
+  } else if (!is.null(config$signMessages)) {
+    shouldSign = config$signMessages
+  } else {
+    shouldSign = FALSE
   }
   
   body <- list(contentType = 'application/json', qry = query)
   
-  if (isTRUE(config$signMessages) || isTRUE(signQuery)) {
-    body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), privateKey))
+  if (isTRUE(shouldSign)) {
+    key <- privateKey %||% getKey()
+    if (is.null(key)) {
+      stop("Please provide a private key for signing. Either as argument or set one using `setKey()`.", call. = FALSE)
+    } else {
+      body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), key))
+    }
   }
   
   return(list(configuration = config, query = body))
 }
 
-#' Send a query
+#' Send a Query
 #' 
 #' @description
-#' This function makes use of `httr` to send the configured query to the 
-#' Fluree instance.
+#' This function makes use of the `httr` package to send the configured query to
+#' the Fluree `/query` API endpoint.
 #' 
 #' @param queryVariables (`list()`)\cr
-#'   A list representing the query specifications.
+#'   A list representing the query specifications. This specification is the
+#'   result of the `query()` function call.
 #' 
-#' @return A character string containing the response content.
+#' @return A character string containing the JSON response content.
 #' 
 #' @examples
 #' queryInstance <- query(exampleQuery)
 #' sendQuery(queryInstance)
+#' 
+#' @importFrom jsonlite toJSON
+#' @importFrom jsonlite fromJSON
+#' 
+#' @importFrom httr POST
 #' 
 #' @export
 sendQuery = function(queryVariables) {
@@ -100,90 +129,119 @@ sendQuery = function(queryVariables) {
   body <- queryVariables$query
   
   contentType <- body$contentType
+  finalQueryString <- ""
   
   if (contentType == 'application/json') {
-    query <- toJSON(body$qry, auto_unbox = TRUE, pretty = FALSE)
+    finalQueryString <- jsonlite::toJSON(body$qry, auto_unbox = TRUE, pretty = FALSE)
+  } else if (contentType == 'application/jwt') {
+    finalQueryString <- body$qry
   } else {
-    query <- body$qry
+    stop("Unsupported content type for query:", contentType)
   }
   
   params <- generateFetchParams(config, 'query', contentType)
   url <- params$url
-  fetchOptions <- params$config
   
-  params$body <- query
-  
-  response <- POST(
+  response <- httr::POST(
     url = url,
     add_headers(`Content-Type` = params$config$headers$`Content-Type`),
-    body = params$body,
+    body = finalQueryString,
     encode = "raw"
   )
   
-  json_response <- fromJSON(content(response, as = "text"))
-  pretty_json <- toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
+  resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
+  if (httr::http_error(response)) {
+    stop("Query failed: ", resp_text)
+  }
   
+  json_response <- jsonlite::fromJSON(resp_text, simplifyDataFrame = FALSE)
+  pretty_json <- jsonlite::toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
   return(pretty_json)
 }
 
 
 
-#' History query configuration
+#' History Query Configuration
 #' 
 #' @description
-#' This function configures the history query instance. The default context is 
-#' configured and if applicable the history query is signed.
+#' This function configures the history query instance. 
+#' The default context is added and if applicable the query is signed.
+#' The function returns a list referred to as `queryVariables` which is a single
+#' structure containing all the information necessary to interact with the
+#' Fluree instance via `sendHistoryQuery()`.
 #' 
+#' @param config (`list()`)\cr
+#'   The configuration list for the Fluree instance.
+#' @param ledger (`character`)\cr
+#'   The name of the ledger to query.
 #' @param query (`list()`)\cr
-#'    The list representation of the history query body to be sent.
-#'    Note alternatively the history query can simply be passed as a JSON `character` string.
+#'   The list representation of the query body to be sent.
+#'   Alternatively the query can simply be passed as a JSON `character` string.
 #' @param signQuery (`logical`)\cr
-#'   Determines whether the given history query should be signed or not.
+#'   Determines whether the given query should be signed or not.
+#'   This will override the value set in `config$signMessages`.
 #' @param privateKey (`character`)\cr
 #'   The hexstring representation of the private key to use for message signing.
+#'   Overrides `getKey()` if provided.
 #' 
 #' @return A list containing everything needed to query the Fluree database.
-#' This includes all the necessary parameters as well as the signed/unsigned history query itself.
+#' This includes all the necessary parameters as well as the signed/unsigned query itself.
+#' 
+#' @importFrom jsonlite validate
 #' 
 #' @export
-history = function(query, signQuery = NULL, privateKey = NULL) {
+history = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateKey = NULL) {
   
-  connected <- as.logical(Sys.getenv("connected"))
-  if (!isTRUE(connected)) {
-    stop("You must connect before querying. Try running connect() before querying", call. = FALSE)
+  ledgerName <- ledger %||% config$ledger
+  if (is.null(ledgerName)) {
+    stop("Please provide a ledger name. Either as argument or within the config.")
+  }
+  if (is.null(config)) {
+    config = setConfig(ledger = ledger)
   }
   
-  config <- fromJSON(Sys.getenv("config"))
-  
-  if (class(query) == "character") {
-    if (!validate(query)) {
+  if (is.character(query)) {
+    if (!jsonlite::validate(query)) {
       stop("Please provide a valid JSON query string", call. = FALSE)
     }
-    query <- fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+    query <- jsonlite::fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
   }
   
   if (is.null(query$from)) {
-    query$from <- config$ledger
+    query$from <- ledgerName
   }
   
   if (is.null(query$history) && is.null(query[['commit-details']])) {
     stop('Either the history or commit-details key is required', call. = FALSE)
   }
   
+  if (!is.null(signQuery)) {
+    shouldSign = signQuery
+  } else if (!is.null(config$signMessages)) {
+    shouldSign = config$signMessages
+  } else {
+    shouldSign = FALSE
+  }
+  
   body <- list(contentType = 'application/json', qry = query)
   
-  if (isTRUE(config$signMessages) || isTRUE(signQuery)) {
-    body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), privateKey))
+  if (isTRUE(shouldSign)) {
+    key <- privateKey %||% getKey()
+    if (is.null(key)) {
+      stop("Please provide a private key for signing. Either as argument or in the configuration object.", call. = FALSE)
+    } else {
+      body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), key))
+    }
   }
   
   return(list(configuration = config, query = body))
 }
 
-#' Send a history query
+#' Send a History Query
 #' 
 #' @description
-#' This function makes use of `httr` to send the configured query to the 
-#' Fluree instance.
+#' This function makes use of the `httr` package to send the configured history
+#' query to the Fluree `/history` API endpoint.
 #' 
 #' @param queryVariables (`list()`)\cr
 #'   A list representing the history query specifications.
@@ -210,25 +268,26 @@ sendHistoryQuery = function(queryVariables) {
   
   params <- generateFetchParams(config, 'history', contentType)
   url <- params$url
-  fetchOptions <- params$config
   
-  params$body <- query
-  
-  response <- POST(
+  response <- httr::POST(
     url = url,
     add_headers(`Content-Type` = params$config$headers$`Content-Type`),
-    body = params$body,
+    body = query,
     encode = "raw"
   )
   
-  json_response <- fromJSON(content(response, as = "text"))
-  pretty_json <- toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
+  resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
+  if (httr::http_error(response)) {
+    stop("History query failed: ", resp_text)
+  }
   
+  json_response <- jsonlite::fromJSON(resp_text, simplifyDataFrame = FALSE)
+  pretty_json <- jsonlite::toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
   return(pretty_json)
 }
 
 
-#' Sign a query
+#' Sign a Query
 #' 
 #' @description
 #' This function is used to sign a query which can then be sent to the Fluree
@@ -252,18 +311,12 @@ sendHistoryQuery = function(queryVariables) {
 signQuery = function(queryVariables = NULL, privateKey = NULL) {
   
   if (is.null(queryVariables)) {
-    stop("Please provide the query to be signed", call. = FALSE)
+    stop("Please provide the full query to be signed. Call `query()` before signing.", call. = FALSE)
   }
   
-  if (!is.null(privateKey)) {
-    key <- privateKey
-  } else {
-    config <- fromJSON(Sys.getenv("config"))
-    key <- config$privateKey
-  }
-  
+  key <- privateKey %||% getKey()
   if (is.null(key)) {
-    stop("privateKey must be provided either as a parameter or in the configuration", call. = FALSE)
+    stop("Please provide a private key for signing. Either as argument or set one using `setKey()`.", call. = FALSE)
   }
   
   config <- queryVariables$configuration
@@ -280,13 +333,13 @@ signQuery = function(queryVariables = NULL, privateKey = NULL) {
   signedQuery <- flureeCrypto:::serialize_jws(as.character(input), key)
   
   body$contentType <- 'application/jwt'
-  body$qry <- signedTransaction
+  body$qry <- signedQuery
   
   return(list(configuration = config, query = body))
 }
 
 
-#' Get the signed query
+#' Get the Signed Query
 #' 
 #' @description
 #' This function returns the JWT representation of the signed query.
@@ -304,7 +357,7 @@ signQuery = function(queryVariables = NULL, privateKey = NULL) {
 #' @export
 getQuerySignature = function(queryVariables = NULL) {
   if (is.null(queryVariables)) {
-    stop("Please provide a valid query instance", call. = FALSE)
+    stop("Please provide a valid query instance (call `query()` first).", call. = FALSE)
   }
   
   body <- queryVariables$query
@@ -319,7 +372,7 @@ getQuerySignature = function(queryVariables = NULL) {
   return(signedQry)
 }
 
-#' Get the query
+#' Get the Raw Query Text
 #' 
 #' @description
 #' This function returns the query body as a JSON string.

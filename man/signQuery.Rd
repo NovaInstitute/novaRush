@@ -2,7 +2,7 @@
 % Please edit documentation in R/queryHandling.R
 \name{signQuery}
 \alias{signQuery}
-\title{Sign a query}
+\title{Sign a Query}
 \usage{
 signQuery(queryVariables = NULL, privateKey = NULL)
 }

@@ -2,13 +2,16 @@
 % Please edit documentation in R/transactionHandling.R
 \name{delete}
 \alias{delete}
-\title{Delete subjects by id}
+\title{Delete Subjects by ID}
 \usage{
-delete(id)
+delete(config, id)
 }
 \arguments{
 \item{id}{(\code{list()})\cr
-The subject identifier/identifiers to retract from the Fluree instance.}
+The subject identifier/identifiers to retract from the Fluree database.}
+}
+\value{
+And instance of a delete transaction (as a list).
 }
 \description{
 Delete is not an API endpoint in Fluree. This function merely transforms

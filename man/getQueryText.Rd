@@ -2,7 +2,7 @@
 % Please edit documentation in R/queryHandling.R
 \name{getQueryText}
 \alias{getQueryText}
-\title{Get the query}
+\title{Get the Raw Query Text}
 \usage{
 getQueryText(queryVariables = NULL)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/queryHandling.R
 \name{getQuerySignature}
 \alias{getQuerySignature}
-\title{Get the signed query}
+\title{Get the Signed Query}
 \usage{
 getQuerySignature(queryVariables = NULL)
 }

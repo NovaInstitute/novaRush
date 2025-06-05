@@ -2,30 +2,39 @@
 % Please edit documentation in R/queryHandling.R
 \name{query}
 \alias{query}
-\title{Query configuration}
+\title{Query Configuration}
 \usage{
-query(query, signQuery = NULL, privateKey = NULL)
+query(config = NULL, ledger = NULL, query, signQuery = NULL, privateKey = NULL)
 }
 \arguments{
+\item{config}{(\code{list()})\cr
+The configuration list for the Fluree instance.}
+
+\item{ledger}{(\code{character})\cr
+The name of the ledger to query.}
+
 \item{query}{(\code{list()})\cr
 The list representation of the query body to be sent.
-Note alternatively the query can simply be passed as a JSON \code{character} string.}
+Alternatively the query can simply be passed as a JSON \code{character} string.}
 
 \item{signQuery}{(\code{logical})\cr
-Determines whether the given query should be signed or not.}
+Determines whether the given query should be signed or not.
+This will override the value set in \code{config$signMessages}.}
 
 \item{privateKey}{(\code{character})\cr
-The hexstring representation of the private key to use for message signing.}
+The hexstring representation of the private key to use for message signing.
+Overrides \code{getKey()} if provided.}
 }
 \value{
 A list containing everything needed to query the Fluree database.
 This includes all the necessary parameters as well as the signed/unsigned query itself.
 }
 \description{
-This function configures the query instance. The default context is configured
-and if applicable the query is signed.
-The function returns a list containing all the information necessary to interact
-with the Fluree instance via \code{sendQuery()}.
+This function configures the query instance.
+The default context is added and if applicable the query is signed.
+The function returns a list referred to as \code{queryVariables} which is a single
+structure containing all the information necessary to interact with the
+Fluree instance via \code{sendQuery()}.
 }
 \examples{
 # Existing data:

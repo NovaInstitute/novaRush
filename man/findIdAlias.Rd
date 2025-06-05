@@ -2,7 +2,7 @@
 % Please edit documentation in R/contextHandling.R
 \name{findIdAlias}
 \alias{findIdAlias}
-\title{Find the alias of the id field}
+\title{Find the Alias of the ID Field}
 \usage{
 findIdAlias(context)
 }

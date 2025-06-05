@@ -7,19 +7,24 @@
 mergeContexts(context1, context2)
 }
 \arguments{
-\item{context1}{The base context, which can be a string, a list, or a named list.}
+\item{context1}{The base context.\cr
+Which can be a string, a list, or a named list.}
 
-\item{context2}{The new context to merge, which can also be a string, a list, or a named list.}
+\item{context2}{The new context to merge,\cr
+Which can also be a string, a list, or a named list.}
 }
 \value{
-A merged context. If both contexts are strings, they are combined into a list.
+The merged context.\cr
+If both contexts are strings, they are combined into a list.
 }
 \description{
-Merges a new context into a base context, supporting strings, lists, and named lists (objects).
+Merges a new context into a base context
+Supports strings, lists, and named lists.
 }
 \examples{
-merge_contexts("https://example.org/context1", "https://example.org/context2")
-merge_contexts("https://example.org/context1", list("https://example.org/context2"))
-merge_contexts(list("https://example.org/context1"), list("https://example.org/context2"))
-merge_contexts(list("https://example.org/context1"), list(a = "https://example.org/context2"))
+mergeContexts("https://example.org/context1", "https://example.org/context2")
+mergeContexts("https://example.org/context1", list("https://example.org/context2"))
+mergeContexts(list("https://example.org/context1"), list("https://example.org/context2"))
+mergeContexts(list("https://example.org/context1"), list(a = "https://example.org/context2"))
+
 }

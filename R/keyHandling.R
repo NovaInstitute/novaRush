@@ -1,72 +1,52 @@
 
-#' Set keys for encryption
-#' 
+#' Store Private Key
+#'
 #' @description
-#' Add a private key to use for signing.
-#' This key will be added to the config of the current instance and  will also 
-#' be used to sign messages by default when using the `signTransaction()` or
-#' `signQuery()` functions on any future queries or transactions.
-#' The public key and DID will be derived from this private key and added to 
-#' the `config` of the current Fluree instance as well.
-#' 
-#' @param privateKey (`string`)\cr
-#'   The private key to use for message signing as a hex string.
-#' 
+#' This function securely stores a private key in the system keyring
+#' using the `key_set()` function from the `keyring` package.
+#' The key is stored under service name `"privateKey"` and keyring `"Fluree"`.
+#'
+#' NOTE: This function will prompt for input.
+#'
+#' @importFrom keyring key_set
+#'
 #' @export
-setKeys = function(privateKey) {
-  publicKey <- flureeCrypto::public_key_from_private(privateKey)
-  accountId <- flureeCrypto::account_id_from_public(publicKey)
-  did <- sprintf('did:fluree:%s', accountId)
-  
-  updateConfiguration(list(privateKey = privateKey, publicKey = publicKey, did = did))
+setKey = function() {
+  keyring::key_set("privateKey", keyring = "Fluree")
 }
 
-#' Generate a new key pair.
+#' Retrieve Private Key
 #' 
 #' @description
-#' This method makes use of the flureeCrypto package to generate a new private key.
-#' The public key and DID are then derived from the private key and these are added 
-#' to the `config` of the current Fluree instance.
+#' This method retrieves the stored private key using the `key_get()` method of
+#' the `keyring` package. Note the private key must have been previously stored
+#' using the `setKey()` method.
+#' 
+#' NOTE: This function should be used with caution. Only invoke this function
+#' withing another function call and never store your private key as an
+#' environment variable.
+#' 
+#' @importFrom keyring key_get
+#' 
+#' @export
+getKey = function() {
+  return(key_get("privateKey", keyring = "Fluree"))
+}
+
+#' Generate a New Key Pair
+#' 
+#' @description
+#' This method uses the `flureeCrypto` package to generate a new public and
+#' private key pair.
+#' 
+#' @return A list containing the generated keys (the first element being the
+#' private key and the second being the public key).
+#' 
+#' @importFrom flureeCrypto generate_keypair
+#' @importFrom flureeCrypto account_id_from_public
 #' 
 #' @export
 generateKeyPair = function() {
   kp <- flureeCrypto::generate_keypair()
-  privateKey <- kp[[1]]
-  publicKey <- kp[[2]]
-  accountId <- flureeCrypto::account_id_from_public(publicKey)
-  did <- paste0('did:fluree:', accountId)
-  updateConfiguration(list(privateKey, publicKey, did))
-}
-
-#' Get the private key
-#' 
-#' @description
-#' Get the currently configured private key (if one has been set).
-#' 
-getPrivateKey = function() {
-  return(Sys.getenv(config$privateKey))
-}
-
-#' Get the public key
-#' 
-#' @description
-#' Get the currently configured public key (if one has been set).
-#' 
-#' @returns (`string`) | (`undefined`).
-#' 
-#' @export
-getPublicKey = function() {
-  return(Sys.getenv(config$publicKey))
-}
-
-#' Get the DID
-#' 
-#' @description
-#' Get the currently configured DID (if one has been set).
-#' 
-#' @returns (`string`) | (`undefined`).
-#' 
-#' @export
-getDid = function() {
-  return(Sys.getenv(config$did))
+  return(kp)
 }
