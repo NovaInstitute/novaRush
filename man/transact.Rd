@@ -13,6 +13,12 @@ transact(
 )
 }
 \arguments{
+\item{config}{(\code{list()})\cr
+The configuration list for the Fluree instance.}
+
+\item{ledger}{(\code{character})\cr
+The name of the ledger to transact to.}
+
 \item{transaction}{(\code{list()})\cr
 The list representation of the transaction body to be sent.
 Note alternatively the transaction can simply be passed as a JSON \code{character} string.}
@@ -47,11 +53,11 @@ exampleData <- '{
    ]
 }'
 
-transactionInstance <- transact(exampleData)
+transactionInstance <- transact(config = conf, ledger = 'demo', exampleData, signTransaction = FALSE)
 
 # OR ALTERNATIVELY
 
 dataList <- fromJSON(exampleData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
-transactionInstance <- transact(dataList)
+transactionInstance <- transact(config = conf, ledger = 'demo', dataList, signTransaction = FALSE)
 
 }
