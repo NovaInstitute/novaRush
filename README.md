@@ -1,60 +1,89 @@
 # NovaRush
 
 This serves as a R wrapper around the Fluree API, providing a more convenient way of interacting (transacting, querying & deleting) with Fluree V3 databases.
-It is largely based on the Fluree client SDK written for TypeScript/JavaScript which can be found [here]().
-
-Additionally functions to handle data migration are also included...TODO
+It is largely based on the Fluree client SDK written for TypeScript/JavaScript which can be found [here](https://github.com/fluree/fluree-client/tree/main).
 
 ## Usage
 
-### The two approaches
+Below follows a quick walk through of the functions included in this packages.
 
-This package allows for an object-oriented approach as well as a functional approach to interact with the Fluree instance.  The object-oriented approach mirrors the Typescript SDK mentioned earlier.
+Before starting it is important to note that this package makes use of the `keyring` R package to handle private keys.
+Of which the documentation can be found [here](https://cran.r-project.org/web/packages/keyring/keyring.pdf).
 
-The documentation for the functional approach follows below with a quick guide of the object-oriented approach at the end (if it were to be applicable).
+#### Configuration
 
-#### Functional approach
-
-###### StartUp
+##### Setting the configuration parameters
 
 The first step is to configure the parameters needed to interact with the Fluree instance.
 
 ```
-config <- list(
-  host = 'localhost', 
-  port = 58090, 
-  ledger = 'policy-view-age', 
-  create = TRUE, 
-  privateKey = key_get("privateKey", keyring = "Fluree"))
-
-setConfiguration(config = config)
+conf <- setConfig(host = datadudes2.xyz, ledger = "demo", signMessages = TRUE))
 ```
 
-NOTE: here the `keyring` package is used to deal with the private key more securely.
+Additionally a port number may be specified. 
+The ledger name is the only mandatory field.  If none of the other arguments are specified, the following default values will be used:
 
-Now that the variables have been set, the `defaultContext` can be set and a connection
-can be established.
+- host = "datadudes2.xyz"
+- port = NULL
+- signMessages = TRUE
+
+
+##### Updating the configuration parameters
+
+Once a configuration has been set, individual fields can be updated as follows
 
 ```
-connect()
+conf <- updateConfig(config, newConfig = list(ledger = "test", signMessages(FALSE)))
+```
 
-Sys.sleep(1)
+In the example given above the existing `ledger` and `signMessages` fields in the old config will be replaced with the new ones
+to produce the new, merged config.
 
+
+#### Context
+
+##### Setting the default context 
+
+The default context being set will be included in all future transactions and queries.
+
+```
 c <- list(
-  "f" = "https://ns.flur.ee/ledger#", 
+  "f" = "https://ns.flur.ee/ledger#",
   "ex" = "http://example.org/",
   "schema" = "http://schema.org/")
-
-setContext(c)
+  
+conf <- setContext(currentConfig = conf, context = c) {
 ```
 
-###### Transacting 
+##### Updating the default context
 
-After a connection has been established to the Fluree instance,  a simple transaction
-is done as follows
+The function described above (`setContext()`) replaces the default context with the the new context passed as argument.
+If one wishes to simply update or add to the default context (without replacing it entirely) the following function can be used.
 
 ```
-data <- '{
+newElements <- list(
+  "rdfs" = "http://www.w3.org/2000/01/rdf-schema#",
+  "owl" = "http://www.w3.org/2002/07/owl#"
+)
+
+conf <- addToContext(currentConfig = conf, context = newElements)
+
+```
+
+This will return the updated config with the default context now including the two new elements
+together with any previously configured ones.
+
+
+
+#### Transacting 
+
+When it comes to transacting two functions are used.  The first configures the transaction and
+the second actually sends it to the Fluree HTTP endpoint.
+
+##### Configuring & signing the transaction
+
+```
+exampleData <- '{
       "insert": [
           {
               "@id": "ex:andrew",
@@ -112,18 +141,40 @@ data <- '{
 }'
 
 
-transactionInstance <- transact(data)
-Sys.sleep(1)
-sendTransaction(transactionInstance)
+transactionInstance <- transact(exampleData)
 
 ```
+
+This creates an "instance" of the transaction, which can then be signed or interacted with as follows:
+
+```
+signedTransaction <- signTransaction(transactionInstance)
+
+txn <- getTransactionText(signedTransaction)
+sig <- getTransactionSignature(signedTransaction)
+```
+
+##### Sending the transaction
+
+Once configured the signed/unsigned transaction can be sent as follows:
+
+```
+sendTransaction(transactionInstance)
+
+// OR
+
+sendTransaction(signedTransaction)
+```
+
 
 ###### Querying
 
-A simple query is done as follows
+Querying follows the same logic as transacting.
+
+##### Configuring & signing the query
 
 ```
-simpleQuery <- '{
+exampleQuery <- '{
   "select": {
     "?s": ["*"]
   },
@@ -134,7 +185,73 @@ simpleQuery <- '{
 }'
 
 queryInstance <- query(simpleQuery)
-Sys.sleep(1)
-sendQuery(queryInstance)
 
 ```
+
+This creates an "instance" of the query, which can then be signed or interacted with as follows:
+
+```
+signedQuery <- signQuery(queryInstance)
+
+qry <- getQueryText(signedQuery)
+sig <- getQuerySignature(signedQuery)
+
+```
+
+##### Sending the query
+
+Once configured the signed/unsigned query can be sent as follows:
+
+```
+sendQuery(queryInstance)
+
+// OR
+
+sendQuery(signedQuery)
+```
+
+#### Of note:
+
+For convenience two wrapper functions have also been implemented namely `Transact()` and `Query()`.
+These functions handle both the configuration and sending of any transactions or queries respectively,
+by calling the relevant functions, thereby not requiring a transaction/query to be configured
+before sending it to Fluree.
+
+Below follows an example:
+
+```
+exampleData <- '{
+      "insert": [
+          {
+              "@id": "ex:andrew",
+              "@type": [
+                  "ex:Yeti",
+                  "schema:Person"
+              ],
+              "schema:age": 35
+          }
+      ]
+  }'
+  
+Transact(config = conf, ledger = 'demo', exampleData, signTransaction = FALSE)
+
+exampleQuery <- '{
+  "select": {
+    "?s": ["*"]
+  },
+  "where": {
+      "@id": "?s",
+      "schema:name": "?name"
+  }
+}'
+
+Query(config = conf, ledger = 'demo', exampleQuery, signQuery = FALSE)
+
+```
+
+
+
+
+
+
+

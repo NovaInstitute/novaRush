@@ -1,4 +1,50 @@
 
+#' Configure and Send a Query
+#' 
+#' @description
+#' This convenience function configures and sends the passed query by calling
+#' the relevant functions.
+#' 
+#' @inheritParams query
+#' 
+#' @seealso [query()]
+#' @seealso [sendQuery()]
+#' 
+#' @examples
+#' # Existing data:
+#' #  [
+#' #    { "@id": "freddy", "name": "Freddy" },
+#' #    { "@id": "alice", "name": "Alice" }
+#' #  ]
+#' 
+#' exampleQuery <- '{
+#'      "select": {
+#'        "?s": ["*"]
+#'      },
+#'      "where": {
+#'        "@id": "?s",
+#'        "name": "?name"
+#'      }
+#' }'
+#' 
+#' Query(config = conf, ledger = 'demo', exampleQuery, signQuery = FALSE)
+#' 
+#' # OR ALTERNATIVELY
+#' 
+#' queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
+#' Query(config = conf, ledger = 'demo', queryList, signQuery = FALSE)
+#' 
+#' @importFrom jsonlite validate
+#' @importFrom jsonlite fromJSON
+#' 
+#' @export
+Query = function(...) {
+  q <- query(...)
+  sendQuery(q)
+}
+
+
+
 #' Query Configuration
 #' 
 #' @description
