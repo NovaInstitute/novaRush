@@ -8,6 +8,7 @@
 #' @importFrom httr POST
 #'
 #' @export
+
 FlureeInstance <- R6Class("FlureeInstance",
   public = list(
     #' @field config (`list()`)\cr
@@ -106,6 +107,12 @@ FlureeInstance <- R6Class("FlureeInstance",
       return(self)
     },
 
+#' testLedgers
+#'
+#' @returns
+#' @export
+#'
+#' @examples
     testLedgers = function() {
       qry <- '{
           "where": {
