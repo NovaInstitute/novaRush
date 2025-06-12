@@ -1,4 +1,46 @@
 
+#' Configure and Send a Transaction
+#' 
+#' @description
+#' This convenience function configures and sends the passed transaction 
+#' by calling the relevant functions.
+#' 
+#' @inheritParams transact
+#' 
+#' @seealso [transact()]
+#' @seealso [sendTransaction()]
+#' 
+#' @examples
+#' exampleData <- '{
+#'    "insert": [
+#'       {
+#'         "@id": "freddy",
+#'         "name": "Freddy"
+#'       },
+#'       {
+#'         "@id": "alice",
+#'         "name": "Alice"
+#'       }
+#'    ]
+#' }'
+#' 
+#' Transact(config = conf, ledger = 'demo', exampleData, signTransaction = FALSE)
+#' 
+#' # OR ALTERNATIVELY
+#' 
+#' dataList <- fromJSON(exampleData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
+#' Transact(config = conf, ledger = 'demo', dataList, signTransaction = FALSE)
+#' 
+#' @importFrom jsonlite validate
+#' @importFrom jsonlite fromJSON
+#' 
+#' @export
+Transact = function(...) {
+  t <- transact(...)
+  sendTransaction(t)
+}
+
+
 #' Transaction configuration
 #' 
 #' @description
@@ -7,6 +49,10 @@
 #' The function returns a list containing all the information necessary to interact
 #' with the Fluree instance via `sendTransaction()`.
 #' 
+#' @param config (`list()`)\cr
+#'   The configuration list for the Fluree instance.
+#' @param ledger (`character`)\cr
+#'   The name of the ledger to transact to.
 #' @param transaction (`list()`)\cr
 #'    The list representation of the transaction body to be sent.
 #'    Note alternatively the transaction can simply be passed as a JSON `character` string.
@@ -32,12 +78,12 @@
 #'    ]
 #' }'
 #' 
-#' transactionInstance <- transact(exampleData)
+#' transactionInstance <- transact(config = conf, ledger = 'demo', exampleData, signTransaction = FALSE)
 #' 
 #' # OR ALTERNATIVELY
 #' 
 #' dataList <- fromJSON(exampleData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
-#' transactionInstance <- transact(dataList)
+#' transactionInstance <- transact(config = conf, ledger = 'demo', dataList, signTransaction = FALSE)
 #' 
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
