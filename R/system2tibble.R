@@ -5,13 +5,14 @@
 #' @param chr Character. The output of a call to system
 #'
 #' @return tibble
+#' @import purrr
 #' @export
 #'
 #' @examples
-#' system2tibble(system("docker ps -a", intern = TRUE))
+#' system2tibble(system("docker ps", intern = TRUE))
 
  system2tibble <- function(chr = system("docker ps -a", intern = TRUE) ) {
   nms <- chr %>% tibble() %>% `[`(1,) %>% pull() %>% strsplit("[[:space:]]{2,20}") %>% unlist() %>% discard(~.x == "")
-  out <- chr %>% as.tibble() %>% `[`(-1,) %>% tidyr::separate(col = value, sep = "[[:space:]]{2,20}", into = nms)
+  out <- chr %>% as_tibble() %>% `[`(-1,) %>% tidyr::separate(col = value, sep = "[[:space:]]{2,20}", into = nms)
   out
    }
