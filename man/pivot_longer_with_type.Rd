@@ -7,21 +7,14 @@
 pivot_longer_with_type(data, names_to = "name", tripplenames = TRUE, ...)
 }
 \arguments{
-\item{data}{data.frame}
+\item{data}{A data frame to pivot longer. T}
 
-\item{names_to}{Character. What you want to call the attribute column. Default "name"}
+\item{names_to}{Character. The name of the column to store the variable names in. Default is "name".}
 
-\item{tripplenames}{Logical. Default TRUE. If TRUE, name columns subject, predicate, object and type}
+\item{tripplenames}{Logical. If TRUE, the resulting column names will be "subject", "predicate", "object", and "type". If FALSE, the column names will be "ID", "name", "value", and "type".}
 
-\item{...}{Passed to pivot_longer}
-}
-\value{
-tibble with four columns:"subject", "predicate", "object", "type"
+\item{...}{}
 }
 \description{
 pivot_longer_with_type
-}
-\examples{
-df1 = pivot_longer_with_type(iris)
-df1 \%>\% select(predicate, type) \%>\% distinct()
 }
