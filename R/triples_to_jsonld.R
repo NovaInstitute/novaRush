@@ -10,7 +10,7 @@
 #' @export
 #'
 #' @examples
-triples_to_jsonld <- function(triples, context_df, base_uri = "https://example.org/survey/") {
+triples_to_jsonld <- function(triples, context_df = make_surveycto_centext(), base_uri = "https://example.org/survey/") {
 
   library(jsonlite)
 
@@ -69,7 +69,7 @@ triples_to_jsonld <- function(triples, context_df, base_uri = "https://example.o
   }
 
   # Convert each subject to JSON-LD object
-  jsonld_objects <- map(grouped_triples$properties, function(props) {
+  jsonld_objects <- purrr::map(grouped_triples$properties, function(props) {
     obj <- list()
 
     for (i in 1:nrow(props)) {
@@ -168,8 +168,8 @@ demo_mapping <- function(formdef) {
 }
 
 # Standalone function to convert triples to JSON-LD
-cto_to_jsonld <- function(formdef, base_uri = "https://example.org/survey/") {
-  triples <- map_cto_to_rdf(formdef, base_uri)
+cto_to_jsonld <- function(formdef, base_uri = "https://example.org/survey/", instrument = "SurveyCTO_Form") {
+  triples <- map_cto_to_rdf(formdef, base_uri, instrument )
   jsonld_obj <- triples_to_jsonld(triples, surveycto_context, base_uri)
   return(jsonld_obj)
 }

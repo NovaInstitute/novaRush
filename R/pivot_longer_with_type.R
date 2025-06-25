@@ -18,7 +18,7 @@ pivot_longer_with_type <- function(data, names_to = "name", tripplenames = TRUE,
 
 # Get original data types
 types <- sapply(data, class)
-dftypes <- dplyr::tibble(name = names(types), type = types)
+dftypes <- dplyr::tibble(name = names(types), type = types) %>% mutate(type = map_chr(type, ~.[[1]]))
 names(dftypes)[1] <- names_to
 
 # Create ID as hash of content
