@@ -3,8 +3,6 @@
 #create database
 createDb("authority/test")
 
-
-
 colNames <- c("mpg", "cyl", "disp")
 # create schema
 schemaList <- lapply(colNames, function(x) {
@@ -18,8 +16,6 @@ schemaList <- lapply(colNames, function(x) {
 
 #create predicate
 createPredicate("rdataset/mtcars", schemaList)
-
-
 
 #insert data
 insertData("rdataset/mtcars", dataList = mtcars[, colNames])
