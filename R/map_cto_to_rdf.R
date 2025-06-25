@@ -24,7 +24,7 @@ map_cto_to_rdf <- function(formdef,
   }
 
   # Initialize triples dataframe
-  triples <- tibble(
+  triples <- tibble::tibble(
     subject = character(),
     predicate = character(),
     object = character(),
@@ -35,13 +35,13 @@ map_cto_to_rdf <- function(formdef,
   survey_uri <- paste0(base_uri, instrument)
 
   # Add survey-level triples
-  survey_triples <- tribble(
+  survey_triples <- tibble::tribble(
     ~subject, ~predicate, ~object, ~object_type,
     survey_uri, "rdf:type", "survey:Survey", "uri",
     survey_uri, "rdfs:label", "SurveyCTO Form", "literal"
   )
 
-  triples <- bind_rows(triples, survey_triples)
+  triples <- dplyr::bind_rows(triples, survey_triples)
 
   # Process each field in the form definition
   for (i in 1:nrow(formdef)) {
@@ -86,7 +86,7 @@ map_cto_to_rdf <- function(formdef,
     }
 
     # Basic question triples
-    question_triples <- tribble(
+    question_triples <- tibble::tribble(
       ~subject, ~predicate, ~object, ~object_type,
       survey_uri, "survey:hasQuestion", question_uri, "uri",
       question_uri, "rdf:type", field_rdf_type, "uri",
@@ -112,7 +112,7 @@ map_cto_to_rdf <- function(formdef,
     if (!is.na(field$group) && field$group != "") {
       group_uri <- paste0(base_uri, "group/", create_uri_safe(field$group))
 
-      group_triples <- tribble(
+      group_triples <- tibble::tribble(
         ~subject, ~predicate, ~object, ~object_type,
         group_uri, "rdf:type", "survey:QuestionGroup", "uri",
         group_uri, "rdfs:label", field$group, "literal",
@@ -148,7 +148,7 @@ map_cto_to_rdf <- function(formdef,
 
       # Add triples to link the question to its collection of options
       # and define the collection itself
-      collection_triples <- tribble(
+      collection_triples <- tibble::tribble(
         ~subject, ~predicate, ~object, ~object_type,
         question_uri, "survey:hasAvailableOptions", options_collection_uri, "uri", # New property to link question to its options collection
         options_collection_uri, "rdf:type", "skos:Collection", "uri",
@@ -161,7 +161,7 @@ map_cto_to_rdf <- function(formdef,
       for (j in 1:nrow(choices_df)) {
         choice_uri <- paste0(question_uri, "/choice/", create_uri_safe(choices_df$choice[j]))
 
-        choice_triples <- tribble(
+        choice_triples <- tibble::tribble(
           ~subject, ~predicate, ~object, ~object_type,
           choice_uri, "rdf:type", "survey:ClosedAnswer", "uri", # Changed from survey:ResponseOption to existing survey:ClosedAnswer
           choice_uri, "survey:hasValue", choices_df$choice[j], "literal", # Keep existing survey:hasValue
@@ -237,8 +237,8 @@ export_turtle <- function(triples, context_df = make_surveycto_centext()) {
 
   # Create prefix declarations
   prefixes <- context_df %>%
-    mutate(prefix_line = paste0("@prefix ", prefix, ": <", namespace, "> .")) %>%
-    pull(prefix_line)
+    dplyr::mutate(prefix_line = paste0("@prefix ", prefix, ": <", namespace, "> .")) %>%
+    dplyr::pull(prefix_line)
 
   # Add common prefixes not in context
   additional_prefixes <- c(
