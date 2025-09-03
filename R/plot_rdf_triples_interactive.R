@@ -11,7 +11,7 @@
 #' @examples
 #' @examples
 #' kia_adapt <- novaCTO::readCTO("KiA_adaptation_ACTIVE")
-#' surveycto_context <- make_surveycto_centext()
+#' surveycto_context <- make_surveycto_context()
 #' formdef <- kia_adapt$fromschema$kia_adaptation
 #' fromRDF <- map_cto_to_rdf(formdef, base_uri = "https://novapc.surveycto.com/", instrument = "KiA_adaptation_ACTIVE")
 #' p1 <- plot_rdf_triples_interactive(fromRDF, surveycto_context)
@@ -29,24 +29,6 @@ plot_rdf_triples_interactive <- function(triples_df, context_map) {
   library(visNetwork)
   library(purrr)
   library(tibble)
-
-  # --- 2. Helper Function to Apply Prefixes and Clean URIs ---
-  # This function shortens full URIs to more readable prefixed names or base names.
-  apply_prefixes_for_display <- function(uri, context_map) {
-    for (i in 1:nrow(context_map)) {
-      prefix <- context_map$prefix[i]
-      namespace <- context_map$namespace[i]
-      if (startsWith(uri, namespace)) {
-        return(paste0(prefix, ":", substr(uri, nchar(namespace) + 1, nchar(uri))))
-      }
-    }
-    # For SurveyCTO specific URIs, get the last part after the last slash
-    if (startsWith(uri, "https://novapc.surveycto.com/")) {
-      return(basename(uri))
-    }
-    return(uri) # Return as-is if no specific prefixing logic applies
-  }
-
   # --- 3. Prepare Data for `visNetwork` ---
 
   # Extract node labels (rdfs:label)
@@ -138,3 +120,22 @@ plot_rdf_triples_interactive <- function(triples_df, context_map) {
 
   return(visNetwork_plot)
 }
+
+
+# --- 2. Helper Function to Apply Prefixes and Clean URIs ---
+# This function shortens full URIs to more readable prefixed names or base names.
+apply_prefixes_for_display <- function(uri, context_map) {
+  for (i in 1:nrow(context_map)) {
+    prefix <- context_map$prefix[i]
+    namespace <- context_map$namespace[i]
+    if (startsWith(uri, namespace)) {
+      return(paste0(prefix, ":", substr(uri, nchar(namespace) + 1, nchar(uri))))
+    }
+  }
+  # For SurveyCTO specific URIs, get the last part after the last slash
+  if (startsWith(uri, "https://novapc.surveycto.com/")) {
+    return(basename(uri))
+  }
+  return(uri) # Return as-is if no specific prefixing logic applies
+}
+
