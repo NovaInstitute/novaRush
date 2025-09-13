@@ -11,11 +11,8 @@ identify_nodes(node_spec, data)
 Each named list should have the following fields:
 
 a) \code{type}: \code{rdf:type} for each node according to nova-o
-
 b) \code{id_col}: the variable that can be used as ID for the node.
-
 c) \code{comb_id_col}: if b) is NULL, which combination of columns can be used to create an ID for the node. The specified columns are hashed to create the ID.
-
 d) \code{const_id}: if both b) and c) are null, the constant identifier for this node. For example, the identifier for the single survey of which all responses form part.
 
 Exactly one of b), c) or d) must be non-NULL}

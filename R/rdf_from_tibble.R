@@ -30,8 +30,8 @@ rdf_from_df3 <- function(df,
     df[[predicate]] <- paste0(vocab, df[[predicate]])
   }
 
-  rdf1 <- rdf()
-  for(i in 1:nrow(df)) rdf1 %>% rdf_add(object = df[i,object], predicate = df[i,predicate],subject = df[i,subject])
+  rdf1 <- rdflib::rdf()
+  for(i in 1:nrow(df)) rdf1 %>% rdflib::rdf_add(object = df[i,object], predicate = df[i,predicate],subject = df[i,subject])
   rdf1
 }
 

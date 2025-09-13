@@ -9,11 +9,13 @@
 #' @import dplyr
 #' @import purrr
 #' @import tibble
+#' @export
 #' @examples
-#' kia_adapt <- novaCTO::readCTO("KiA_adaptation_ACTIVE")
+#' srv <- "KiA_adaptation_ACTIVE"
+#' kia_adapt <- novaCTO::readCTO(srv)
 #' formdef <- kia_adapt$fromschema$kia_adaptation
-#' fromRDF <- map_cto_to_rdf(formdef, base_uri = "https://novapc.surveycto.com/", instrument = "KiA_adaptation_ACTIVE")
-#' js <- triples_to_jsonld(fromRDF, surveycto_context)
+#' fromRDF <- map_cto_to_rdf(formdef, base_uri = glue::glue("https://novapc.surveycto.com/{srv}/"), instrument = "KiA_adaptation_ACTIVE")
+#' js <- triples_to_jsonld(fromRDF, make_surveycto_centext())
 
 map_cto_to_rdf <- function(formdef,
                            base_uri = "https://novapc.surveycto.com/",
@@ -49,10 +51,10 @@ map_cto_to_rdf <- function(formdef,
     #cat("\n", field[[1]], "\n")
 
     # Create question URI
-    question_uri <- paste0(base_uri, "question/", create_uri_safe(field$name))
+    question_uri <- paste0(survey_uri, "/question/", create_uri_safe(field$name))
 
     # Map CTO type to semantic type
-    semantic_type <- cto_semantic_mapping %>%
+    semantic_type <- make_cto_semantic_mapping() %>%
       filter(CTO_label == field$type) %>%
       pull(Semantic_label)
 

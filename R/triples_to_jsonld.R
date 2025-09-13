@@ -1,6 +1,7 @@
-# Function to convert RDF triples to JSON-LD
+
 #' triples_to_jsonld
-#'
+#' @description
+#' Function to convert RDF triples to JSON-LD
 #' @param triples data.frame containing RDF triples with columns `subject`, `predicate`, `object`, and `object_type`.
 #' resulting from the `map_cto_to_rdf` function.
 #' @param context_df  data.frame containing the context for JSON-LD conversion. Should have columns `prefix` and `namespace`.
@@ -10,9 +11,21 @@
 #' @export
 #'
 #' @examples
-triples_to_jsonld <- function(triples, context_df = make_surveycto_centext(), base_uri = "https://example.org/survey/") {
+#' srv <- "KiA_adaptation_ACTIVE"
+#' kia_adapt <- novaCTO::readCTO(srv)
+#' formdef <- kia_adapt$fromschema$kia_adaptation
+#' fromRDF <- map_cto_to_rdf(formdef, base_uri = glue::glue("https://novapc.surveycto.com/{srv}/"), instrument = "KiA_adaptation_ACTIVE")
+#' js <- triples_to_jsonld(fromRDF, make_surveycto_centext())
+#'
 
-  library(jsonlite)
+triples_to_jsonld <- function(triples,
+                              context_df = NULL,
+                              base_uri = "https://example.org/survey/") {
+
+  #library(jsonlite)
+  if (is.null(context_df)) {
+    context_df <- make_surveycto_centext()
+  }
 
   # Create context object from context_df
   context <- as.list(setNames(context_df$namespace, context_df$prefix))
@@ -29,88 +42,7 @@ triples_to_jsonld <- function(triples, context_df = make_surveycto_centext(), ba
       .groups = "drop"
     )
 
-  # Function to convert predicate to short form
-  shorten_predicate <- function(pred) {
-    for (i in 1:nrow(context_df)) {
-      full_ns <- context_df$namespace[i]
-      prefix <- context_df$prefix[i]
-      if (startsWith(pred, full_ns)) {
-        return(paste0(prefix, ":", gsub(full_ns, "", pred)))
-      }
-    }
-
-    # Handle common RDF predicates
-    if (pred == "rdf:type" || pred == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type") {
-      return("@type")
-    }
-    if (startsWith(pred, "http://www.w3.org/1999/02/22-rdf-syntax-ns#")) {
-      return(paste0("rdf:", gsub("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "", pred)))
-    }
-
-    return(pred)
-  }
-
-  # Function to convert object based on type
-  format_object <- function(obj, obj_type) {
-    if (obj_type == "uri") {
-      # Try to shorten URI using context
-      for (i in 1:nrow(context_df)) {
-        full_ns <- context_df$namespace[i]
-        prefix <- context_df$prefix[i]
-        if (startsWith(obj, full_ns)) {
-          return(paste0(prefix, ":", gsub(full_ns, "", obj)))
-        }
-      }
-      # If not shortened, return as @id
-      return(list("@id" = obj))
-    } else {
-      return(obj)
-    }
-  }
-
-  # Convert each subject to JSON-LD object
-  jsonld_objects <- purrr::map(grouped_triples$properties, function(props) {
-    obj <- list()
-
-    for (i in 1:nrow(props)) {
-      pred <- shorten_predicate(props$predicate[i])
-      value <- format_object(props$object[i], props$object_type[i])
-
-      # Handle @type specially
-      if (pred == "@type") {
-        if (is.list(value) && !is.null(value[["@id"]])) {
-          value <- value[["@id"]]
-        }
-        # Try to shorten type URIs
-        for (j in 1:nrow(context_df)) {
-          full_ns <- context_df$namespace[j]
-          prefix <- context_df$prefix[j]
-          if (startsWith(value, full_ns)) {
-            value <- paste0(prefix, ":", gsub(full_ns, "", value))
-            break
-          }
-        }
-      }
-
-      # Add to object, handling multiple values
-      if (pred %in% names(obj)) {
-        if (!is.list(obj[[pred]]) || is.null(names(obj[[pred]]))) {
-          obj[[pred]] <- list(obj[[pred]], value)
-        } else {
-          obj[[pred]] <- append(obj[[pred]], list(value))
-        }
-      } else {
-        obj[[pred]] <- value
-      }
-    }
-
-    return(obj)
-  })
-
-  # Add @id to each object
-  for (i in 1:length(jsonld_objects)) {
-    jsonld_objects[[i]][["@id"]] <- grouped_triples$subject[i]
-  }
+  jsonld_objects <- purrr::map2(grouped_triples$properties, grouped_triples$subject, ~properties2kv(dfprops = ..1, id = ..2))
 
   # Create final JSON-LD document
   jsonld_doc <- list(
@@ -120,6 +52,9 @@ triples_to_jsonld <- function(triples, context_df = make_surveycto_centext(), ba
 
   return(jsonld_doc)
 }
+
+# ___________________________________________________________
+# Helper functions
 
 # Function to export JSON-LD as pretty JSON string
 export_jsonld <- function(jsonld_obj) {
@@ -141,6 +76,8 @@ demo_mapping <- function(formdef) {
 
   cat("\n\nGenerating JSON-LD...\n")
 
+  surveycto_context <- make_surveycto_centext()
+
   # Convert to JSON-LD
   jsonld_obj <- triples_to_jsonld(triples, surveycto_context)
   jsonld_string <- export_jsonld(jsonld_obj)
@@ -150,6 +87,8 @@ demo_mapping <- function(formdef) {
   if (nchar(jsonld_string) > 1000) {
     cat("\n... (truncated)")
   }
+
+  surveycto_context <- make_surveycto_centext()
 
   cat("\n\nTurtle format output:\n")
   turtle_output <- export_turtle(triples, surveycto_context)
@@ -167,9 +106,4 @@ demo_mapping <- function(formdef) {
   ))
 }
 
-# Standalone function to convert triples to JSON-LD
-cto_to_jsonld <- function(formdef, base_uri = "https://example.org/survey/", instrument = "SurveyCTO_Form") {
-  triples <- map_cto_to_rdf(formdef, base_uri, instrument )
-  jsonld_obj <- triples_to_jsonld(triples, surveycto_context, base_uri)
-  return(jsonld_obj)
-}
+

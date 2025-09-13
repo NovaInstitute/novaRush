@@ -1,4 +1,4 @@
-# Function to create URI-safe identifiers
+# create_uri_safe
 #' @title
 #' create_uri_safe
 #' @description

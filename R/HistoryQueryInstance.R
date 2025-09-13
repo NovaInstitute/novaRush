@@ -8,7 +8,7 @@
 #' @importFrom httr POST
 #'
 #' @export
-HistoryQueryInstance <- R6Class("HistoryQueryInstance",
+HistoryQueryInstance <- R6::R6Class("HistoryQueryInstance",
   public = list(
     #' @field query (`list()`)\cr
     #' The list representation of a history query to be sent to the Fluree instance.

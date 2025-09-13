@@ -14,7 +14,7 @@ Take the dataframe of tripples made by map_cto_to_rdf and create a graph.
 }
 \examples{
 kia_adapt <- novaCTO::readCTO("KiA_adaptation_ACTIVE")
-surveycto_context <- make_surveycto_centext()
+surveycto_context <- make_surveycto_context()
 formdef <- kia_adapt$fromschema$kia_adaptation
 fromRDF <- map_cto_to_rdf(formdef, base_uri = "https://novapc.surveycto.com/", instrument = "KiA_adaptation_ACTIVE")
 p1 <- plot_rdf_triples_interactive(fromRDF, surveycto_context)

@@ -8,7 +8,7 @@
 #' @importFrom httr POST
 #'
 #' @export
-QueryInstance <- R6Class("QueryInstance",
+QueryInstance <- R6::R6Class("QueryInstance",
   public = list(
     #' @field query (`list()`)\cr
     #' The list representation of a query to be sent to the Fluree instance.

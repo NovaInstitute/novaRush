@@ -2,7 +2,7 @@
 % Please edit documentation in R/createSPO.R
 \name{addObject}
 \alias{addObject}
-\title{Add SPO columns with correct object}
+\title{addObject}
 \usage{
 addObject(long_data, pred_tb)
 }
@@ -17,6 +17,7 @@ You can use \code{\link[=mapPredicates]{mapPredicates()}} and \code{\link[=predi
 \link{data.frame} \code{long_data} with the correct object according to the domain of the predicate. Values are only added where the \code{object} column in \code{long_data} is empty.
 }
 \description{
+Add SPO columns with correct object
 Adjust dataframe to have correct object according to domain and range specifications in \code{pred_tb}. Helper function used in \code{\link[=pivotLongerSPO]{pivotLongerSPO()}}.
 }
 \seealso{

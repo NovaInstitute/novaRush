@@ -112,6 +112,7 @@ The new configuration parameters to be merged with the existing set.}
 }
 \subsection{Returns}{
 \link{FlureeInstance}.
+testLedgers
 }
 }
 \if{html}{\out{<hr>}}

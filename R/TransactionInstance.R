@@ -8,7 +8,7 @@
 #' @importFrom httr POST
 #'
 #' @export
-TransactionInstance <- R6Class("TransactionInstance",
+TransactionInstance <- R6::R6Class("TransactionInstance",
   public = list(
     #' @field transaction (`list()`)\cr
     #' The list representation of a transaction to be sent to the Fluree instance.

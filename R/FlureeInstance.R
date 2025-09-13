@@ -9,7 +9,7 @@
 #'
 #' @export
 
-FlureeInstance <- R6Class("FlureeInstance",
+FlureeInstance <-  R6::R6Class("FlureeInstance",
   public = list(
     #' @field config (`list()`)\cr
     #' Configuration parameters of the instance.

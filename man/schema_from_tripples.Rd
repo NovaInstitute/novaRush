@@ -4,7 +4,12 @@
 \alias{schema_from_tripples}
 \title{Create a schema body from tripples}
 \usage{
-schema_from_tripples(df = NULL, name = NULL)
+schema_from_tripples(
+  df = NULL,
+  name = NULL,
+  typename = "object_type",
+  predicate_name = "predicate"
+)
 }
 \arguments{
 \item{df}{A data frame containing the tripples.}
@@ -25,4 +30,5 @@ schema_from_tripples
 \examples{
 df1 <- pivot_longer_with_type(iris)
 df_schema <- schema_from_tripples(df = df1, name = "iris")
+jsonlite::toJSON(df_schema, auto_unbox = TRUE, pretty = TRUE)
 }
