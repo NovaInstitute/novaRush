@@ -7,15 +7,15 @@
 getPredicateInfo(ontology_path, pred_vn, id_tb)
 }
 \arguments{
-\item{ontology_path}{\link{string} Path to local ontology file, preferably in RDF/XML syntax (.rdf extension)}
+\item{ontology_path}{\code{character} Path to local ontology file, preferably in RDF/XML syntax (.rdf extension)}
 
-\item{pred_vn}{\link{list} Named list where the keys are the predicate IRIs and the values are variable names
+\item{pred_vn}{\code{list} Named list where the keys are the predicate IRIs and the values are variable names
 (NA if no corresponding variable name in your data exists.)}
 
-\item{id_tb}{\link{tibble} Class specifications for your data. You can use \code{\link[=identify_nodes]{identify_nodes()}} to generate this tibble.}
+\item{id_tb}{\code{tibble} Class specifications for your data. You can use \code{\link[=identify_nodes]{identify_nodes()}} to generate this tibble.}
 }
 \value{
-\link{list} Named list with two entries: \code{mapped} and \code{exceptions}
+\code{list} Named list with two entries: \code{mapped} and \code{exceptions}
 }
 \description{
 Given a list of predicate IRIs and the variable names they correspond to (possibly NA if there is no corresponding variable),

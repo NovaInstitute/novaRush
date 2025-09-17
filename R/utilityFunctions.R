@@ -51,6 +51,8 @@ stopDockerContainer <- function(name = NULL) {
   system(cmd)
 }
 
+#' Constructs arguments for httr::POST
+#' 
 #' @description
 #' This function is a generic function to construct the parameters needed by
 #' `httr` to execute a `POST()` request of a transaction or query.
@@ -110,7 +112,8 @@ deep_merge <- function(x, y) {
   x
 }
 
-
+#' Null-coalescing operator
+#' 
 #' @description
 #' This helper function provides a null-coalescing operator, which returns 
 #' the first non-`NULL` value between two arguments. It is useful for 

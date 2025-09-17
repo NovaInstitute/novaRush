@@ -27,16 +27,16 @@
 #'  d) Maps `data` to SPO format using the above class specifications and predicates. 
 #'
 #' @param data [data.frame] The survey response data
-#' @param instanceid [string] Column in `data` that contains ID for interview
-#' @param starttime [string] Column in `data` that contains starting time for interview
-#' @param endtime [string] Column in `data` that contains ending time for interview
-#' @param devicephonenum  [string] Column in `data` that contains phone number for the device used to conduct the survey
-#' @param device_info [string] Column in `data` that contains information on the device used to conduct the interview
-#' @param duration [string] Column in `data` that contains duration of the interview
-#' @param geo_location [string] Column in `data` that contains location at which interview was conducted
-#' @param village [string] Column in `data` that contains the village respondent lives in
-#' @param standnumber [string] Column in `data` that contains the respondent's stand number
-#' @param survey [string] Identifier for the survey these responses form part of.
+#' @param instanceid `character` Column in `data` that contains ID for interview
+#' @param starttime `character` Column in `data` that contains starting time for interview
+#' @param endtime `character` Column in `data` that contains ending time for interview
+#' @param devicephonenum  `character` Column in `data` that contains phone number for the device used to conduct the survey
+#' @param device_info `character` Column in `data` that contains information on the device used to conduct the interview
+#' @param duration `character` Column in `data` that contains duration of the interview
+#' @param geo_location `character` Column in `data` that contains location at which interview was conducted
+#' @param village `character` Column in `data` that contains the village respondent lives in
+#' @param standnumber `character` Column in `data` that contains the respondent's stand number
+#' @param survey `character` Identifier for the survey these responses form part of.
 #'
 #' @return [data.frame] Containing columns `subject`, `predicate`, `object`. This dataframe can be parsed to triples.
 #' @export

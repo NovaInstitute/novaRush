@@ -7,7 +7,7 @@
 createBody(ledger = NULL, data = NULL, context = NULL)
 }
 \arguments{
-\item{ledger}{\link{string} The name of the ledger into which to transact the data}
+\item{ledger}{\code{character} The name of the ledger into which to transact the data}
 
 \item{data}{\link{data.frame} Containing columns \code{subject}, \code{predicate}, \code{object}}
 

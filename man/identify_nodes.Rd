@@ -7,7 +7,7 @@
 identify_nodes(node_spec, data)
 }
 \arguments{
-\item{node_spec}{\link{list} Node specification as a list of named lists. There should be an entry for each class of entity implied by the dataframe.
+\item{node_spec}{\code{list} Node specification as a list of named lists. There should be an entry for each class of entity implied by the dataframe.
 Each named list should have the following fields:
 
 a) \code{type}: \code{rdf:type} for each node according to nova-o
@@ -20,10 +20,10 @@ d) \code{const_id}: if both b) and c) are null, the constant identifier for this
 
 Exactly one of b), c) or d) must be non-NULL}
 
-\item{data}{\link{tibble}}
+\item{data}{\code{tibble}}
 }
 \value{
-\link{list} \code{data} with ID columns appended; a tibble containing the node specifications from \code{node_spec} + the variable name used to identify each node (i.e. the subject in each triple)
+\code{list} \code{data} with ID columns appended; a tibble containing the node specifications from \code{node_spec} + the variable name used to identify each node (i.e. the subject in each triple)
 }
 \description{
 This function creates node specifications implied by a dataframe according to a specified schema and the Nova ontology.
