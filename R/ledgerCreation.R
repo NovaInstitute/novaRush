@@ -18,7 +18,6 @@
 #' @importFrom httr add_headers
 #' @importFrom httr content
 #' @importFrom httr http_error
-#' @importFrom flureeCrypto serialize_jws
 #' 
 #' @export
 createLedger <- function(config = NULL, ledgerName = NULL, transaction = NULL, signMessage = FALSE, privateKey = NULL) {

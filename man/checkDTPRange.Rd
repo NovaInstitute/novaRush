@@ -7,14 +7,14 @@
 checkDTPRange(ran_res, rdf_data, vn_res)
 }
 \arguments{
-\item{ran_res}{\link{tibble} Containing columns: \code{predicate} and \code{range}. The result of a SPARQL query to find the ranges of all predicates in a list.}
+\item{ran_res}{\code{tibble} Containing columns: \code{predicate} and \code{range}. The result of a SPARQL query to find the ranges of all predicates in a list.}
 
-\item{rdf_data}{\link{rdf} Parsed ontology data}
+\item{rdf_data}{\code{rdf} Parsed ontology data}
 
-\item{vn_res}{\link{tibble} Containing two columns: \code{predicate} and \code{varname} (possibly NA).}
+\item{vn_res}{\code{tibble} Containing two columns: \code{predicate} and \code{varname} (possibly NA).}
 }
 \value{
-\link{tibble} Datatype properties that have (at least) a range specified
+\code{tibble} Datatype properties that have (at least) a range specified
 }
 \description{
 Helper function in \code{\link[=getPredicateInfo]{getPredicateInfo()}}

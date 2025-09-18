@@ -7,16 +7,16 @@
 mapPredicates(varnames, predIRIs, domains, ranges)
 }
 \arguments{
-\item{varnames}{\link{character} Column names corresponding to predicates.}
+\item{varnames}{\code{character} Column names corresponding to predicates.}
 
-\item{domains}{\link{character} Complete domain IRIs.}
+\item{domains}{\code{character} Complete domain IRIs.}
 
-\item{ranges}{\link{character} Complete range IRIs.}
+\item{ranges}{\code{character} Complete range IRIs.}
 
-\item{predicates}{\link{character} Complete predicate IRIs.}
+\item{predicates}{\code{character} Complete predicate IRIs.}
 }
 \value{
-\link{tibble} The predicate mappings as a tibble with columns:
+\code{tibble} The predicate mappings as a tibble with columns:
 \code{predicate}, \verb{http://www.w3.org/2000/01/rdf-schema#domain},
 \verb{http://www.w3.org/2000/01/rdf-schema#range}, and \code{varname} (column name corresponding to this predicate mapping).
 }

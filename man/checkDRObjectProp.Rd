@@ -7,19 +7,19 @@
 checkDRObjectProp(rdf_data, pred_vn, dom_res, ran_res)
 }
 \arguments{
-\item{rdf_data}{\link{rdf} Parsed ontology}
+\item{rdf_data}{\code{rdf} Parsed ontology}
 
-\item{pred_vn}{\link{list} Named list where the keys are the predicate IRIs and the values are variable names
+\item{pred_vn}{\code{list} Named list where the keys are the predicate IRIs and the values are variable names
 (NA if no corresponding variable name in your data exists.)}
 
-\item{dom_res}{\link{tibble} Containing columns: \code{predicate} and \code{domain}.
+\item{dom_res}{\code{tibble} Containing columns: \code{predicate} and \code{domain}.
 The result of a SPARQL query to find the domains of all predicates in the list implied by \code{pred_vn}.}
 
-\item{ran_res}{\link{tibble} Containing columns: \code{predicate} and \code{range}.
+\item{ran_res}{\code{tibble} Containing columns: \code{predicate} and \code{range}.
 The result of a SPARQL query to find the ranges of all predicates in the list implied by \code{pred_vn}.}
 }
 \value{
-\link{tibble} Object properties in \code{pred_vn} for which no domain and/or range could be specified by querying the ontology in \code{rdf_data}.
+\code{tibble} Object properties in \code{pred_vn} for which no domain and/or range could be specified by querying the ontology in \code{rdf_data}.
 }
 \description{
 Helper function in \code{\link[=getPredicateInfo]{getPredicateInfo()}}.

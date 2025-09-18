@@ -7,18 +7,18 @@
 checkVNDataProp(rdf_data, vn_res, dom_res, ran_res)
 }
 \arguments{
-\item{rdf_data}{\link{rdf} Parsed ontology data}
+\item{rdf_data}{\code{rdf} Parsed ontology data}
 
-\item{vn_res}{\link{tibble} Containing two columns: \code{predicate} and \code{varname} (possibly NA).}
+\item{vn_res}{\code{tibble} Containing two columns: \code{predicate} and \code{varname} (possibly NA).}
 
-\item{dom_res}{\link{tibble} Containing columns: \code{predicate} and \code{domain}.
+\item{dom_res}{\code{tibble} Containing columns: \code{predicate} and \code{domain}.
 The result of a SPARQL query to find the domains of all predicates in the list implied by \code{pred_vn}.}
 
-\item{ran_res}{\link{tibble} Containing columns: \code{predicate} and \code{range}.
+\item{ran_res}{\code{tibble} Containing columns: \code{predicate} and \code{range}.
 The result of a SPARQL query to find the ranges of all predicates in the list implied by \code{pred_vn}.}
 }
 \value{
-\link{tibble} Datatype properties in \code{pred_vn} for which no corresponding variable name was specified.
+\code{tibble} Datatype properties in \code{pred_vn} for which no corresponding variable name was specified.
 }
 \description{
 Helper function in \code{\link[=getPredicateInfo]{getPredicateInfo()}}.

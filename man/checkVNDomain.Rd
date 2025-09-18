@@ -7,14 +7,14 @@
 checkVNDomain(dom_res, ran_res, vn_res)
 }
 \arguments{
-\item{dom_res}{\link{tibble} Containing columns: \code{predicate} and \code{domain}. The result of a SPARQL query to find the domains of all predicates in a list.}
+\item{dom_res}{\code{tibble} Containing columns: \code{predicate} and \code{domain}. The result of a SPARQL query to find the domains of all predicates in a list.}
 
-\item{ran_res}{\link{tibble} Containing columns: \code{predicate} and \code{range}. The result of a SPARQL query to find the ranges of all predicates in a list.}
+\item{ran_res}{\code{tibble} Containing columns: \code{predicate} and \code{range}. The result of a SPARQL query to find the ranges of all predicates in a list.}
 
-\item{vn_res}{\link{tibble} Containing two columns: \code{predicate} and \code{varname} (possibly NA).}
+\item{vn_res}{\code{tibble} Containing two columns: \code{predicate} and \code{varname} (possibly NA).}
 }
 \value{
-\link{tibble} Predicates for which no domain could be specified from \code{dom_res} and no variable name was supplied.
+\code{tibble} Predicates for which no domain could be specified from \code{dom_res} and no variable name was supplied.
 }
 \description{
 Helper function for \code{\link[=getPredicateInfo]{getPredicateInfo()}}.

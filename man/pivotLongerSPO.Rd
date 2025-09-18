@@ -9,7 +9,7 @@ pivotLongerSPO(data, pred_tb)
 \arguments{
 \item{data}{\link{data.frame}}
 
-\item{pred_tb}{\link{tibble} A tibble containing columns \code{predicate} (which contains the prefixed IRI), \code{rdfs:domain}, \code{rdfs:range} and \code{varname} (which contains the name of the variable in data corresponding to this predicate)
+\item{pred_tb}{\code{tibble} A tibble containing columns \code{predicate} (which contains the prefixed IRI), \code{rdfs:domain}, \code{rdfs:range} and \code{varname} (which contains the name of the variable in data corresponding to this predicate)
 You can use \code{\link[=mapPredicates]{mapPredicates()}} and \code{\link[=predicateTibble]{predicateTibble()}} to generate this tibble.}
 }
 \value{

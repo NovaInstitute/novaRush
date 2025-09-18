@@ -7,14 +7,14 @@
 replaceSubclass(rdf_data, ex_classes, id_tb)
 }
 \arguments{
-\item{rdf_data}{\link{rdf} Parsed ontology data}
+\item{rdf_data}{\code{rdf} Parsed ontology data}
 
-\item{ex_classes}{\link{tibble} Generated with \code{\link[=excludedClasses]{excludedClasses()}}}
+\item{ex_classes}{\code{tibble} Generated with \code{\link[=excludedClasses]{excludedClasses()}}}
 
-\item{id_tb}{\link{tibble} Class specifications for your data. You can use \code{\link[=identify_nodes]{identify_nodes()}} to generate this tibble.}
+\item{id_tb}{\code{tibble} Class specifications for your data. You can use \code{\link[=identify_nodes]{identify_nodes()}} to generate this tibble.}
 }
 \value{
-\link{tibble} Containing columns \code{new_domain} and \code{new_range} (possibly NA)
+\code{tibble} Containing columns \code{new_domain} and \code{new_range} (possibly NA)
 }
 \description{
 Helper function for \code{\link[=getPredicateInfo]{getPredicateInfo()}}

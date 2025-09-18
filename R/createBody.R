@@ -4,7 +4,7 @@
 #' Currently only supports insertion of data. 
 #' TODO: expand to accommodate queries
 #'
-#' @param ledger [string] The name of the ledger into which to transact the data
+#' @param ledger `character` The name of the ledger into which to transact the data
 #' @param data [data.frame] Containing columns `subject`, `predicate`, `object`
 #' @param context [data.frame] Containing columns `prefix`, `IRI`
 #'

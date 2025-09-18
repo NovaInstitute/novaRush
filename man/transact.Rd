@@ -9,7 +9,8 @@ transact(
   ledger = NULL,
   transaction,
   signTransaction = NULL,
-  privateKey = NULL
+  privateKey = NULL,
+  apiKey = NULL
 )
 }
 \arguments{
