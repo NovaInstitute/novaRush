@@ -34,7 +34,7 @@ pred_tb <- tibble(
 small_data <- tibble(
   starttime = c("2024-02-27 14:18:19", "2024-02-27 09:40:44"),
   endtime = c("2024-02-27 14:41:43", "2024-02-27 09:59:54"),
-  Interview_ID = c("uuid:fe690b51-ee58-4294-b7b6-9f941b47b741", 
+  Interview_ID = c("uuid:fe690b51-ee58-4294-b7b6-9f941b47b741",
                    "uuid:0aa90b5e-14a7-46bc-a4cd-dc7306f03d61")
 )
 

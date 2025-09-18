@@ -30,9 +30,9 @@ system("docker run -d --name fluree-server --network fluree-network
        -e fdb-api-port=8090
        -p 8095:8090 fluree/server:latest ")
 system("docker ps -a")
-system("docker start fb2c5f749966")
-k <- system("docker exec -t --user root fb2c5f749966 cat /var/lib/fluree/default-private-key.txt", intern = TRUE) # /var/lib/fluree/
-# Go into the UI and retrieve the AithId
+# system("docker start fb2c5f749966")
+k <- system("docker exec -t --user root a9e85d62b66d cat /var/lib/fluree/default-private-key.txt", intern = TRUE) # /var/lib/fluree/
+# Go into the UI and retrieve the AuthId
 authId <- "Texfia91G7PfrL7g3Dc6RK3enUBviVGrDvx"
 
 Sys.setenv(authId = authId)
@@ -56,6 +56,25 @@ dfRole <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_role", sign
 dfAuth <- getAllEntityRecords(ledgerName = "cjp/een", entityName = "_auth", signQuery = TRUE) %>%
   rename_with(~ gsub("_", "", .x)) %>%
   mutate(across(where(is.numeric), as.character))
+
+# make iris data
+iristriples <- pivot_longer_with_type(iris)
+rdfiris <- rdf_from_df3(iristriples, base = "http://example.com/iris/", vocab = "http://example.com/irisvocab/#")
+rdflib::rdf_serialize(rdfiris, "rdfiris.json", format = "jsonld", base = "http://example.com/iris/")
+
+# Create a legder and write data
+post2fluree(signature = NULL,
+            privateKey = pk,
+            tx_type = "transact",
+            ledger = transaction_data$ledger,
+            transaction_data = transaction_data)
+
+post2fluree(signature = NULL,
+            privateKey = pk,
+            tx_type = "transact",
+            ledger = t2$ledger,
+            transaction_data = t2)
+
 
 # create auth object locally
 transactObj <- createAuthObject(id = authId, doc = "Test 123", roles = dfRole$`id`[[1]])

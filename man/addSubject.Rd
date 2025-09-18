@@ -34,7 +34,7 @@ long_data <- tibble(
   predicate = c("prov:startedAtTime", "prov:endedAtTime", "rdf:type"),
   `rdfs:domain` = c(":Survey", ":Survey", "owl:Thing"),
   `rdfs:range` = c("xsd:dateTime", "xsd:dateTime", ":Interview")
-) 
+)
 
 long_data <- addSubject(long_data, pred_tb)
 

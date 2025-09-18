@@ -16,3 +16,4 @@ Imports:
 Depends: 
     dplyr,
     magrittr
+Roxygen: list(markdown = TRUE)

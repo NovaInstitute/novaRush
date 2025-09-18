@@ -11,9 +11,10 @@
 #' @examples
 #' df1 <- pivot_longer_with_type(iris)
 #' df_schema <- schema_from_tripples(df = df1, name = "iris")
+#' jsonlite::toJSON(df_schema, auto_unbox = TRUE, pretty = TRUE)
 #' @export
 
-schema_from_tripples <- function(df = NULL, name = NULL) {
+schema_from_tripples <- function(df = NULL, name = NULL, typename = "object_type", predicate_name = "predicate") {
 
   if (is.null(df) || is.null(name)) {
     stop("Both df and name must be provided.")
@@ -24,13 +25,22 @@ schema_from_tripples <- function(df = NULL, name = NULL) {
     stop("Input must be a data frame.")
   }
 
+  if (typename %in% names(df)) {
+    df <- df %>% rename(type = all_of(typename))
+  }
+
+  if (predicate_name %in% names(df)) {
+    df <- df %>% rename(predicate = all_of(predicate_name))
+  }
+
   # Check if the data frame has the required columns
   required_columns <- c("predicate", "type" )
-  df <- df %>% select(predicate, type) %>% distinct()
-  missing_columns <- setdiff(required_columns, colnames(df))
-  if (length(missing_columns) > 0) {
-    stop(paste("Data frame is missing required columns:", paste(missing_columns, collapse = ", ")))
+
+  if (!all(required_columns %in% colnames(df))) {
+    stop(paste("Data frame must contain the following columns:", paste(required_columns, collapse = ", ")))
   }
+
+  df <- df %>% select(predicate, type) %>% distinct()
 
   # Create the schema body
   schema_body <- list(
@@ -41,7 +51,7 @@ schema_from_tripples <- function(df = NULL, name = NULL) {
   )
 
   # Populate the schema body with tripples
-  schema_body2  <- pmap(df %>% mutate(name = name) %>% select(name, predicate, type),
+  schema_body2  <- purrr::pmap(df %>% mutate(name = name) %>% select(name, predicate, type),
                                    ~{list( `_id` = "_predicate",
                                            `name` = paste0(..1, "/", ..2),
                                            type = ..3)})
