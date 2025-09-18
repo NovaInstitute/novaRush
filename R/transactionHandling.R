@@ -89,7 +89,14 @@ Transact = function(...) {
 #' @importFrom jsonlite fromJSON
 #' 
 #' @export
-transact = function(config = NULL, ledger = NULL, transaction, signTransaction = NULL, privateKey = NULL) {
+transact = function(
+    config = NULL, 
+    ledger = NULL, 
+    transaction, 
+    signTransaction = NULL, 
+    privateKey = NULL,
+    apiKey = NULL) {
+  
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
     stop("Please provide a ledger name. Either as argument or within the config.")
@@ -102,7 +109,11 @@ transact = function(config = NULL, ledger = NULL, transaction, signTransaction =
     if (!jsonlite::validate(transaction)) {
       stop("Please provide a valid JSON transaction string", call. = FALSE)
     }
-    transaction <- jsonlite::fromJSON(transaction, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+    transaction <- jsonlite::fromJSON(
+      txt = transaction, 
+      simplifyVector = FALSE, 
+      simplifyDataFrame = FALSE, 
+      simplifyMatrix = FALSE)
   }
   
   if (is.null(transaction$ledger)) {
@@ -116,22 +127,28 @@ transact = function(config = NULL, ledger = NULL, transaction, signTransaction =
     transaction[['@context']] <- mergeContexts(defaultContext, transactionContext)
   }
   
-  if (!is.null(signQuery)) {
-    shouldSign = signQuery
+  if (!is.null(signTransaction)) {
+    shouldSign <- signTransaction
   } else if (!is.null(config$signMessages)) {
-    shouldSign = config$signMessages
+    shouldSign <- config$signMessages
   } else {
-    shouldSign = FALSE
+    shouldSign <- FALSE
   }
   
   body <- list(contentType = 'application/json', txn = transaction)
   
-  if (isTRUE(shouldSign)) {
+  if (shouldSign) {
     key <- privateKey %||% getKey()
     if (is.null(key)) {
       stop("Please provide a private key for signing.  Either as argument or set one using `setKey()`.")
     }
-    body <- list(contentType = 'application/jwt', txn = signTransaction(list(configuration = config, transaction = body), privateKey))
+    body <- list(
+      contentType = 'application/jwt', 
+      txn = signTransaction(list(configuration = config, transaction = body), privateKey))
+  }
+  
+  if (length(apiKey) == 1) {
+    config$apiKey <- apiKey
   }
   
   return(list(configuration = config, transaction = body))
@@ -273,7 +290,7 @@ sendTransaction = function(transactionVariables) {
   contentType <- body$contentType
   
   if (contentType == 'application/json') {
-    transaction <- toJSON(body$txn, auto_unbox = TRUE, pretty = FALSE)
+    transaction <- jsonlite::toJSON(body$txn, auto_unbox = TRUE, pretty = FALSE)
   } else if (contentType == 'application/jwt') {
     transaction <- body$txn
   } else {
@@ -284,7 +301,12 @@ sendTransaction = function(transactionVariables) {
   url <- params$url
   fetchOptions <- params$config
   
-  headers <- add_headers(`Content-Type` = contentType)
+  if (length(config$apiKey) == 1) {
+    headers <- add_headers(`Content-Type` = contentType,
+                           Authorization = config$apiKey)
+  } else {
+    headers <- add_headers(`Content-Type` = contentType)
+  }
   
   response <- POST(
     url = url,

@@ -7,14 +7,14 @@
 excludedClasses(dom_res, ran_res, id_tb)
 }
 \arguments{
-\item{dom_res}{\link{tibble} Containing columns: \code{predicate} and \code{domain}. The result of a SPARQL query to find the domains of all predicates in a list.}
+\item{dom_res}{\code{tibble} Containing columns: \code{predicate} and \code{domain}. The result of a SPARQL query to find the domains of all predicates in a list.}
 
-\item{ran_res}{\link{tibble} Containing columns: \code{predicate} and \code{range}. The result of a SPARQL query to find the ranges of all predicates in a list.}
+\item{ran_res}{\code{tibble} Containing columns: \code{predicate} and \code{range}. The result of a SPARQL query to find the ranges of all predicates in a list.}
 
-\item{id_tb}{\link{tibble} Class specifications for your data. You can use \code{\link[=identify_nodes]{identify_nodes()}} to generate this tibble.}
+\item{id_tb}{\code{tibble} Class specifications for your data. You can use \code{\link[=identify_nodes]{identify_nodes()}} to generate this tibble.}
 }
 \value{
-\link{tibble} Classes in domain and/or range of the list of predicates implied by \code{dom_res} and \code{ran_res} but not \code{id_tb}.
+\code{tibble} Classes in domain and/or range of the list of predicates implied by \code{dom_res} and \code{ran_res} but not \code{id_tb}.
 }
 \description{
 Helper function for \code{\link[=getPredicateInfo]{getPredicateInfo()}}

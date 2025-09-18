@@ -17,12 +17,12 @@
 #'  
 #'  4) No variable name and no domain provided
 #'
-#' @param ontology_path [string] Path to local ontology file, preferably in RDF/XML syntax (.rdf extension)
-#' @param pred_vn [list] Named list where the keys are the predicate IRIs and the values are variable names 
+#' @param ontology_path `character` Path to local ontology file, preferably in RDF/XML syntax (.rdf extension)
+#' @param pred_vn `list` Named list where the keys are the predicate IRIs and the values are variable names 
 #' (NA if no corresponding variable name in your data exists.)
-#' @param id_tb [tibble] Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
+#' @param id_tb `tibble` Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
 #'
-#' @return [list] Named list with two entries: `mapped` and `exceptions`
+#' @return `list` Named list with two entries: `mapped` and `exceptions`
 getPredicateInfo <- function(ontology_path,
                              pred_vn,
                              id_tb) {
@@ -118,11 +118,11 @@ getPredicateInfo <- function(ontology_path,
 #' Helper function for [getPredicateInfo()]
 #' Find classes in domain and/or range of the list of predicates but not in the node specifications.
 #'
-#' @param dom_res [tibble] Containing columns: `predicate` and `domain`. The result of a SPARQL query to find the domains of all predicates in a list.
-#' @param ran_res [tibble] Containing columns: `predicate` and `range`. The result of a SPARQL query to find the ranges of all predicates in a list.
-#' @param id_tb [tibble] Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
+#' @param dom_res `tibble` Containing columns: `predicate` and `domain`. The result of a SPARQL query to find the domains of all predicates in a list.
+#' @param ran_res `tibble` Containing columns: `predicate` and `range`. The result of a SPARQL query to find the ranges of all predicates in a list.
+#' @param id_tb `tibble` Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
 #'
-#' @return [tibble] Classes in domain and/or range of the list of predicates implied by `dom_res` and `ran_res` but not `id_tb`.
+#' @return `tibble` Classes in domain and/or range of the list of predicates implied by `dom_res` and `ran_res` but not `id_tb`.
 excludedClasses <- function(dom_res, 
                             ran_res,
                             id_tb) {
@@ -153,11 +153,11 @@ excludedClasses <- function(dom_res,
 #' that are not in the node specifications (`id_tb`) for a dataset (`ex_classes`), 
 #' attempt to find a subclass of that class that is in `id_tb` such that this subclass is unique (no conflicts).
 #'
-#' @param rdf_data [rdf] Parsed ontology data
-#' @param ex_classes [tibble] Generated with [excludedClasses()]
-#' @param id_tb [tibble] Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
+#' @param rdf_data `rdf` Parsed ontology data
+#' @param ex_classes `tibble` Generated with [excludedClasses()]
+#' @param id_tb `tibble` Class specifications for your data. You can use [identify_nodes()] to generate this tibble.
 #'
-#' @return [tibble] Containing columns `new_domain` and `new_range` (possibly NA)
+#' @return `tibble` Containing columns `new_domain` and `new_range` (possibly NA)
 replaceSubclass <- function(rdf_data, 
                           ex_classes, 
                           id_tb) {
@@ -223,15 +223,15 @@ replaceSubclass <- function(rdf_data,
 #' 
 #' Helper function in [getPredicateInfo()].
 #'
-#' @param rdf_data [rdf] Parsed ontology
-#' @param pred_vn [list] Named list where the keys are the predicate IRIs and the values are variable names 
+#' @param rdf_data `rdf` Parsed ontology
+#' @param pred_vn `list` Named list where the keys are the predicate IRIs and the values are variable names 
 #' (NA if no corresponding variable name in your data exists.)
-#' @param dom_res [tibble] Containing columns: `predicate` and `domain`. 
+#' @param dom_res `tibble` Containing columns: `predicate` and `domain`. 
 #' The result of a SPARQL query to find the domains of all predicates in the list implied by `pred_vn`.
-#' @param ran_res [tibble] Containing columns: `predicate` and `range`. 
+#' @param ran_res `tibble` Containing columns: `predicate` and `range`. 
 #' The result of a SPARQL query to find the ranges of all predicates in the list implied by `pred_vn`.
 #'
-#' @return [tibble] Object properties in `pred_vn` for which no domain and/or range could be specified by querying the ontology in `rdf_data`.
+#' @return `tibble` Object properties in `pred_vn` for which no domain and/or range could be specified by querying the ontology in `rdf_data`.
 checkDRObjectProp <- function(rdf_data, 
                               pred_vn,
                               dom_res,
@@ -266,14 +266,14 @@ checkDRObjectProp <- function(rdf_data,
 #'
 #' Helper function in [getPredicateInfo()].
 #'
-#' @param rdf_data [rdf] Parsed ontology data
-#' @param vn_res [tibble] Containing two columns: `predicate` and `varname` (possibly NA). 
-#' @param dom_res [tibble] Containing columns: `predicate` and `domain`. 
+#' @param rdf_data `rdf` Parsed ontology data
+#' @param vn_res `tibble` Containing two columns: `predicate` and `varname` (possibly NA). 
+#' @param dom_res `tibble` Containing columns: `predicate` and `domain`. 
 #' The result of a SPARQL query to find the domains of all predicates in the list implied by `pred_vn`.
-#' @param ran_res [tibble] Containing columns: `predicate` and `range`. 
+#' @param ran_res `tibble` Containing columns: `predicate` and `range`. 
 #' The result of a SPARQL query to find the ranges of all predicates in the list implied by `pred_vn`.
 #'
-#' @return [tibble] Datatype properties in `pred_vn` for which no corresponding variable name was specified.
+#' @return `tibble` Datatype properties in `pred_vn` for which no corresponding variable name was specified.
 checkVNDataProp <- function(rdf_data,
                             vn_res, 
                             dom_res,
@@ -309,11 +309,11 @@ checkVNDataProp <- function(rdf_data,
 #'
 #' Helper function for [getPredicateInfo()].
 #'
-#' @param dom_res [tibble] Containing columns: `predicate` and `domain`. The result of a SPARQL query to find the domains of all predicates in a list.
-#' @param ran_res [tibble] Containing columns: `predicate` and `range`. The result of a SPARQL query to find the ranges of all predicates in a list. 
-#' @param vn_res [tibble] Containing two columns: `predicate` and `varname` (possibly NA).  
+#' @param dom_res `tibble` Containing columns: `predicate` and `domain`. The result of a SPARQL query to find the domains of all predicates in a list.
+#' @param ran_res `tibble` Containing columns: `predicate` and `range`. The result of a SPARQL query to find the ranges of all predicates in a list. 
+#' @param vn_res `tibble` Containing two columns: `predicate` and `varname` (possibly NA).  
 #'
-#' @return [tibble] Predicates for which no domain could be specified from `dom_res` and no variable name was supplied.
+#' @return `tibble` Predicates for which no domain could be specified from `dom_res` and no variable name was supplied.
 checkVNDomain <- function(dom_res, 
                           ran_res, 
                           vn_res) {
@@ -331,11 +331,11 @@ checkVNDomain <- function(dom_res,
 #'
 #' Helper function in [getPredicateInfo()]
 #'  
-#' @param ran_res [tibble] Containing columns: `predicate` and `range`. The result of a SPARQL query to find the ranges of all predicates in a list. 
-#' @param rdf_data [rdf] Parsed ontology data
-#' @param vn_res [tibble] Containing two columns: `predicate` and `varname` (possibly NA). 
+#' @param ran_res `tibble` Containing columns: `predicate` and `range`. The result of a SPARQL query to find the ranges of all predicates in a list. 
+#' @param rdf_data `rdf` Parsed ontology data
+#' @param vn_res `tibble` Containing two columns: `predicate` and `varname` (possibly NA). 
 #'
-#' @return [tibble] Datatype properties that have (at least) a range specified
+#' @return `tibble` Datatype properties that have (at least) a range specified
 checkDTPRange <- function(ran_res,
                           rdf_data,
                           vn_res) {

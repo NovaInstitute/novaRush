@@ -22,25 +22,25 @@ parseCTO(
 \arguments{
 \item{data}{\link{data.frame} The survey response data}
 
-\item{instanceid}{\link{string} Column in \code{data} that contains ID for interview}
+\item{instanceid}{\code{character} Column in \code{data} that contains ID for interview}
 
-\item{starttime}{\link{string} Column in \code{data} that contains starting time for interview}
+\item{starttime}{\code{character} Column in \code{data} that contains starting time for interview}
 
-\item{endtime}{\link{string} Column in \code{data} that contains ending time for interview}
+\item{endtime}{\code{character} Column in \code{data} that contains ending time for interview}
 
-\item{devicephonenum}{\link{string} Column in \code{data} that contains phone number for the device used to conduct the survey}
+\item{devicephonenum}{\code{character} Column in \code{data} that contains phone number for the device used to conduct the survey}
 
-\item{device_info}{\link{string} Column in \code{data} that contains information on the device used to conduct the interview}
+\item{device_info}{\code{character} Column in \code{data} that contains information on the device used to conduct the interview}
 
-\item{duration}{\link{string} Column in \code{data} that contains duration of the interview}
+\item{duration}{\code{character} Column in \code{data} that contains duration of the interview}
 
-\item{geo_location}{\link{string} Column in \code{data} that contains location at which interview was conducted}
+\item{geo_location}{\code{character} Column in \code{data} that contains location at which interview was conducted}
 
-\item{village}{\link{string} Column in \code{data} that contains the village respondent lives in}
+\item{village}{\code{character} Column in \code{data} that contains the village respondent lives in}
 
-\item{standnumber}{\link{string} Column in \code{data} that contains the respondent's stand number}
+\item{standnumber}{\code{character} Column in \code{data} that contains the respondent's stand number}
 
-\item{survey}{\link{string} Identifier for the survey these responses form part of.}
+\item{survey}{\code{character} Identifier for the survey these responses form part of.}
 }
 \value{
 \link{data.frame} Containing columns \code{subject}, \code{predicate}, \code{object}. This dataframe can be parsed to triples.

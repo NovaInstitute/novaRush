@@ -3,7 +3,7 @@
 #' This function creates node specifications implied by a dataframe according to a specified schema and the Nova ontology.
 #' It amends `data` to include columns that are used as the the subject for triples concerning each class.
 #'
-#' @param node_spec [list] Node specification as a list of named lists. There should be an entry for each class of entity implied by the dataframe.
+#' @param node_spec `list` Node specification as a list of named lists. There should be an entry for each class of entity implied by the dataframe.
 #' Each named list should have the following fields:
 #'
 #'  a) `type`: `rdf:type` for each node according to nova-o
@@ -13,9 +13,9 @@
 #'
 #' Exactly one of b), c) or d) must be non-NULL
 #'
-#' @param data [tibble]
+#' @param data `tibble`
 #'
-#' @return [list] `data` with ID columns appended; a tibble containing the node specifications from `node_spec` + the variable name used to identify each node (i.e. the subject in each triple)
+#' @return `list` `data` with ID columns appended; a tibble containing the node specifications from `node_spec` + the variable name used to identify each node (i.e. the subject in each triple)
 #' @export
 #'
 #' @examples
