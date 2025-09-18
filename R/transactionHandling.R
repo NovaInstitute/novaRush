@@ -94,7 +94,8 @@ transact = function(
     ledger = NULL, 
     transaction, 
     signTransaction = NULL, 
-    privateKey = NULL) {
+    privateKey = NULL,
+    apiKey = NULL) {
   
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
@@ -144,6 +145,10 @@ transact = function(
     body <- list(
       contentType = 'application/jwt', 
       txn = signTransaction(list(configuration = config, transaction = body), privateKey))
+  }
+  
+  if (length(apiKey) == 1) {
+    config$apiKey <- apiKey
   }
   
   return(list(configuration = config, transaction = body))
@@ -285,7 +290,7 @@ sendTransaction = function(transactionVariables) {
   contentType <- body$contentType
   
   if (contentType == 'application/json') {
-    transaction <- toJSON(body$txn, auto_unbox = TRUE, pretty = FALSE)
+    transaction <- jsonlite::toJSON(body$txn, auto_unbox = TRUE, pretty = FALSE)
   } else if (contentType == 'application/jwt') {
     transaction <- body$txn
   } else {
@@ -296,7 +301,12 @@ sendTransaction = function(transactionVariables) {
   url <- params$url
   fetchOptions <- params$config
   
-  headers <- add_headers(`Content-Type` = contentType)
+  if (length(config$apiKey) == 1) {
+    headers <- add_headers(`Content-Type` = contentType,
+                           Authorization = config$apiKey)
+  } else {
+    headers <- add_headers(`Content-Type` = contentType)
+  }
   
   response <- POST(
     url = url,

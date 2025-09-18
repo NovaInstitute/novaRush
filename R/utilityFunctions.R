@@ -69,17 +69,13 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
   
   host <- config$host
   port <- config$port
-  isFlureeHosted <- config$FlureeHosted
   apiKey <- config$apiKey
   
-  if (isTRUE(isFlureeHosted))  {
-    url <- "https://data.flur.ee"
-  } else {
-    url <- paste0("https://", host)
-    if (!is.null(port)) {
-      url <- paste0(url, ":", port)
-    }
+  url <- paste0("https://", host)
+  if (!is.null(port)) {
+    url <- paste0(url, ":", port)
   }
+  
   url <- paste0(url, "/fluree/", endpoint)
   
   
@@ -88,7 +84,7 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
   )
   
   if (!is.null(apiKey)) {
-    headers[['Authorization']] <- paste0("Bearer ", apiKey)
+    header[['Authorization']] <- paste0("Bearer ", apiKey)
   }
   
   params <- list(
