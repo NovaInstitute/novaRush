@@ -76,7 +76,9 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
     url <- paste0(url, ":", port)
   }
   
-  url <- paste0(url, "/fluree/", endpoint)
+  if (config$host == "data.flur.ee") {
+    url <- paste0(url, "/fluree/", endpoint)
+  }
   
   header <- c(
     'Content-Type' = contentType)
