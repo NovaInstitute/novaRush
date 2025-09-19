@@ -98,7 +98,14 @@ Query = function(...) {
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
 #' @export
-query = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateKey = NULL) {
+query = function(
+    config = NULL, 
+    ledger = NULL, 
+    query, 
+    signQuery = NULL, 
+    privateKey = NULL, 
+    apiKey = NULL) {
+  
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
     stop("Please provide a ledger name. Either as argument or within the config.")
@@ -111,7 +118,11 @@ query = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateK
     if (!jsonlite::validate(query)) {
       stop("Please provide a valid JSON query string", call. = FALSE)
     }
-    query <- jsonlite::fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+    query <- jsonlite::fromJSON(
+      txt = query, 
+      simplifyVector = FALSE, 
+      simplifyDataFrame = FALSE, 
+      simplifyMatrix = FALSE)
   }
   
   if (is.null(query$from)) {
@@ -136,13 +147,19 @@ query = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateK
   
   body <- list(contentType = 'application/json', qry = query)
   
-  if (isTRUE(shouldSign)) {
+  if (shouldSign) {
     key <- privateKey %||% getKey()
     if (is.null(key)) {
       stop("Please provide a private key for signing. Either as argument or set one using `setKey()`.", call. = FALSE)
     } else {
-      body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), key))
+      body <- list(
+        contentType = 'application/jwt', 
+        qry = signQuery(list(configuration = config, qry = body), key))
     }
+  }
+  
+  if (length(apiKey) == 1) {
+    config$apiKey <- apiKey
   }
   
   return(list(configuration = config, query = body))
@@ -171,6 +188,7 @@ query = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateK
 #' 
 #' @export
 sendQuery = function(queryVariables) {
+  
   config <- queryVariables$configuration
   body <- queryVariables$query
   
@@ -178,7 +196,10 @@ sendQuery = function(queryVariables) {
   finalQueryString <- ""
   
   if (contentType == 'application/json') {
-    finalQueryString <- jsonlite::toJSON(body$qry, auto_unbox = TRUE, pretty = FALSE)
+    finalQueryString <- jsonlite::toJSON(
+      x = body$qry, 
+      auto_unbox = TRUE, 
+      pretty = FALSE)
   } else if (contentType == 'application/jwt') {
     finalQueryString <- body$qry
   } else {
@@ -190,7 +211,7 @@ sendQuery = function(queryVariables) {
   
   response <- httr::POST(
     url = url,
-    add_headers(`Content-Type` = params$config$headers$`Content-Type`),
+    config = add_headers(.headers = params$config$headers),
     body = finalQueryString,
     encode = "raw"
   )
@@ -200,8 +221,13 @@ sendQuery = function(queryVariables) {
     stop("Query failed: ", resp_text)
   }
   
-  json_response <- jsonlite::fromJSON(resp_text, simplifyDataFrame = FALSE)
-  pretty_json <- jsonlite::toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
+  json_response <- jsonlite::fromJSON(
+    txt = resp_text, 
+    simplifyDataFrame = FALSE)
+  pretty_json <- jsonlite::toJSON(
+    x = json_response, 
+    auto_unbox = TRUE, 
+    pretty = TRUE)
   return(pretty_json)
 }
 

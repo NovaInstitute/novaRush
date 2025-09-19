@@ -290,38 +290,44 @@ sendTransaction = function(transactionVariables) {
   contentType <- body$contentType
   
   if (contentType == 'application/json') {
-    transaction <- jsonlite::toJSON(body$txn, auto_unbox = TRUE, pretty = FALSE)
+    transaction <- jsonlite::toJSON(
+      x = body$txn, 
+      auto_unbox = TRUE, 
+      pretty = FALSE)
   } else if (contentType == 'application/jwt') {
     transaction <- body$txn
   } else {
     stop("Unsupported content type: ", contentType)
   }
   
-  params <- generateFetchParams(config, 'transact', contentType)
+  params <- generateFetchParams(
+    config = config, 
+    endpoint = 'transact', 
+    contentType = contentType)
   url <- params$url
   fetchOptions <- params$config
-  
-  if (length(config$apiKey) == 1) {
-    headers <- add_headers(`Content-Type` = contentType,
-                           Authorization = config$apiKey)
-  } else {
-    headers <- add_headers(`Content-Type` = contentType)
-  }
-  
+
   response <- POST(
     url = url,
-    headers,
+    config = add_headers(.headers = fetchOptions$headers),
     body = charToRaw(transaction),
-    encode = "raw"
-  )
+    encode = "raw")
   
-  resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
+  resp_text <- httr::content(
+    x = response, 
+    as = "text", 
+    encoding = "UTF-8")
   if (httr::http_error(response)) {
     stop("Transaction failed: ", resp_text)
   }
   
-  json_response <- jsonlite::fromJSON(resp_text, simplifyDataFrame = FALSE)
-  pretty_json <- jsonlite::toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
+  json_response <- jsonlite::fromJSON(
+    txt = resp_text, 
+    simplifyDataFrame = FALSE)
+  pretty_json <- jsonlite::toJSON(
+    x = json_response, 
+    auto_unbox = TRUE, 
+    pretty = TRUE)
   return(pretty_json)
 }
 

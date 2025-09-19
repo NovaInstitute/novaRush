@@ -13,7 +13,10 @@
 #'   The current stable version of the fluree/server docker image.
 #' 
 #' @export
-runDockerContainer <- function(port = "58090", name = NULL, dockerImage = "5839ffe273062b8da972b120deb54dd62e7c3d1f") {
+runDockerContainer <- function(
+    port = "58090", 
+    name = NULL, 
+    dockerImage = "5839ffe273062b8da972b120deb54dd62e7c3d1f") {
   
   if (is.null(name)) {
     cmd <- sprintf("docker run -d -p %s:8090 fluree/server:%s", port, name, dockerImage)
@@ -76,15 +79,15 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
     url <- paste0(url, ":", port)
   }
   
-  url <- paste0(url, "/fluree/", endpoint)
+  if (config$host == "data.flur.ee") {
+    url <- paste0(url, "/fluree/", endpoint)
+  }
   
-  
-  header <- list(
-    'Content-Type' = contentType
-  )
+  header <- c(
+    'Content-Type' = contentType)
   
   if (!is.null(apiKey)) {
-    header[['Authorization']] <- paste0("Bearer ", apiKey)
+    header <- c(header, 'Authorization' = paste0("Bearer ", apiKey))
   }
   
   params <- list(
