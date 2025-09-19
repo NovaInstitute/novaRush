@@ -78,13 +78,11 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
   
   url <- paste0(url, "/fluree/", endpoint)
   
-  
-  header <- list(
-    'Content-Type' = contentType
-  )
+  header <- c(
+    'Content-Type' = contentType)
   
   if (!is.null(apiKey)) {
-    header[['Authorization']] <- paste0("Bearer ", apiKey)
+    header <- c(header, 'Authorization' = paste0("Bearer ", apiKey))
   }
   
   params <- list(
