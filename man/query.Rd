@@ -4,7 +4,14 @@
 \alias{query}
 \title{Query Configuration}
 \usage{
-query(config = NULL, ledger = NULL, query, signQuery = NULL, privateKey = NULL)
+query(
+  config = NULL,
+  ledger = NULL,
+  query,
+  signQuery = NULL,
+  privateKey = NULL,
+  apiKey = NULL
+)
 }
 \arguments{
 \item{config}{(\code{list()})\cr

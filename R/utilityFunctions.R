@@ -13,7 +13,10 @@
 #'   The current stable version of the fluree/server docker image.
 #' 
 #' @export
-runDockerContainer <- function(port = "58090", name = NULL, dockerImage = "5839ffe273062b8da972b120deb54dd62e7c3d1f") {
+runDockerContainer <- function(
+    port = "58090", 
+    name = NULL, 
+    dockerImage = "5839ffe273062b8da972b120deb54dd62e7c3d1f") {
   
   if (is.null(name)) {
     cmd <- sprintf("docker run -d -p %s:8090 fluree/server:%s", port, name, dockerImage)
