@@ -1,5 +1,6 @@
 #' expandIRIs
 #' 
+#'@note Largely written by ChatGPT. Does not work yet.
 #'@description Expands the IRIs in a JSON-LD object list according to its 
 #'  "@context" values.
 #'@param x List A list representation of a JSON-LD object. If the list contains an 
@@ -9,7 +10,6 @@
 #'  Defaults to FALSE.
 #'@return If x contained an "@context" item, a list with fully expanded IRIs and 
 #'  (optionally) no "@context" item; otherwise, x unchanged.
-#'@note Largely written by ChatGPT.
 #'@export
 #'
 expandIRIs <- function(x, keepCtx = FALSE) {
