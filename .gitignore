@@ -7,3 +7,4 @@ node_modules
 *.Rproj
 .DS_Store
 temp.js
+.RData
