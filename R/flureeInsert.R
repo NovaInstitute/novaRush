@@ -13,9 +13,29 @@
 #'
 flureeInsert <- function(data, config, signTransaction, apiKey = NULL) {
   
+  if (length(names(data)) == 0) {
+    res <- lapply(
+      X = data, 
+      FUN = flureeInsert, 
+      config = config, 
+      signTransaction = signTransaction, 
+      apiKey = apiKey)
+    return(res)
+  }
+  
+  if ("@context" %in% names(data)) {
+    ctx <- data[["@context"]]; data[["@context"]] <- NULL
+    x <- list(
+      '@context' = ctx,
+      'insert' = list(data))
+  } else {
+    x <- list(
+      'insert' = list(data))
+  }
+  
   # Convert the data to a JSON-LD Fluree insert statement.
   q <- jsonlite::toJSON(
-    x = list('insert' = if (length(names(data)) == 0) { data } else { list(data) }), 
+    x = x, 
     dataframe = "rows",
     matrix = "rowmajor", 
     POSIXt = "string", 
