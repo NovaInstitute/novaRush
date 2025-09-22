@@ -23,5 +23,5 @@ Expands the IRIs in a JSON-LD object list according to its
 "@context" values.
 }
 \note{
-Largely written by ChatGPT.
+Largely written by ChatGPT. Does not work yet.
 }
