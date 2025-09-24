@@ -67,6 +67,9 @@ Query = function(...) {
 #' @param privateKey (`character`)\cr
 #'   The hexstring representation of the private key to use for message signing.
 #'   Overrides `getKey()` if provided.
+#' @param apiKey (`character`)\cr
+#'   The API key for accessing the Fluree ledger on the remote host (e.g., when
+#'   the host is data.flur.ee).
 #' 
 #' @return A list containing everything needed to query the Fluree database.
 #' This includes all the necessary parameters as well as the signed/unsigned query itself.
@@ -255,14 +258,23 @@ sendQuery = function(queryVariables) {
 #' @param privateKey (`character`)\cr
 #'   The hexstring representation of the private key to use for message signing.
 #'   Overrides `getKey()` if provided.
-#' 
+#' @param apiKey (`character`)\cr
+#'   The API key for accessing the Fluree ledger on the remote host (e.g., when
+#'   the host is data.flur.ee).
+#'   
 #' @return A list containing everything needed to query the Fluree database.
 #' This includes all the necessary parameters as well as the signed/unsigned query itself.
 #' 
 #' @importFrom jsonlite validate
 #' 
 #' @export
-history = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateKey = NULL) {
+history = function(
+    config = NULL, 
+    ledger = NULL, 
+    query, 
+    signQuery = NULL, 
+    privateKey = NULL,
+    apiKey = NULL) {
   
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
@@ -276,7 +288,11 @@ history = function(config = NULL, ledger = NULL, query, signQuery = NULL, privat
     if (!jsonlite::validate(query)) {
       stop("Please provide a valid JSON query string", call. = FALSE)
     }
-    query <- jsonlite::fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+    query <- jsonlite::fromJSON(
+      txt = query, 
+      simplifyVector = FALSE, 
+      simplifyDataFrame = FALSE, 
+      simplifyMatrix = FALSE)
   }
   
   if (is.null(query$from)) {
@@ -302,8 +318,14 @@ history = function(config = NULL, ledger = NULL, query, signQuery = NULL, privat
     if (is.null(key)) {
       stop("Please provide a private key for signing. Either as argument or in the configuration object.", call. = FALSE)
     } else {
-      body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), key))
+      body <- list(
+        contentType = 'application/jwt', 
+        qry = signQuery(list(configuration = config, qry = body), key))
     }
+  }
+  
+  if (length(apiKey) == 1) {
+    config$apiKey <- apiKey
   }
   
   return(list(configuration = config, query = body))
@@ -343,10 +365,9 @@ sendHistoryQuery = function(queryVariables) {
   
   response <- httr::POST(
     url = url,
-    add_headers(`Content-Type` = params$config$headers$`Content-Type`),
+    config = add_headers(.headers = params$config$headers),
     body = query,
-    encode = "raw"
-  )
+    encode = "raw")
   
   resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
   if (httr::http_error(response)) {
