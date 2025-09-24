@@ -2,10 +2,9 @@
 % Please edit documentation in R/utilityFunctions.R
 \name{getDefaultToJSONargs}
 \alias{getDefaultToJSONargs}
-\title{To be called by any function in this package that makes use of
-jsonlite::toJSON. Ensures toJSON conversion consistency across all functions.}
+\title{getDefaultToJSONargs}
 \usage{
-getDefaultToJSONargs()
+getDefaultToJSONargs(pretty = FALSE)
 }
 \description{
 To be called by any function in this package that makes use of

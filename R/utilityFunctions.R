@@ -111,6 +111,8 @@ deep_merge <- function(x, y) {
   x
 }
 
+#' getDefaultToJSONargs
+#' 
 #' @description
 #'  To be called by any function in this package that makes use of 
 #'  jsonlite::toJSON. Ensures toJSON conversion consistency across all functions.
@@ -130,6 +132,8 @@ getDefaultToJSONargs <- function(pretty = FALSE) {
       na = "null"))
 }
 
+#' getDefaultFromJSONargs
+#' 
 #' @description
 #'  To be called by any function in this package that makes use of 
 #'  jsonlite::fromJSON. Ensures fromJSON conversion consistency across all functions.

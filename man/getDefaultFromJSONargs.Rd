@@ -2,8 +2,7 @@
 % Please edit documentation in R/utilityFunctions.R
 \name{getDefaultFromJSONargs}
 \alias{getDefaultFromJSONargs}
-\title{To be called by any function in this package that makes use of
-jsonlite::fromJSON. Ensures fromJSON conversion consistency across all functions.}
+\title{getDefaultFromJSONargs}
 \usage{
 getDefaultFromJSONargs()
 }
