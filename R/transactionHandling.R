@@ -109,11 +109,12 @@ transact = function(
     if (!jsonlite::validate(transaction)) {
       stop("Please provide a valid JSON transaction string", call. = FALSE)
     }
-    transaction <- jsonlite::fromJSON(
-      txt = transaction, 
-      simplifyVector = FALSE, 
-      simplifyDataFrame = FALSE, 
-      simplifyMatrix = FALSE)
+    transaction <- do.call(
+      what = jsonlite::fromJSON, 
+      args = c(
+        list(txt = transaction),
+        novaRush:::getDefaultFromJSONargs()), 
+      quote = FALSE)
   }
   
   if (is.null(transaction$ledger)) {
@@ -254,7 +255,12 @@ upsert = function(config, transaction) {
     if (!jsonlite::validate(transaction)) {
       stop("Please provide a valid JSON string", call. = FALSE)
     }
-    transaction <- fromJSON(transaction, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+    transaction <- do.call(
+      what = jsonlite::fromJSON, 
+      args = c(
+        list(txt = transaction),
+        novaRush:::getDefaultFromJSONargs()), 
+      quote = FALSE)
   }
   
   idAlias <- findIdAlias(config$defaultContext)
@@ -290,10 +296,12 @@ sendTransaction = function(transactionVariables) {
   contentType <- body$contentType
   
   if (contentType == 'application/json') {
-    transaction <- jsonlite::toJSON(
-      x = body$txn, 
-      auto_unbox = TRUE, 
-      pretty = FALSE)
+    transaction <- do.call(
+      what = jsonlite::toJSON, 
+      args = c(
+        list(x = body$txn), 
+        novaRush:::getDefaultToJSONargs()), 
+      quote = FALSE)
   } else if (contentType == 'application/jwt') {
     transaction <- body$txn
   } else {
@@ -321,13 +329,20 @@ sendTransaction = function(transactionVariables) {
     stop("Transaction failed: ", resp_text)
   }
   
-  json_response <- jsonlite::fromJSON(
-    txt = resp_text, 
-    simplifyDataFrame = FALSE)
-  pretty_json <- jsonlite::toJSON(
-    x = json_response, 
-    auto_unbox = TRUE, 
-    pretty = TRUE)
+  json_response <- do.call(
+    what = jsonlite::fromJSON, 
+    args = c(
+      list(txt = resp_text),
+      novaRush:::getDefaultFromJSONargs()), 
+    quote = FALSE)
+
+  pretty_json <- do.call(
+    what = jsonlite::toJSON, 
+    args = c(
+      list(x = json_response), 
+      novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+    quote = FALSE)
+  
   return(pretty_json)
 }
 
@@ -377,7 +392,12 @@ signTransaction = function(transactionVariables = NULL, privateKey = NULL) {
   if (contentType == 'application/jwt') {
     stop("The provided transaction has already been signed", call. = FALSE)
   } else {
-    input <- toJSON(body$txn, auto_unbox = TRUE, pretty = FALSE)
+    input <- do.call(
+      what = jsonlite::toJSON, 
+      args = c(
+        list(x = body$txn), 
+        novaRush:::getDefaultToJSONargs()), 
+      quote = FALSE)
   }
   
   signedTransaction <- flureeCrypto:::serialize_jws(as.character(input), key)
@@ -443,11 +463,26 @@ getTransactionText = function(transactionVariables = NULL) {
   contentType <- body$contentType
   
   if (contentType == "application/jwt") {
+    
     jwt <- body$txn
     desrialized <- flureeCrypto:::deserialize_jws(jwt)
-    Txn <- toJSON(desrialized$payload, auto_unbox = TRUE, pretty = TRUE)
+    
+    Txn <- do.call(
+      what = jsonlite::toJSON, 
+      args = c(
+        list(x = desrialized$payload), 
+        novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+      quote = FALSE)
+    
   } else {
-    Txn <- toJSON(body$txn, auto_unbox = TRUE, pretty = TRUE)
+    
+    Txn <- do.call(
+      what = jsonlite::toJSON, 
+      args = c(
+        list(x = body$txn), 
+        novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+      quote = FALSE)
+
   }
   
   return(Txn)

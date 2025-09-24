@@ -34,17 +34,12 @@ flureeInsert <- function(data, config, signTransaction, apiKey = NULL) {
   }
   
   # Convert the data to a JSON-LD Fluree insert statement.
-  q <- jsonlite::toJSON(
-    x = x, 
-    dataframe = "rows",
-    matrix = "rowmajor", 
-    POSIXt = "string", 
-    factor = "string",
-    auto_unbox = TRUE, 
-    pretty = FALSE, 
-    Date = "ISO8601", 
-    complex = "string", 
-    null = "list")
+  q <- do.call(
+    what = jsonlite::toJSON, 
+    args = c(
+      list(x = x), 
+      novaRush:::getDefaultToJSONargs()), 
+    quote = FALSE)
   
   # Create the transaction.
   tx <- novaRush::transact(

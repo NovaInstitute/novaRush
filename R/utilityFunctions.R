@@ -111,6 +111,39 @@ deep_merge <- function(x, y) {
   x
 }
 
+#' @description
+#'  To be called by any function in this package that makes use of 
+#'  jsonlite::toJSON. Ensures toJSON conversion consistency across all functions.
+#'
+getDefaultToJSONargs <- function(pretty = FALSE) {
+  return(
+    list(
+      auto_unbox = TRUE, 
+      pretty = pretty, 
+      dataframe = "rows", 
+      matrix = "rowmajor", 
+      Date = "ISO8601", 
+      POSIXt = "ISO8601", 
+      factor = "string", 
+      complex = "list", 
+      null = "list", 
+      na = "null"))
+}
+
+#' @description
+#'  To be called by any function in this package that makes use of 
+#'  jsonlite::fromJSON. Ensures fromJSON conversion consistency across all functions.
+#'
+getDefaultFromJSONargs <- function() {
+  return(
+    list(
+      simplifyDataFrame = FALSE, 
+      simplifyMatrix = FALSE, 
+      flatten = FALSE, 
+      simplifyVector = FALSE))
+}
+
+
 #' Null-coalescing operator
 #' 
 #' @description
