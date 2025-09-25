@@ -28,7 +28,7 @@ getOntology <- function(ontology_url) {
       httr::add_headers(Accept = "application/json")
     )
     if (httr::status_code(response) != 200) {
-      stop("Failed to fetch ontology from URL. Status code: ", status_code(response))
+      stop("Failed to fetch ontology from URL. Status code: ", httr::status_code(response))
     }
     jsonld_text <- httr::content(response, as = "text", encoding = "UTF-8")
     jsonlite::fromJSON(jsonld_text, simplifyVector = FALSE, flatten = FALSE)

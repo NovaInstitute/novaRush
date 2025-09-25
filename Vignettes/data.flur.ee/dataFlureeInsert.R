@@ -35,13 +35,13 @@ dataFlureeInsert <- function(tx_body,
 
   res_tx <- POST(
     endpoint,  # NOTE: no /api
-    add_headers(
+    httr::add_headers(
       "Content-Type"  = "application/json",
       "Accept"        = "application/json",
       "Authorization" = paste("Bearer", api_key),
       "x-user-handle" = handle
     ),
-    body   = toJSON(tx_body, auto_unbox = TRUE),
+    body   = jsonlite::toJSON(tx_body, auto_unbox = TRUE),
     encode = "raw"
   )
   cat(res_tx$status_code, "\n")

@@ -15,7 +15,7 @@
 #'
 #' @examples
 #' # Download the InfoComm ontology
-#' ont <- getOntology(ontology_url = "https://datadudes.xyz/infocomm")
+#' ont <- getOntology(ontology_url = "https://w3id.org/infocomm")
 #' # Create the f:DataModel to be used in Fluree
 #' dM <- dataFlureeOnt2Model( ont,
 #' model_id = "https://datadudes.xyz/infocomm",
