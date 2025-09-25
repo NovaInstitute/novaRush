@@ -39,7 +39,12 @@ createLedger <- function(config = NULL, ledgerName = NULL, transaction = NULL, s
     body$ledger <- ledger
   }
   
-  finalBody <- jsonlite::toJSON(body, auto_unbox = TRUE, pretty = FALSE)
+  finalBody <- do.call(
+    what = jsonlite::toJSON, 
+    args = c(
+      list(x = body), 
+      novaRush:::getDefaultToJSONargs()), 
+    quote = FALSE)
   
   contentType <- "application/json"
   shouldSign <- signMessage %||% config$signMessages

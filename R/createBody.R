@@ -64,7 +64,12 @@ createBody <- function(ledger = NULL,
   
   # combine key-value pairs
   combined_json <- c(context_json, ledger_json, content_json)
-  json_output <- toJSON(combined_json, pretty = TRUE, auto_unbox = TRUE)
+  json_output <- do.call(
+    what = jsonlite::toJSON, 
+    args = c(
+      list(x = combined_json), 
+      novaRush:::getDefaultToJSONargs()), 
+    quote = FALSE)
   
   return(json_output)
 }

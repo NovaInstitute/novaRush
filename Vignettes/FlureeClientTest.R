@@ -74,7 +74,12 @@ payload1 <- list(
   )
 )
 
-body <- toJSON(payload1, auto_unbox = TRUE, pretty = TRUE)
+body <- do.call(
+  what = jsonlite::toJSON, 
+  args = c(
+    list(x = payload1), 
+    novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+  quote = FALSE)
 
 # Ledger creation with the above transaction as its first entry
 port <- Sys.getenv("PORT")
@@ -116,7 +121,12 @@ payload2 <- list(
   )
 )
 
-body <- toJSON(payload2, auto_unbox = TRUE, pretty = TRUE)
+body <- do.call(
+  what = jsonlite::toJSON, 
+  args = c(
+    list(x = payload2), 
+    novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+  quote = FALSE)
 
 signing_input <- toString(body)
 
@@ -160,7 +170,12 @@ payload3 <- list(
   )
 )
 
-body <- toJSON(payload3, auto_unbox = TRUE, pretty = TRUE)
+body <- do.call(
+  what = jsonlite::toJSON, 
+  args = c(
+    list(x = payload3), 
+    novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+  quote = FALSE)
 
 response <- POST(
   url = base_url,
