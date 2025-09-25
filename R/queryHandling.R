@@ -67,6 +67,9 @@ Query = function(...) {
 #' @param privateKey (`character`)\cr
 #'   The hexstring representation of the private key to use for message signing.
 #'   Overrides `getKey()` if provided.
+#' @param apiKey (`character`)\cr
+#'   The API key for accessing the Fluree ledger on the remote host (e.g., when
+#'   the host is data.flur.ee).
 #' 
 #' @return A list containing everything needed to query the Fluree database.
 #' This includes all the necessary parameters as well as the signed/unsigned query itself.
@@ -98,7 +101,14 @@ Query = function(...) {
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
 #' @export
-query = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateKey = NULL) {
+query = function(
+    config = NULL, 
+    ledger = NULL, 
+    query, 
+    signQuery = NULL, 
+    privateKey = NULL, 
+    apiKey = NULL) {
+  
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
     stop("Please provide a ledger name. Either as argument or within the config.")
@@ -111,7 +121,12 @@ query = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateK
     if (!jsonlite::validate(query)) {
       stop("Please provide a valid JSON query string", call. = FALSE)
     }
-    query <- jsonlite::fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+    query <- do.call(
+      what = jsonlite::fromJSON, 
+      args = c(
+        list(txt = query),
+        novaRush:::getDefaultFromJSONargs()), 
+      quote = FALSE)
   }
   
   if (is.null(query$from)) {
@@ -136,13 +151,19 @@ query = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateK
   
   body <- list(contentType = 'application/json', qry = query)
   
-  if (isTRUE(shouldSign)) {
+  if (shouldSign) {
     key <- privateKey %||% getKey()
     if (is.null(key)) {
       stop("Please provide a private key for signing. Either as argument or set one using `setKey()`.", call. = FALSE)
     } else {
-      body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), key))
+      body <- list(
+        contentType = 'application/jwt', 
+        qry = signQuery(list(configuration = config, qry = body), key))
     }
+  }
+  
+  if (length(apiKey) == 1) {
+    config$apiKey <- apiKey
   }
   
   return(list(configuration = config, query = body))
@@ -171,6 +192,7 @@ query = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateK
 #' 
 #' @export
 sendQuery = function(queryVariables) {
+  
   config <- queryVariables$configuration
   body <- queryVariables$query
   
@@ -178,7 +200,12 @@ sendQuery = function(queryVariables) {
   finalQueryString <- ""
   
   if (contentType == 'application/json') {
-    finalQueryString <- jsonlite::toJSON(body$qry, auto_unbox = TRUE, pretty = FALSE)
+    finalQueryString <- do.call(
+      what = jsonlite::toJSON, 
+      args = c(
+        list(x = body$qry), 
+        novaRush:::getDefaultToJSONargs()), 
+      quote = FALSE)
   } else if (contentType == 'application/jwt') {
     finalQueryString <- body$qry
   } else {
@@ -190,7 +217,7 @@ sendQuery = function(queryVariables) {
   
   response <- httr::POST(
     url = url,
-    add_headers(`Content-Type` = params$config$headers$`Content-Type`),
+    config = add_headers(.headers = params$config$headers),
     body = finalQueryString,
     encode = "raw"
   )
@@ -200,8 +227,20 @@ sendQuery = function(queryVariables) {
     stop("Query failed: ", resp_text)
   }
   
-  json_response <- jsonlite::fromJSON(resp_text, simplifyDataFrame = FALSE)
-  pretty_json <- jsonlite::toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
+  json_response <- do.call(
+    what = jsonlite::fromJSON, 
+    args = c(
+      list(txt = resp_text),
+      novaRush:::getDefaultFromJSONargs()), 
+    quote = FALSE)
+  
+  pretty_json <- do.call(
+    what = jsonlite::toJSON, 
+    args = c(
+      list(x = json_response), 
+      novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+    quote = FALSE)
+
   return(pretty_json)
 }
 
@@ -229,14 +268,23 @@ sendQuery = function(queryVariables) {
 #' @param privateKey (`character`)\cr
 #'   The hexstring representation of the private key to use for message signing.
 #'   Overrides `getKey()` if provided.
-#' 
+#' @param apiKey (`character`)\cr
+#'   The API key for accessing the Fluree ledger on the remote host (e.g., when
+#'   the host is data.flur.ee).
+#'   
 #' @return A list containing everything needed to query the Fluree database.
 #' This includes all the necessary parameters as well as the signed/unsigned query itself.
 #' 
 #' @importFrom jsonlite validate
 #' 
 #' @export
-history = function(config = NULL, ledger = NULL, query, signQuery = NULL, privateKey = NULL) {
+history = function(
+    config = NULL, 
+    ledger = NULL, 
+    query, 
+    signQuery = NULL, 
+    privateKey = NULL,
+    apiKey = NULL) {
   
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
@@ -250,7 +298,12 @@ history = function(config = NULL, ledger = NULL, query, signQuery = NULL, privat
     if (!jsonlite::validate(query)) {
       stop("Please provide a valid JSON query string", call. = FALSE)
     }
-    query <- jsonlite::fromJSON(query, simplifyVector = FALSE, simplifyDataFrame = FALSE, simplifyMatrix = FALSE)
+    query <- do.call(
+      what = jsonlite::fromJSON, 
+      args = c(
+        list(txt = query),
+        novaRush:::getDefaultFromJSONargs()), 
+      quote = FALSE)
   }
   
   if (is.null(query$from)) {
@@ -276,8 +329,14 @@ history = function(config = NULL, ledger = NULL, query, signQuery = NULL, privat
     if (is.null(key)) {
       stop("Please provide a private key for signing. Either as argument or in the configuration object.", call. = FALSE)
     } else {
-      body <- list(contentType = 'application/jwt', qry = signQuery(list(configuration = config, qry = body), key))
+      body <- list(
+        contentType = 'application/jwt', 
+        qry = signQuery(list(configuration = config, qry = body), key))
     }
+  }
+  
+  if (length(apiKey) == 1) {
+    config$apiKey <- apiKey
   }
   
   return(list(configuration = config, query = body))
@@ -307,7 +366,12 @@ sendHistoryQuery = function(queryVariables) {
   contentType <- body$contentType
   
   if (contentType == 'application/json') {
-    query <- toJSON(body$qry, auto_unbox = TRUE, pretty = FALSE)
+    query <- do.call(
+      what = jsonlite::toJSON, 
+      args = c(
+        list(x = body$qry), 
+        novaRush:::getDefaultToJSONargs()), 
+      quote = FALSE)
   } else {
     query <- body$qry
   }
@@ -317,18 +381,29 @@ sendHistoryQuery = function(queryVariables) {
   
   response <- httr::POST(
     url = url,
-    add_headers(`Content-Type` = params$config$headers$`Content-Type`),
+    config = add_headers(.headers = params$config$headers),
     body = query,
-    encode = "raw"
-  )
+    encode = "raw")
   
   resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
   if (httr::http_error(response)) {
     stop("History query failed: ", resp_text)
   }
   
-  json_response <- jsonlite::fromJSON(resp_text, simplifyDataFrame = FALSE)
-  pretty_json <- jsonlite::toJSON(json_response, auto_unbox = TRUE, pretty = TRUE)
+  json_response <- do.call(
+    what = jsonlite::fromJSON, 
+    args = c(
+      list(txt = resp_text),
+      novaRush:::getDefaultFromJSONargs()), 
+    quote = FALSE)
+
+  pretty_json <- do.call(
+    what = jsonlite::toJSON, 
+    args = c(
+      list(x = json_response), 
+      novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+    quote = FALSE)
+  
   return(pretty_json)
 }
 
@@ -373,7 +448,12 @@ signQuery = function(queryVariables = NULL, privateKey = NULL) {
   if (contentType == 'application/jwt') {
     stop("The provided query has already been signed", call. = FALSE)
   } else {
-    input <- toJSON(body$qry, auto_unbox = TRUE, pretty = FALSE)
+    input <- do.call(
+      what = jsonlite::toJSON, 
+      args = c(
+        list(x = body$qry), 
+        novaRush:::getDefaultToJSONargs()), 
+      quote = FALSE)
   }
   
   signedQuery <- flureeCrypto:::serialize_jws(as.character(input), key)
@@ -433,7 +513,7 @@ getQuerySignature = function(queryVariables = NULL) {
 #' qry <- getQueryText(queryInstance)
 #' 
 #' @export
-getQueryText = function(queryVariables = NULL) {
+getQueryText = function(queryVariables = NULL, pretty = TRUE) {
   if (is.null(queryVariables)) {
     stop("Please provide a valid query instance", call. = FALSE)
   }
@@ -441,12 +521,29 @@ getQueryText = function(queryVariables = NULL) {
   body <- queryVariables$query
   contentType <- body$contentType
   
+  toJsonArgs <- novaRush:::getDefaultToJSONargs(pretty = pretty)
+  
   if (contentType == "application/jwt") {
+    
     jwt <- body$qry
     desrialized <- flureeCrypto:::deserialize_jws(jwt)
-    Qry <- toJSON(desrialized$payload, auto_unbox = TRUE, pretty = TRUE)
+    
+    Qry  <- do.call(
+      what = jsonlite::toJSON, 
+      args = c(
+        list(x = desrialized$payload),
+        toJsonArgs), 
+      quote = FALSE)
+
   } else {
-    Qry <- toJSON(body$qry, auto_unbox = TRUE, pretty = TRUE)
+    
+    Qry  <- do.call(
+      what = jsonlite::toJSON, 
+      args = c(
+        list(x = body$qry),
+        toJsonArgs), 
+      quote = FALSE)
+
   }
   
   return(Qry)

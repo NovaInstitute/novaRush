@@ -4,7 +4,14 @@
 \alias{query}
 \title{Query Configuration}
 \usage{
-query(config = NULL, ledger = NULL, query, signQuery = NULL, privateKey = NULL)
+query(
+  config = NULL,
+  ledger = NULL,
+  query,
+  signQuery = NULL,
+  privateKey = NULL,
+  apiKey = NULL
+)
 }
 \arguments{
 \item{config}{(\code{list()})\cr
@@ -24,6 +31,10 @@ This will override the value set in \code{config$signMessages}.}
 \item{privateKey}{(\code{character})\cr
 The hexstring representation of the private key to use for message signing.
 Overrides \code{getKey()} if provided.}
+
+\item{apiKey}{(\code{character})\cr
+The API key for accessing the Fluree ledger on the remote host (e.g., when
+the host is data.flur.ee).}
 }
 \value{
 A list containing everything needed to query the Fluree database.

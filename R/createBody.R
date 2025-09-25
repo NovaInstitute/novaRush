@@ -1,3 +1,4 @@
+
 #' Create Fluree transaction body from dataframe and context tibble
 #'
 #' Create the body for a Fluree transaction containing fields `@context`, `ledger`, and `insert`.
@@ -69,5 +70,3 @@ createBody <- function(ledger = NULL,
 
   return(json_output)
 }
-
-

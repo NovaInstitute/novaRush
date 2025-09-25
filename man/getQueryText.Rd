@@ -4,7 +4,7 @@
 \alias{getQueryText}
 \title{Get the Raw Query Text}
 \usage{
-getQueryText(queryVariables = NULL)
+getQueryText(queryVariables = NULL, pretty = TRUE)
 }
 \value{
 JSON string representation of the query body
