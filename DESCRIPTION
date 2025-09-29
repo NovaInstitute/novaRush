@@ -14,6 +14,7 @@ Roxygen: list(markdown = TRUE, r6 = TRUE)
 Imports: 
     purrr
 Depends: 
+    tidyr,
     dplyr,
     magrittr
 Roxygen: list(markdown = TRUE)
