@@ -20,8 +20,11 @@
 #'
 #' @returns A visNetwork object representing the interactive graph.
 #'
-#' @importFrom stringr str_detect str_sub
-#' @importFrom visNetwork visNetwork visOptions visPhysics visEdges visLayout visInteraction
+#' @importFrom dplyr filter, mutate, select, left_join, case_when
+#' @importFrom tibble tibble
+#' @importFrom stringr str_detect, str_sub, basename
+#' @importFrom purrr map_chr
+#' @import visNetwork
 #'
 #' @export
 #'
@@ -59,73 +62,59 @@ plot_rdf_triples_generic <- function(
   damping = 0.09,
   avoidOverlap = 0.1
 ) {
-  # --- 1. Helper Function to Shorten IDs ---
-  shorten_id <- function(id) {
-    if (stringr::str_detect(id, "/")) {
-      # If ID contains a slash, take the part after the last slash
-      return(basename(id))
-    } else {
-      # Truncate to first 8 characters and add ellipsis if longer
-      if (nchar(id) > 8) {
-        return(paste0(stringr::str_sub(id, 1, 8), "..."))
-      }
-      return(id)
-    }
-  }
-
-  # --- 2. Validate Input ---
+  # --- 3. Validate Input ---
   required_cols <- c("subject", "predicate", "object")
   if (!all(required_cols %in% names(triples_df))) {
     stop("triples_df must contain columns: subject, predicate, object")
   }
 
-  # --- 3. Apply Query Filters ---
+  # --- 4. Apply Query Filters ---
   triples_df <- triples_df %>%
-    dplyr::filter(
+    filter(
       if (!is.null(subjects)) subject %in% subjects else TRUE,
       if (!is.null(objects)) object %in% objects else TRUE,
       if (!is.null(predicates)) predicate %in% predicates else TRUE,
       if (!is.null(object_types) && "type" %in% names(triples_df)) type %in% object_types else TRUE
     )
 
-  # --- 4. Prepare Nodes ---
+  # --- 5. Prepare Nodes ---
   # All subjects and objects are nodes
   all_nodes <- unique(c(triples_df$subject, triples_df$object))
 
   # Create node role indicators using joins
-  subjects <- tibble::tibble(id = unique(triples_df$subject), is_subject = TRUE)
-  objects <- tibble::tibble(id = unique(triples_df$object), is_object = TRUE)
+  subjects <- tibble(id = unique(triples_df$subject), is_subject = TRUE)
+  objects <- tibble(id = unique(triples_df$object), is_object = TRUE)
 
   # Create nodes dataframe
-  nodes <- tibble::tibble(id = all_nodes) %>%
-    dplyr::left_join(subjects, by = "id") %>%
-    dplyr::left_join(objects, by = "id") %>%
-    dplyr::mutate(
-      is_subject = dplyr::if_else(is.na(is_subject), FALSE, is_subject),
-      is_object = dplyr::if_else(is.na(is_object), FALSE, is_object),
-      group = dplyr::case_when(
+  nodes <- tibble(id = all_nodes) %>%
+    left_join(subjects, by = "id") %>%
+    left_join(objects, by = "id") %>%
+    mutate(
+      is_subject = if_else(is.na(is_subject), FALSE, is_subject),
+      is_object = if_else(is.na(is_object), FALSE, is_object),
+      group = case_when(
         is_subject & is_object ~ "subject_object",
         is_subject ~ "subject",
         is_object ~ "object",
         TRUE ~ "unknown"
       ),
       # Assign colors based on group
-      color = dplyr::case_when(
+      color = case_when(
         group == "subject" ~ "#FF9999",          # Red for subjects
         group == "object" ~ "#99CCFF",           # Blue for objects
         group == "subject_object" ~ "#FFCC99",   # Orange for nodes that are both
         TRUE ~ "#CCCCCC"                         # Default grey
       ),
       # Assign shapes based on group
-      shape = dplyr::case_when(
+      shape = case_when(
         group == "subject" ~ "box",
         group == "object" ~ "circle",
         group == "subject_object" ~ "diamond",
         TRUE ~ "ellipse"
       ),
       # Shorten IDs for labels if requested
-      label = dplyr::case_when(
-        shorten_ids ~ purrr::map_chr(id, shorten_id),
+      label = case_when(
+        shorten_ids ~ map_chr(id, shorten_id),
         TRUE ~ id
       ),
       # Add type info to hover text with full ID
@@ -138,39 +127,39 @@ plot_rdf_triples_generic <- function(
         paste0("<b>ID:</b> ", x, "<br>", type_info)
       })
     ) %>%
-    dplyr::select(id, label, group, color, shape, title)
+    select(id, label, group, color, shape, title)
 
-  # --- 5. Prepare Edges ---
+  # --- 6. Prepare Edges ---
   edges <- triples_df %>%
-    dplyr::select(from = subject, to = object, predicate) %>%
-    dplyr::mutate(
+    select(from = subject, to = object, predicate) %>%
+    mutate(
       arrows = "to", # Directed edges
       color = "#888888", # Default edge color
-      font = dplyr::case_when(
+      font = case_when(
         show_edge_labels ~ list(align = "top"),
         TRUE ~ list(NULL)
       ),
-      label = dplyr::case_when(
+      label = case_when(
         show_edge_labels ~ predicate,
         TRUE ~ NA_character_
       ),
       # Shorten predicate for edge labels if requested and showing labels
-      label = dplyr::case_when(
-        show_edge_labels & shorten_ids ~ purrr::map_chr(predicate, shorten_id),
+      label = case_when(
+        show_edge_labels & shorten_ids ~ map_chr(predicate, shorten_id),
         TRUE ~ label
       ),
       title = paste0("<b>Predicate:</b> ", predicate) # Use full predicate for hover text
     ) %>%
-    dplyr::select(-predicate) # Remove predicate column after use
+    select(-predicate) # Remove predicate column after use
 
-  # --- 6. Create Interactive visNetwork Plot ---
-  visNetwork_plot <- visNetwork::visNetwork(nodes, edges, main = "RDF Triples Graph") %>%
-    visNetwork::visOptions(
+  # --- 7. Create Interactive visNetwork Plot ---
+  visNetwork_plot <- visNetwork(nodes, edges, main = "RDF Triples Graph") %>%
+    visOptions(
       highlightNearest = TRUE, # Highlight connected nodes on hover
       nodesIdSelection = TRUE, # Dropdown to select nodes
       selectedBy = "group"     # Allow selection by group
     ) %>%
-    visNetwork::visPhysics(
+    visPhysics(
       solver = "barnesHut",
       stabilization = stabilize,
       barnesHut = list(
@@ -182,12 +171,12 @@ plot_rdf_triples_generic <- function(
         avoidOverlap = avoidOverlap
       )
     ) %>%
-    visNetwork::visEdges(
+    visEdges(
       smooth = TRUE,
       color = list(highlight = "#333333")
     ) %>%
-    visNetwork::visLayout(randomSeed = 123) %>%
-    visNetwork::visInteraction(navigationButtons = TRUE, zoomView = TRUE)
+    visLayout(randomSeed = 123) %>%
+    visInteraction(navigationButtons = TRUE, zoomView = TRUE)
 
   return(visNetwork_plot)
 }

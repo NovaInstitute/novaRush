@@ -6,9 +6,6 @@
 #' @param context_map
 #'
 #' @returns
-#'
-#' @importFrom visNetwork visNetwork visOptions visPhysics visEdges visLayout visInteraction
-#'
 #' @export
 #'
 #' @examples
@@ -23,7 +20,12 @@
 #' utils::browseURL("~/tmp/rdf_graph.html")
 
 plot_rdf_triples_interactive <- function(triples_df, context_map) {
-  # --- 1. Prepare Data for `visNetwork` ---
+  # --- 1. Load Necessary Libraries ---
+  # These lines ensure the required packages are available.
+  # It's good practice to install them once if you haven't already:
+  # install.packages(c("dplyr", "igraph", "visNetwork", "purrr", "tibble"))
+
+  # --- 3. Prepare Data for `visNetwork` ---
 
   # Extract node labels (rdfs:label)
   node_labels_df <- triples_df %>%
@@ -56,13 +58,13 @@ plot_rdf_triples_interactive <- function(triples_df, context_map) {
 
   # Create nodes dataframe for visNetwork, with labels and types
   nodes <- tibble::tibble(id = all_nodes_uris) %>%
-    dplyr::left_join(node_labels_df, by = "id") %>%
-    dplyr::left_join(node_types_df, by = "id") %>%
+    left_join(node_labels_df, by = "id") %>%
+    left_join(node_types_df, by = "id") %>%
     dplyr::mutate(
       # Use rdfs:label if available, otherwise use a shortened URI
       label = ifelse(is.na(label), purrr::map_chr(id, ~apply_prefixes_for_display(.x, context_map)), label),
       # Assign colors based on type - now more dynamic with more cases and a default
-      color = dplyr::case_when(
+      color = case_when(
         type == "survey:Survey" ~ "#00cc99",          # Teal for survey root
         type == "survey:Question" ~ "#00b2e3",        # Light blue for questions
         type == "skos:Collection" ~ "#ffae42",        # Orange for collections
@@ -74,7 +76,7 @@ plot_rdf_triples_interactive <- function(triples_df, context_map) {
         TRUE ~ "#cccccc"                             # Default grey for other types
       ),
       # Assign shapes based on type
-      shape = dplyr::case_when(
+      shape = case_when(
         type == "survey:Survey" ~ "box",
         type == "survey:Question" ~ "square",
         type == "skos:Collection" ~ "triangle",
@@ -97,7 +99,7 @@ plot_rdf_triples_interactive <- function(triples_df, context_map) {
       title = paste0("<b>Predicate:</b> ", label) # Add title for hover text on edges
     )
 
-  # --- 2. Create and Return the Interactive visNetwork Plot ---
+  # --- 4. Create and Return the Interactive visNetwork Plot ---
   visNetwork_plot <- visNetwork::visNetwork(nodes, edges, main = "RDF Graph from SurveyCTO Data") %>%
     visNetwork::visOptions(
       highlightNearest = TRUE, # Highlight connected nodes on hover
@@ -115,7 +117,7 @@ plot_rdf_triples_interactive <- function(triples_df, context_map) {
   return(visNetwork_plot)
 }
 
-# Helper Function to Apply Prefixes and Clean URIs
+# --- 2. Helper Function to Apply Prefixes and Clean URIs ---
 # This function shortens full URIs to more readable prefixed names or base names.
 apply_prefixes_for_display <- function(uri, context_map) {
   for (i in 1:nrow(context_map)) {

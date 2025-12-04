@@ -8,15 +8,9 @@ Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: What license is it under?
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.3.3
-Roxygen: list(markdown = TRUE, r6 = TRUE)
-Imports: 
-    purrr,
-    stringr,
-    tibble,
-    visNetwork
-Depends: 
-    tidyr,
-    dplyr,
-    magrittr
+Roxygen: list(markdown = TRUE)
+Imports: purrr
+Depends: tidyr, dplyr, magrittr
+NeedsCompilation: no
+Packaged: 2025-12-04 13:26:16 UTC; runner
