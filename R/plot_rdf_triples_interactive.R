@@ -7,6 +7,7 @@
 #'
 #' @returns
 #'
+#' @importFrom purrr map_chr
 #' @importFrom visNetwork visNetwork visOptions visPhysics visEdges visLayout visInteraction
 #'
 #' @export

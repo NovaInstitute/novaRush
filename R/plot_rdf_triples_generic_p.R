@@ -20,6 +20,7 @@
 #'
 #' @returns A visNetwork object representing the interactive graph.
 #'
+#' @importFrom purrr map_chr
 #' @importFrom stringr str_detect str_sub
 #' @importFrom visNetwork visNetwork visOptions visPhysics visEdges visLayout visInteraction
 #'
