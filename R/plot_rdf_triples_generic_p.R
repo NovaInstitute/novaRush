@@ -19,6 +19,11 @@
 #' @param avoidOverlap Numeric, node overlap prevention (default: 0.1).
 #'
 #' @returns A visNetwork object representing the interactive graph.
+#'
+#' @importFrom purrr map_chr
+#' @importFrom stringr str_detect str_sub
+#' @importFrom visNetwork visNetwork visOptions visPhysics visEdges visLayout visInteraction
+#'
 #' @export
 #'
 #' @examples
@@ -55,82 +60,72 @@ plot_rdf_triples_generic <- function(
   damping = 0.09,
   avoidOverlap = 0.1
 ) {
-  # --- 1. Load Necessary Libraries ---
-  if (!require(visNetwork)) install.packages("visNetwork")
-  if (!require(dplyr)) install.packages("dplyr")
-  if (!require(tibble)) install.packages("tibble")
-  if (!require(stringr)) install.packages("stringr")
-  library(visNetwork)
-  library(dplyr)
-  library(tibble)
-  library(stringr)
-
-  # --- 2. Helper Function to Shorten IDs ---
+  # --- 1. Helper Function to Shorten IDs ---
   shorten_id <- function(id) {
-    if (str_detect(id, "/")) {
+    if (stringr::str_detect(id, "/")) {
       # If ID contains a slash, take the part after the last slash
       return(basename(id))
     } else {
       # Truncate to first 8 characters and add ellipsis if longer
       if (nchar(id) > 8) {
-        return(paste0(str_sub(id, 1, 8), "..."))
+        return(paste0(stringr::str_sub(id, 1, 8), "..."))
       }
       return(id)
     }
   }
 
-  # --- 3. Validate Input ---
+  # --- 2. Validate Input ---
   required_cols <- c("subject", "predicate", "object")
   if (!all(required_cols %in% names(triples_df))) {
     stop("triples_df must contain columns: subject, predicate, object")
   }
 
-  # --- 4. Apply Query Filters ---
+  # --- 3. Apply Query Filters ---
   triples_df <- triples_df %>%
-    filter(
+    dplyr::filter(
       if (!is.null(subjects)) subject %in% subjects else TRUE,
       if (!is.null(objects)) object %in% objects else TRUE,
       if (!is.null(predicates)) predicate %in% predicates else TRUE,
       if (!is.null(object_types) && "type" %in% names(triples_df)) type %in% object_types else TRUE
     )
 
-  # --- 5. Prepare Nodes ---
+  # --- 4. Prepare Nodes ---
   # All subjects and objects are nodes
   all_nodes <- unique(c(triples_df$subject, triples_df$object))
 
   # Create node role indicators using joins
-  subjects <- tibble(id = unique(triples_df$subject), is_subject = TRUE)
-  objects <- tibble(id = unique(triples_df$object), is_object = TRUE)
+  subjects <- tibble::tibble(id = unique(triples_df$subject), is_subject = TRUE)
+  objects <- tibble::tibble(id = unique(triples_df$object), is_object = TRUE)
 
   # Create nodes dataframe
-  nodes <- tibble(id = all_nodes) %>%
-    left_join(subjects, by = "id") %>%
-    left_join(objects, by = "id") %>%
-    mutate(
-      is_subject = if_else(is.na(is_subject), FALSE, is_subject),
-      is_object = if_else(is.na(is_object), FALSE, is_object),
-      group = case_when(
+  nodes <- tibble::tibble(id = all_nodes) %>%
+    dplyr::left_join(subjects, by = "id") %>%
+    dplyr::left_join(objects, by = "id") %>%
+    dplyr::mutate(
+      is_subject = dplyr::if_else(is.na(is_subject), FALSE, is_subject),
+      is_object = dplyr::if_else(is.na(is_object), FALSE, is_object),
+      group = dplyr::case_when(
         is_subject & is_object ~ "subject_object",
         is_subject ~ "subject",
         is_object ~ "object",
         TRUE ~ "unknown"
       ),
       # Assign colors based on group
-      color = case_when(
+      color = dplyr::case_when(
         group == "subject" ~ "#FF9999",          # Red for subjects
         group == "object" ~ "#99CCFF",           # Blue for objects
         group == "subject_object" ~ "#FFCC99",   # Orange for nodes that are both
         TRUE ~ "#CCCCCC"                         # Default grey
       ),
       # Assign shapes based on group
-      shape = case_when(
+      shape = dplyr::case_when(
         group == "subject" ~ "box",
         group == "object" ~ "circle",
         group == "subject_object" ~ "diamond",
         TRUE ~ "ellipse"
       ),
       # Shorten IDs for labels if requested
-      label = case_when(
+      label = dplyr::case_when(
         shorten_ids ~ purrr::map_chr(id, shorten_id),
         TRUE ~ id
       ),
@@ -144,39 +139,39 @@ plot_rdf_triples_generic <- function(
         paste0("<b>ID:</b> ", x, "<br>", type_info)
       })
     ) %>%
-    select(id, label, group, color, shape, title)
+    dplyr::select(id, label, group, color, shape, title)
 
-  # --- 6. Prepare Edges ---
+  # --- 5. Prepare Edges ---
   edges <- triples_df %>%
-    select(from = subject, to = object, predicate) %>%
-    mutate(
+    dplyr::select(from = subject, to = object, predicate) %>%
+    dplyr::mutate(
       arrows = "to", # Directed edges
       color = "#888888", # Default edge color
-      font = case_when(
+      font = dplyr::case_when(
         show_edge_labels ~ list(align = "top"),
         TRUE ~ list(NULL)
       ),
-      label = case_when(
+      label = dplyr::case_when(
         show_edge_labels ~ predicate,
         TRUE ~ NA_character_
       ),
       # Shorten predicate for edge labels if requested and showing labels
-      label = case_when(
+      label = dplyr::case_when(
         show_edge_labels & shorten_ids ~ purrr::map_chr(predicate, shorten_id),
         TRUE ~ label
       ),
       title = paste0("<b>Predicate:</b> ", predicate) # Use full predicate for hover text
     ) %>%
-    select(-predicate) # Remove predicate column after use
+    dplyr::select(-predicate) # Remove predicate column after use
 
-  # --- 7. Create Interactive visNetwork Plot ---
-  visNetwork_plot <- visNetwork(nodes, edges, main = "RDF Triples Graph") %>%
-    visOptions(
+  # --- 6. Create Interactive visNetwork Plot ---
+  visNetwork_plot <- visNetwork::visNetwork(nodes, edges, main = "RDF Triples Graph") %>%
+    visNetwork::visOptions(
       highlightNearest = TRUE, # Highlight connected nodes on hover
       nodesIdSelection = TRUE, # Dropdown to select nodes
       selectedBy = "group"     # Allow selection by group
     ) %>%
-    visPhysics(
+    visNetwork::visPhysics(
       solver = "barnesHut",
       stabilization = stabilize,
       barnesHut = list(
@@ -188,12 +183,12 @@ plot_rdf_triples_generic <- function(
         avoidOverlap = avoidOverlap
       )
     ) %>%
-    visEdges(
+    visNetwork::visEdges(
       smooth = TRUE,
       color = list(highlight = "#333333")
     ) %>%
-    visLayout(randomSeed = 123) %>%
-    visInteraction(navigationButtons = TRUE, zoomView = TRUE)
+    visNetwork::visLayout(randomSeed = 123) %>%
+    visNetwork::visInteraction(navigationButtons = TRUE, zoomView = TRUE)
 
   return(visNetwork_plot)
 }

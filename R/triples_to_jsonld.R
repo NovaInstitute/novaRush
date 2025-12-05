@@ -22,7 +22,6 @@ triples_to_jsonld <- function(triples,
                               context_df = NULL,
                               base_uri = "https://example.org/survey/") {
 
-  #library(jsonlite)
   if (is.null(context_df)) {
     context_df <- make_surveycto_centext()
   }
