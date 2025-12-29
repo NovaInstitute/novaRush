@@ -67,7 +67,7 @@ plot_rdf_triples_generic <- function(
 
   # --- 2. Helper Function to Shorten IDs ---
   shorten_id <- function(id) {
-    if (str_detect(id, "/")) {
+    if (stringr::str_detect(id, "/")) {
       # If ID contains a slash, take the part after the last slash
       return(basename(id))
     } else {
