@@ -12,8 +12,11 @@ LazyData: true
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE, r6 = TRUE)
 Imports: 
-    purrr
+    purrr,
+    stringr,
+    tibble,
+    visNetwork
 Depends: 
+    tidyr,
     dplyr,
     magrittr
-Roxygen: list(markdown = TRUE)

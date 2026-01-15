@@ -13,8 +13,8 @@
 
 
 
-dfQ$kia_adaptation %>%  unnest(c(choices)) %>%
-  select(-names, -typecode, -control, -repeatGroupCount, -exportable,
-         -publishable,-required, -repeatGroupField, -note, -repeatedField,
-         -metadataField, -appearance, -repeat_grp, -group, -constraint) %>%
-  pivot_longer(cols = -c(name),  names_to = "var")
+#dfQ$kia_adaptation %>%  unnest(c(choices)) %>%
+#  select(-names, -typecode, -control, -repeatGroupCount, -exportable,
+#         -publishable,-required, -repeatGroupField, -note, -repeatedField,
+#         -metadataField, -appearance, -repeat_grp, -group, -constraint) %>%
+#  pivot_longer(cols = -c(name),  names_to = "var")
