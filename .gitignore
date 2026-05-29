@@ -12,3 +12,4 @@ temp.js
 # Build artifacts
 *.tar.gz
 *.Rcheck/
+.positai
