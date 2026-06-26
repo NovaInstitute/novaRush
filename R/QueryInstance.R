@@ -22,6 +22,10 @@ QueryInstance <- R6::R6Class("QueryInstance",
     #' The JWT of the query.
     signedQuery = '',
 
+    #' @field endpoint (`string`)\cr
+    #' The Fluree v4 query endpoint: 'query' or 'sparql'.
+    endpoint = 'query',
+
     #' @description
     #' Creates a new instance of this [R6][R6::R6Class] class.
     #'
@@ -29,16 +33,19 @@ QueryInstance <- R6::R6Class("QueryInstance",
     #'   The query to be sent to the Fluree instance.
     #' @param config (`list()`)\cr
     #'   Configuration parameters of the instance.
-    initialize = function(query, config) {
+    #' @param endpoint (`string`)\cr
+    #'   The Fluree v4 query endpoint: 'query' (JSON-LD) or 'sparql'.
+    initialize = function(query, config, endpoint = 'query') {
 
       self$query <- query
       self$config <- config
+      self$endpoint <- endpoint
 
       defaultContext <- config$defaultContext %||% list()
-      transactionContext <- transaction[["@context"]] %||% list()
+      queryContext <- query[["@context"]] %||% list()
 
-      if (!is.null(defaultContext) || !is.null(transactionContext)) {
-        self$transaction[['@context']] <- mergeContexts(defaultContext, transactionContext)
+      if (length(defaultContext) > 0 || length(queryContext) > 0) {
+        self$query[['@context']] <- mergeContexts(defaultContext, queryContext)
       }
 
       if (isTRUE(config$signMessages)) {
@@ -57,24 +64,29 @@ QueryInstance <- R6::R6Class("QueryInstance",
         contentType <- 'application/json'
       }
 
-      params <- generateFetchParams(self$config, 'query', contentType)
+      params <- generateFetchParams(self$config, self$endpoint, contentType)
       url <- params$url
       fetchOptions <- params$config
 
-      if (nzchar(self$signedQuery)) {
-        params$body <- self$signedQuery
+      body <- if (nzchar(self$signedQuery)) {
+        self$signedQuery
       } else {
-        params$body <- toJSON(self$query, auto_unbox = T, pretty = F)
+        do.call(jsonlite::toJSON, c(list(x = self$query), novaRush:::getDefaultToJSONargs()))
       }
 
       response <- POST(
         url = url,
         add_headers(`Content-Type` = params$config$headers$`Content-Type`),
-        body = params$body,
+        body = body,
         encode = "raw"
       )
 
-      print(content(response, as = "text"))
+      resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
+      if (httr::http_error(response)) {
+        stop("Query failed: ", resp_text)
+      }
+
+      do.call(jsonlite::fromJSON, c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()))
     },
 
     #' @description

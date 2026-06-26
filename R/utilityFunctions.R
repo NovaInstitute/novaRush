@@ -63,7 +63,7 @@ stopDockerContainer <- function(name = NULL) {
 #' @param config (`list()`)\cr
 #'   The configuration parameters of the current active transaction or query instance.
 #' @param endpoint (`string`)\cr
-#'   The endpoint to which the http request is made (either '/transact', '/query', '/create' or '/history').
+#'   The Fluree v4 endpoint name: 'query', 'sparql', 'insert', 'upsert', 'update', 'create', or 'history'.
 #' @param contentType (`string`)\cr
 #'   In the case of an unsigned message 'application/json' is used ('application/jwt' if signed).
 #' 
@@ -74,14 +74,12 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
   port <- config$port
   apiKey <- config$apiKey
   
-  url <- paste0("https://", host)
+  protocol <- if (isTRUE(config$isFlureeHosted) || identical(host, "data.flur.ee")) "https" else "http"
+  url <- paste0(protocol, "://", host)
   if (!is.null(port)) {
     url <- paste0(url, ":", port)
   }
-  
-  if (config$host == "data.flur.ee") {
-    url <- paste0(url, "/fluree/", endpoint)
-  }
+  url <- paste0(url, "/fluree/", endpoint)
   
   header <- c(
     'Content-Type' = contentType)

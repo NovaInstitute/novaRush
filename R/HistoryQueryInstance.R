@@ -58,20 +58,25 @@ HistoryQueryInstance <- R6::R6Class("HistoryQueryInstance",
       url <- params$url
       fetchOptions <- params$config
 
-      if (nzchar(self$signedQuery)) {
-        params$body <- self$signedQuery
+      body <- if (nzchar(self$signedQuery)) {
+        self$signedQuery
       } else {
-        params$body <- toJSON(self$query, auto_unbox = TRUE, pretty = TRUE)
+        do.call(jsonlite::toJSON, c(list(x = self$query), novaRush:::getDefaultToJSONargs()))
       }
 
       response <- POST(
         url = url,
         add_headers(`Content-Type` = params$config$headers$`Content-Type`),
-        body = params$body,
+        body = body,
         encode = "raw"
       )
 
-      print(content(response, as = "text"))
+      resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
+      if (httr::http_error(response)) {
+        stop("History query failed: ", resp_text)
+      }
+
+      do.call(jsonlite::fromJSON, c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()))
     },
 
     #' @description

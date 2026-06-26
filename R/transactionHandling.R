@@ -250,24 +250,50 @@ delete = function(config, id) {
 #' 
 #' @export
 upsert = function(config, transaction) {
-  
-  if (class(transaction) == "character") {
+
+  if (is.character(transaction)) {
     if (!jsonlite::validate(transaction)) {
       stop("Please provide a valid JSON string", call. = FALSE)
     }
     transaction <- do.call(
-      what = jsonlite::fromJSON, 
+      what = jsonlite::fromJSON,
       args = c(
         list(txt = transaction),
-        novaRush:::getDefaultFromJSONargs()), 
+        novaRush:::getDefaultFromJSONargs()),
       quote = FALSE)
   }
-  
-  idAlias <- findIdAlias(config$defaultContext)
-  resultingTransaction <- handleUpsert(transaction, idAlias)
-  resultingTransaction$ledger <- config$ledger
-  
-  transact(transaction = resultingTransaction)
+
+  defaultContext <- config$defaultContext %||% list()
+  txnContext <- transaction[["@context"]] %||% list()
+  if (length(defaultContext) > 0 || length(txnContext) > 0) {
+    transaction[["@context"]] <- mergeContexts(defaultContext, txnContext)
+  }
+
+  body <- list(contentType = 'application/json', txn = transaction)
+  params <- generateFetchParams(config = config, endpoint = 'upsert', contentType = 'application/json')
+  url <- params$url
+  fetchOptions <- params$config
+
+  txnJson <- do.call(
+    what = jsonlite::toJSON,
+    args = c(list(x = body$txn), novaRush:::getDefaultToJSONargs()),
+    quote = FALSE)
+
+  response <- POST(
+    url = url,
+    config = add_headers(.headers = fetchOptions$headers),
+    body = charToRaw(txnJson),
+    encode = "raw")
+
+  resp_text <- httr::content(x = response, as = "text", encoding = "UTF-8")
+  if (httr::http_error(response)) {
+    stop("Upsert failed: ", resp_text)
+  }
+
+  do.call(
+    what = jsonlite::fromJSON,
+    args = c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()),
+    quote = FALSE)
 }
 
 #' Send a Transaction
@@ -308,9 +334,10 @@ sendTransaction = function(transactionVariables) {
     stop("Unsupported content type: ", contentType)
   }
   
+  endpoint <- if (!is.null(body$txn$where)) 'update' else 'insert'
   params <- generateFetchParams(
-    config = config, 
-    endpoint = 'transact', 
+    config = config,
+    endpoint = endpoint,
     contentType = contentType)
   url <- params$url
   fetchOptions <- params$config

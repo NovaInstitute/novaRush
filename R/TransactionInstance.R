@@ -22,6 +22,10 @@ TransactionInstance <- R6::R6Class("TransactionInstance",
     #' The JWT of the transaction.
     signedTransaction = '',
 
+    #' @field endpoint (`string`)\cr
+    #' The Fluree v4 endpoint: 'insert', 'upsert', or 'update'.
+    endpoint = 'insert',
+
     #' @description
     #' Creates a new instance of this [R6][R6::R6Class] class.
     #'
@@ -29,10 +33,13 @@ TransactionInstance <- R6::R6Class("TransactionInstance",
     #'   The transaction to be sent to the Fluree instance.
     #' @param config (`list()`)\cr
     #'   Configuration parameters of the instance.
-    initialize = function(transaction, config) {
+    #' @param endpoint (`string`)\cr
+    #'   The Fluree v4 endpoint to use: 'insert', 'upsert', or 'update'.
+    initialize = function(transaction, config, endpoint = 'insert') {
 
       self$transaction <- transaction
       self$config <- config
+      self$endpoint <- endpoint
 
       defaultContext <- config$defaultContext %||% list()
       transactionContext <- transaction[["@context"]] %||% list()
@@ -57,27 +64,28 @@ TransactionInstance <- R6::R6Class("TransactionInstance",
         contentType <- 'application/json'
       }
 
-      params <- generateFetchParams(self$config, 'transact', contentType)
+      params <- generateFetchParams(self$config, self$endpoint, contentType)
       url <- params$url
-      fetchOptions <- params$config
 
-      if (nzchar(self$signedTransaction)) {
-        params$body <- self$signedTransaction
+      body <- if (nzchar(self$signedTransaction)) {
+        self$signedTransaction
       } else {
-        params$body <- toJSON(self$transaction, auto_unbox = TRUE, pretty = TRUE)
+        do.call(jsonlite::toJSON, c(list(x = self$transaction), novaRush:::getDefaultToJSONargs()))
       }
 
-      print(url)
-      print(params$config$headers$`Content-Type`)
-      print(params$body)
-     response <- POST(
-       url = url,
-       add_headers(`Content-Type` = params$config$headers$`Content-Type`),
-       body = params$body,
-       encode = "raw"
-     )
+      response <- POST(
+        url = url,
+        add_headers(`Content-Type` = params$config$headers$`Content-Type`),
+        body = body,
+        encode = "raw"
+      )
 
-     print(content(response, as = "text"))
+      resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
+      if (httr::http_error(response)) {
+        stop("Transaction failed: ", resp_text)
+      }
+
+      do.call(jsonlite::fromJSON, c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()))
     },
 
     #' @description

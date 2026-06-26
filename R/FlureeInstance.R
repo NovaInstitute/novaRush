@@ -43,7 +43,6 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' @param isConnecting (`logical`)\cr
     #'   This value indicates whether or not the FlureeInstance is attempting to connect to the host.
     checkConfig = function(config, isConnecting = FALSE) {
-      print("Checking config")
       isFlureeHosted <- config$isFlureeHosted
       create <- config$create
       host <- config$host
@@ -52,8 +51,6 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
       signMessages <- config$signMessages
       privateKey <- config$privateKey
       apiKey <- config$apiKey
-
-      print("Past part 1")
 
         if (isConnecting) {
           if (!is.null(isFlureeHosted) && isFlureeHosted) {
@@ -160,153 +157,139 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #'   The list representation of a transaction to be entered into the
     #'   new ledger (optional).
     create = function(ledgerName = NULL, transaction = NULL) {
-
-      print("test error 1")
       config <- self$config
-
-      isFlureeHosted <- config$isFlureeHosted
-      create <- config$create
-      host <- config$host
-      port <- config$port
       ledger <- config$ledger
       signMessages <- config$signMessages
       privateKey <- config$privateKey
-      apiKey <- config$apiKey
 
-      print("test error 2")
-      url <- paste0('http://', host)
-      if (!is.null(port)) {
-        print("test error 3")
-        url <- paste(url, sep = ":", port)
-      }
-      print("test error 4")
-      url <- paste0(url, "/fluree/create")
+      params <- generateFetchParams(config, 'create')
+      url <- params$url
 
-      body <- list(
-        ledger = ledgerName %||% ledger,
-        insert = list(message = "success")
-      )
-
-      print("test error 5")
+      body <- list(ledger = ledgerName %||% ledger)
       if (!is.null(transaction)) {
         body <- modifyList(body, transaction)
-        print("test error 6")
       }
 
-      header = 'application/json'
-      finalBody = toJSON(body, auto_unbox = TRUE, pretty = FALSE)
+      contentType <- 'application/json'
+      finalBody <- do.call(jsonlite::toJSON, c(list(x = body), novaRush:::getDefaultToJSONargs()))
 
       if (isTRUE(signMessages) && !is.null(privateKey)) {
-        finalBody <- flureeCrypto:::serialize_jws(finalBody, privateKey)
-        header = 'application/jwt'
-        print("test error 7")
+        finalBody <- flureeCrypto:::serialize_jws(as.character(finalBody), privateKey)
+        contentType <- 'application/jwt'
       }
 
       response <- POST(
         url = url,
-        add_headers(`Content-Type` = header),
+        add_headers(`Content-Type` = contentType),
         body = finalBody,
         encode = "raw"
       )
 
-      print("test error 8")
-      if (http_error(response)) {
-        stop("Failed to create ledger: ", content(response, "text"))
+      resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
+      if (httr::http_error(response)) {
+        stop("Failed to create ledger: ", resp_text)
       }
 
-      # Output the results
-      print(content(response, as = "text"))
-  },
+      do.call(jsonlite::fromJSON, c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()))
+    },
 
     #' @description
     #' Create a new instance of the QueryInstance class.
-    #' This new QueryInstance can then be used to transact with the Fluree database.
     #'
     #' @param query (`list()`)\cr
-    #'   Representation of the query to perform on the active Fluree instance.
+    #'   Representation of the JSON-LD query to perform on the active Fluree instance.
     #' @return [QueryInstance].
     query = function(query) {
       if (!self$connected) {
-        stop("You must connect before querying. Try using .connect().query() instead", call. = FALSE)
-      }
-
-      if (is.null(query$from)) {
-        query$from <- self$config$ledger
+        stop("You must connect before querying. Try using $connect()$query() instead", call. = FALSE)
       }
       return(QueryInstance$new(query, self$config))
     },
 
     #' @description
-    #' Create a new instance of the TransactionInstance class.
-    #' This new TransactionInstance can then be used to transact with the Fluree database.
+    #' Create a new QueryInstance for a raw SPARQL 1.1 query.
     #'
-    #' @param transaction (`list()`)\cr
-    #'   Representation of the transaction to send to the active Fluree instance.
-    #' @return [TransactionInstance].
-    transact = function(transaction) {
-      print('In transaction method...')
+    #' @param sparql (`character`)\cr
+    #'   A SPARQL 1.1 query string.
+    #' @param reasoning (`character`)\cr
+    #'   Optional reasoning mode: 'rdfs', 'owl2ql', 'owl2rl', 'datalog', or 'none'.
+    #' @return [QueryInstance].
+    sparql = function(sparql, reasoning = NULL) {
       if (!self$connected) {
-        stop("You must connect before transacting. Try using $connect()$transact() instead", call. = FALSE)
+        stop("You must connect before querying. Try using $connect()$sparql() instead", call. = FALSE)
       }
-
-      if (is.null(transaction$ledger)) {
-        transaction$ledger <- self$config$ledger
+      body <- list(query = sparql)
+      if (!is.null(reasoning)) {
+        body$reasoning <- reasoning
       }
-
-      return(TransactionInstance$new(transaction, self$config))
+      return(QueryInstance$new(body, self$config, endpoint = 'sparql'))
     },
 
     #' @description
-    #' Create a new TransactionInstance for upserting with the Fluree database.
-    #'
-    #' Upsert is not an API endpoint in Fluree. This function merely transforms
-    #' an upsert transaction into an insert/where/delete transaction.
-    #'
-    #' Upsert assumes that the facts provided in the transaction should be treated
-    #' as the true & accurate state of the data after the transaction is processed.
-    #' i.e. the facts in the transaction should be inserted (if new) and should
-    #' replace existing facts (if they already exist on those subjects & properties).
+    #' Create a new TransactionInstance to insert data into the Fluree ledger.
+    #' Insert adds new triples without touching existing ones.
     #'
     #' @param transaction (`list()`)\cr
-    #'   The upsert transaction to send to the Fluree instance.
+    #'   A list with a `@graph` key containing the data to insert.
+    #' @return [TransactionInstance].
+    insert = function(transaction) {
+      if (!self$connected) {
+        stop("You must connect before transacting. Try using $connect()$insert() instead", call. = FALSE)
+      }
+      return(TransactionInstance$new(transaction, self$config, endpoint = 'insert'))
+    },
+
+    #' @description
+    #' Alias for `insert()` for backward compatibility.
+    #' @param transaction (`list()`)\cr
+    #'   A list with a `@graph` key containing the data to insert.
+    #' @return [TransactionInstance].
+    transact = function(transaction) {
+      self$insert(transaction)
+    },
+
+    #' @description
+    #' Create a new TransactionInstance to upsert data into the Fluree ledger.
+    #' Upsert replaces values for the predicates supplied on each subject;
+    #' predicates not mentioned are left untouched.
+    #'
+    #' @param transaction (`list()`)\cr
+    #'   A list with a `@graph` key containing the subjects and properties to upsert.
     #' @return [TransactionInstance].
     upsert = function(transaction) {
-      print('In upsert method...')
       if (!self$connected) {
         stop("You must connect before transacting. Try using $connect()$upsert() instead", call. = FALSE)
       }
-
-      idAlias <- findIdAlias(self$config$defaultContext)
-      resultingTransaction <- handleUpsert(transaction, idAlias)
-      resultingTransaction$ledger <- self$config$ledger
-
-      return(TransactionInstance$new(transaction = resultingTransaction, config = self$config))
+      return(TransactionInstance$new(transaction, self$config, endpoint = 'upsert'))
     },
 
     #' @description
-    #' Create a new TransactionInstance for deleting subjects by @id in the Fluree database.
+    #' Create a new TransactionInstance for a conditional update (where/delete/insert).
+    #' Use when you need to bind current values before replacing them.
     #'
-    #' Delete is not an API endpoint in Fluree. This function merely transforms
-    #' a single or list of subject identifiers ( @id ) into a where/delete transaction
-    #' that deletes the subject and all facts about the subject.
+    #' @param transaction (`list()`)\cr
+    #'   A list with `where`, `delete`, and optionally `insert` keys.
+    #' @return [TransactionInstance].
+    update = function(transaction) {
+      if (!self$connected) {
+        stop("You must connect before transacting. Try using $connect()$update() instead", call. = FALSE)
+      }
+      return(TransactionInstance$new(transaction, self$config, endpoint = 'update'))
+    },
+
+    #' @description
+    #' Delete all triples for the given subject IRI(s).
     #'
-    #' Delete assumes that all facts for the provided subjects should be retracted
-    #' from the database.
-    #'
-    #' @param id (`list()`)\cr
-    #'   The subject identifier/identifiers to retract from the Fluree instance.
+    #' @param id (`character`)\cr
+    #'   One or more subject IRIs to retract.
     #' @return [TransactionInstance].
     delete = function(id) {
-      print('In delete method...')
       if (!self$connected) {
         stop("You must connect before transacting. Try using $connect()$delete() instead", call. = FALSE)
       }
-
       idAlias <- findIdAlias(self$config$defaultContext)
       resultingTransaction <- handleDelete(id, idAlias)
-      resultingTransaction$ledger <- self$config$ledger
-
-      return(TransactionInstance$new(transaction = resultingTransaction, config = self$config))
+      return(TransactionInstance$new(transaction = resultingTransaction, config = self$config, endpoint = 'update'))
     },
 
     #' @description
@@ -317,7 +300,6 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #'   Representation of the transaction to send to the active Fluree instance.
     #' @return [HistoryQueryInstance].
     history = function(query) {
-      print('In history method...')
       if (!self$connected) {
         stop("You must connect before querying history. Try using $connect()$transact() instead", call. = FALSE)
       }

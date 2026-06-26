@@ -13,3 +13,4 @@ temp.js
 *.tar.gz
 *.Rcheck/
 .positai
+.httr-oauth
