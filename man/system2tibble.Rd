@@ -16,7 +16,5 @@ tibble
 Turn the results of a call to system into a tibble
 }
 \examples{
-
 system2tibble(system("docker ps", intern = TRUE))
-
 }

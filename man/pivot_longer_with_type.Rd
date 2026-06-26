@@ -23,9 +23,5 @@ pivot_longer_with_type
 }
 \examples{
 df1 = pivot_longer_with_type(iris)
-<<<<<<< HEAD
-df1 \%>\% select(predicate, type) \%>\% distinct()
-=======
 df1 \%>\% dplyr::select(predicate, type) \%>\% dplyr::distinct()
->>>>>>> cjp_CTO
 }

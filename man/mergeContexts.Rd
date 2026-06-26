@@ -20,6 +20,12 @@ If both contexts are strings, they are combined into a list.
 \description{
 Merges a new context into a base context
 Supports strings, lists, and named lists.
+Handles conflicts and duplicates in namespace abbreviations:
+\itemize{
+\item Solid duplicates (same key = same value) are kept once
+\item Different abbreviations for the same namespace keep the first one
+\item Same abbreviation for different namespaces: context1's value is kept
+}
 }
 \examples{
 mergeContexts("https://example.org/context1", "https://example.org/context2")
