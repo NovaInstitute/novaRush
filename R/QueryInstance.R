@@ -23,7 +23,7 @@ QueryInstance <- R6::R6Class("QueryInstance",
     signedQuery = '',
 
     #' @field endpoint (`string`)\cr
-    #' The Fluree v4 query endpoint: 'query' or 'sparql'.
+    #' The Fluree v4 query endpoint. Always 'query'; SPARQL is detected by content-type.
     endpoint = 'query',
 
     #' @description
@@ -34,21 +34,22 @@ QueryInstance <- R6::R6Class("QueryInstance",
     #' @param config (`list()`)\cr
     #'   Configuration parameters of the instance.
     #' @param endpoint (`string`)\cr
-    #'   The Fluree v4 query endpoint: 'query' (JSON-LD) or 'sparql'.
+    #'   Ignored — always 'query'. Kept for backward compatibility.
     initialize = function(query, config, endpoint = 'query') {
 
       self$query <- query
       self$config <- config
-      self$endpoint <- endpoint
+      self$endpoint <- 'query'
 
-      defaultContext <- config$defaultContext %||% list()
-      queryContext <- query[["@context"]] %||% list()
-
-      if (length(defaultContext) > 0 || length(queryContext) > 0) {
-        self$query[['@context']] <- mergeContexts(defaultContext, queryContext)
+      if (!is.character(query)) {
+        defaultContext <- config$defaultContext %||% list()
+        queryContext <- query[["@context"]] %||% list()
+        if (length(defaultContext) > 0 || length(queryContext) > 0) {
+          self$query[['@context']] <- mergeContexts(defaultContext, queryContext)
+        }
       }
 
-      if (isTRUE(config$signMessages)) {
+      if (isTRUE(config$signMessages) && !is.character(query)) {
         self$sign()
       }
     },
@@ -58,24 +59,22 @@ QueryInstance <- R6::R6Class("QueryInstance",
     #' The Fluree instance must be 'connected' before querying or transacting.
     #' If `signMessages = TRUE` the JWT will be sent to the host.
     send = function() {
-      if (nzchar(self$signedQuery)) {
-        contentType <- 'application/jwt'
-      } else {
-        contentType <- 'application/json'
-      }
+      isSparql <- is.character(self$query)
 
-      params <- generateFetchParams(self$config, self$endpoint, contentType)
-      url <- params$url
-      fetchOptions <- params$config
-
-      body <- if (nzchar(self$signedQuery)) {
-        self$signedQuery
+      if (isSparql) {
+        ledger <- self$config$ledger
+        params <- generateFetchParams(self$config, 'query', 'application/sparql-query', ledger = ledger)
+        body <- self$query
+      } else if (nzchar(self$signedQuery)) {
+        params <- generateFetchParams(self$config, self$endpoint, 'application/jwt')
+        body <- self$signedQuery
       } else {
-        do.call(jsonlite::toJSON, c(list(x = self$query), novaRush:::getDefaultToJSONargs()))
+        params <- generateFetchParams(self$config, self$endpoint, 'application/json')
+        body <- do.call(jsonlite::toJSON, c(list(x = self$query), novaRush:::getDefaultToJSONargs()))
       }
 
       response <- POST(
-        url = url,
+        url = params$url,
         add_headers(`Content-Type` = params$config$headers$`Content-Type`),
         body = body,
         encode = "raw"

@@ -1,75 +1,61 @@
 
-#' Class providing objects with methods to perform history queries on a Fluree instance.
+#' Class for querying the commit log of a Fluree ledger.
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @importFrom jsonlite toJSON fromJSON
-#' @import flureeCrypto
-#' @importFrom httr POST
+#' @importFrom jsonlite fromJSON
+#' @importFrom httr GET add_headers
 #'
 #' @export
 HistoryQueryInstance <- R6::R6Class("HistoryQueryInstance",
   public = list(
     #' @field query (`list()`)\cr
-    #' The list representation of a history query to be sent to the Fluree instance.
+    #' Optional parameters: `limit` (integer), `from` (start t), `to` (end t).
     query = NULL,
 
     #' @field config (`list()`)\cr
     #' Configuration parameters of the instance.
     config = NULL,
 
-    #' @field signedQuery (`string`)\cr
-    #' The JWT of the history query.
-    signedQuery = '',
-
     #' @description
     #' Creates a new instance of this [R6][R6::R6Class] class.
     #'
     #' @param query (`list()`)\cr
-    #'   The history query to be sent to the Fluree instance.
+    #'   Optional parameters for the log request: `limit`, `from` (start t), `to` (end t).
     #' @param config (`list()`)\cr
     #'   Configuration parameters of the instance.
-    initialize = function(query, config) {
-
-      if (is.null(query$history) && is.null(query[['commit-details']])) {
-        stop('either the history or commit-details key is required', call. = FALSE)
-      }
-
+    initialize = function(query = list(), config) {
       self$query <- query
       self$config <- config
-
-      if (isTRUE(config$signMessages)) {
-        self$sign()
-      }
     },
 
     #' @description
-    #' This method sends the configured history query to the host.
-    #' The Fluree instance must be 'connected' before querying or transacting.
-    #' If `signMessages = TRUE` the JWT will be sent to the host.
+    #' Fetch the commit log for the configured ledger.
+    #' Returns a list with `ledger_id`, `commits` (each having `t`, `commit_id`, `time`,
+    #' `asserts`, `retracts`, `flake_count`), `count`, and `truncated`.
     send = function() {
-      if (nzchar(self$signedQuery)) {
-        contentType <- 'application/jwt'
-      } else {
-        contentType <- 'application/json'
+      ledger <- self$query$from %||% self$config$ledger
+      if (is.null(ledger)) {
+        stop("Ledger is required for history queries", call. = FALSE)
       }
 
-      params <- generateFetchParams(self$config, 'history', contentType)
+      params <- generateFetchParams(self$config, paste0("log/", ledger))
       url <- params$url
-      fetchOptions <- params$config
 
-      body <- if (nzchar(self$signedQuery)) {
-        self$signedQuery
-      } else {
-        do.call(jsonlite::toJSON, c(list(x = self$query), novaRush:::getDefaultToJSONargs()))
+      qp <- list()
+      if (!is.null(self$query$limit)) qp$limit <- self$query$limit
+      if (!is.null(self$query[["from-t"]])) qp[["from-t"]] <- self$query[["from-t"]]
+      if (!is.null(self$query[["to-t"]])) qp[["to-t"]] <- self$query[["to-t"]]
+
+      if (length(qp) > 0) {
+        qs <- paste(
+          mapply(function(k, v) paste0(k, "=", v), names(qp), qp),
+          collapse = "&"
+        )
+        url <- paste0(url, "?", qs)
       }
 
-      response <- POST(
-        url = url,
-        add_headers(`Content-Type` = params$config$headers$`Content-Type`),
-        body = body,
-        encode = "raw"
-      )
+      response <- httr::GET(url, add_headers(.headers = params$config$headers))
 
       resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
       if (httr::http_error(response)) {
@@ -80,44 +66,9 @@ HistoryQueryInstance <- R6::R6Class("HistoryQueryInstance",
     },
 
     #' @description
-    #' This method is used to sign the configured history query.
-    #' This method is called automatically when `signMessages = TRUE` and requires
-    #' a privateKey to be either passed as a parameter or configured within the
-    #' `config`.
+    #' Returns the query parameters.
     #'
-    #' @param privateKey (`string`)\cr
-    #'   The private key to use for message signing (represented as a hex string).
-    #' @return [HistoryQueryInstance]
-    sign = function(privateKey = NULL) {
-      if (!is.null(privateKey)) {
-        key <- privateKey
-      } else {
-        key <- self$config$privateKey
-      }
-
-      if (is.null(key)) {
-        stop("privateKey must be provided in either the transaction or the config")
-      }
-
-      input <- toJSON(self$query, auto_unbox = T, pretty = F)
-      signedHistoryQuery <- flureeCrypto:::serialize_jws(as.character(input), key)
-
-      self$signedQuery <- signedHistoryQuery
-      return(self)
-    },
-
-    #' @description
-    #' Returns the signed history query (if it has been set).
-    #'
-    #' @return (`string`).
-    getSignedQuery = function() {
-      return(self$signedQuery)
-    },
-
-    #' @description
-    #' Returns the history query body.
-    #'
-    #' @return (`string`).
+    #' @return (`list()`).
     getQuery = function() {
       return(self$query)
     }

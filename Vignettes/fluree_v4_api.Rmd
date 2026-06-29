@@ -1,0 +1,203 @@
+---
+title: "novaRush with Fluree v4: Full API Walkthrough"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{novaRush with Fluree v4: Full API Walkthrough}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+This vignette demonstrates every major operation against a locally running Fluree v4
+instance. All examples target the `novaRush/demo` ledger.
+
+**Prerequisites**: Fluree v4 installed and a server running (`fluree serve` from a
+directory initialised with `fluree init`).
+
+## Configuration
+
+```{r config}
+library(novaRush)
+
+conf <- list(
+  host    = "localhost",
+  port    = 8090,
+  ledger  = "novaRush/demo"
+)
+```
+
+A shared `@context` saves repeating namespace prefixes on every call.
+
+```{r context}
+ctx <- list(
+  schema = "http://schema.org/",
+  ex     = "http://example.org/"
+)
+```
+
+## Connect
+
+```{r connect}
+db <- FlureeInstance$new(conf)$setContext(ctx)$connect()
+```
+
+## Insert — add new triples
+
+Insert is the right operation when subjects are new. Existing subjects are not
+touched.
+
+```{r insert}
+db$insert(list(
+  insert = list(
+    list(`@id` = "ex:alice", `@type` = "schema:Person",
+         `schema:name` = "Alice", `schema:age` = 30L),
+    list(`@id` = "ex:bob",   `@type` = "schema:Person",
+         `schema:name` = "Bob",   `schema:age` = 25L)
+  )
+))$send()
+```
+
+## Upsert — replace predicate values idempotently
+
+Upsert replaces every predicate you supply on the matching subject; predicates you
+omit are left unchanged. Running the same upsert twice produces the same ledger state.
+
+```{r upsert}
+db$upsert(list(
+  upsert = list(
+    list(`@id` = "ex:bob", `schema:age` = 26L)
+  )
+))$send()
+```
+
+## Update — conditional where/delete/insert
+
+Use update when you need to bind the current value before replacing it. The `where`
+clause matches existing triples; `delete` retracts them; `insert` adds the new ones.
+
+```{r update}
+db$update(list(
+  where  = list(list(`@id` = "ex:alice", `schema:age` = "?age")),
+  delete = list(list(`@id` = "ex:alice", `schema:age` = "?age")),
+  insert = list(list(`@id` = "ex:alice", `schema:age` = 31L))
+))$send()
+```
+
+## Delete — retract all triples for a subject
+
+Delete routes through update with a wildcard pattern that retracts every triple for
+the given IRI(s).
+
+```{r delete}
+db$insert(list(
+  insert = list(
+    list(`@id` = "ex:temp", `schema:name` = "Temp")
+  )
+))$send()
+
+db$delete("ex:temp")$send()
+```
+
+## Query — JSON-LD query
+
+Fluree's native query language uses `select`, `where`, and optional `filter`,
+`groupBy`, `orderBy`, `limit`, and `reasoning` fields.
+
+```{r query-basic}
+result <- db$query(list(
+  select = list("?name", "?age"),
+  where  = list(list(`@id` = "?s", `schema:name` = "?name", `schema:age` = "?age")),
+  orderBy = "?name"
+))$send()
+
+result
+```
+
+### With RDFS reasoning
+
+Declare `@type` relationships and query via `rdfs:subClassOf` inference:
+
+```{r query-reasoning}
+# Load a minimal ontology first
+db$insert(list(
+  insert = list(
+    list(`@id` = "schema:Employee", `rdfs:subClassOf` = list(`@id` = "schema:Person"))
+  )
+))$send()
+
+db$insert(list(
+  insert = list(
+    list(`@id` = "ex:dave", `@type` = "schema:Employee", `schema:name` = "Dave")
+  )
+))$send()
+
+# Query for all Persons — includes Employees via subClassOf
+result <- db$query(list(
+  `@context` = list(rdfs = "http://www.w3.org/2000/01/rdf-schema#"),
+  select     = list("?name"),
+  where      = list(list(`@id` = "?s", `@type` = "schema:Person", `schema:name` = "?name")),
+  reasoning  = "rdfs"
+))$send()
+
+result
+```
+
+## SPARQL
+
+SPARQL 1.1 SELECT queries are sent to the same `/query` endpoint with
+`Content-Type: application/sparql-query`. The ledger is taken from config.
+
+```{r sparql}
+result <- db$sparql('
+  PREFIX schema: <http://schema.org/>
+  PREFIX ex:     <http://example.org/>
+  SELECT ?name ?age
+  WHERE {
+    ?s a schema:Person ;
+       schema:name ?name ;
+       schema:age  ?age .
+  }
+  ORDER BY ?name
+')$send()
+
+# SPARQL responses follow the W3C SPARQL JSON format
+result$results$bindings
+```
+
+## History — commit log
+
+`$history()` returns the commit log: each entry records the t-value, commit ID,
+timestamp, and the number of triples asserted and retracted.
+
+```{r history}
+log <- db$history()$send()
+
+# Each commit
+log$commits
+```
+
+Limit to the two most recent commits:
+
+```{r history-limit}
+log <- db$history(list(limit = 2L))$send()
+log$commits
+```
+
+## Time-travel query
+
+Query the ledger at a past commit using `t` in the query body. `t` is the integer
+transaction counter returned by every write operation.
+
+```{r time-travel}
+# State at t = 1 (initial insert)
+result <- db$query(list(
+  select = list("?name", "?age"),
+  where  = list(list(`@id` = "?s", `schema:name` = "?name", `schema:age` = "?age")),
+  t      = list(value = 1L)
+))$send()
+
+result
+```

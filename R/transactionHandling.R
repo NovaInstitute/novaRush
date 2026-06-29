@@ -41,6 +41,42 @@ Transact = function(...) {
 }
 
 
+#' Insert Data into a Fluree Ledger
+#'
+#' @description
+#' Convenience wrapper: configures and sends an insert transaction to the
+#' Fluree v4 `/insert` endpoint. Adds new triples without touching existing ones.
+#'
+#' @inheritParams transact
+#'
+#' @seealso [transact()] [sendTransaction()]
+#'
+#' @export
+Insert = function(...) {
+  t <- transact(...)
+  sendTransaction(t)
+}
+
+
+#' Conditionally Update Data in a Fluree Ledger
+#'
+#' @description
+#' Convenience wrapper: configures and sends an update transaction to the
+#' Fluree v4 `/update` endpoint. The transaction must contain a `where` clause
+#' that binds current values, a `delete` clause that retracts them, and an
+#' optional `insert` clause that adds new values.
+#'
+#' @inheritParams transact
+#'
+#' @seealso [transact()] [sendTransaction()]
+#'
+#' @export
+Update = function(...) {
+  t <- transact(...)
+  sendTransaction(t)
+}
+
+
 #' Transaction configuration
 #' 
 #' @description
@@ -157,14 +193,10 @@ transact = function(
 
 
 #' Delete Subjects by ID
-#' 
+#'
 #' @description
-#' Delete is not an API endpoint in Fluree. This function merely transforms
-#' a single or list of subject identifier(s) ( @id's ) into a where/delete transaction
-#' that deletes the subject and all facts about the subject.
-#' 
-#' Delete assumes that all facts for the provided subjects should be retracted
-#' from the database.
+#' Deletes all triples for one or more subjects by routing through the Fluree v4
+#' `/update` endpoint with a wildcard where/delete pattern.
 #' 
 #' @param id (`list()`)\cr
 #'   The subject identifier/identifiers to retract from the Fluree database.
@@ -197,15 +229,11 @@ delete = function(config, id) {
 
 
 #' Upsert Into a Fluree Database
-#' 
+#'
 #' @description
-#' Upsert is not an API endpoint in Fluree. This function merely transforms
-#' an upsert transaction into an insert/where/delete transaction.
-#' 
-#' Upsert assumes that the facts provided in the transaction should be treated
-#' as the true & accurate state of the data after the transaction is processed.
-#' i.e. the facts in the transaction should be inserted (if new) and should
-#' replace existing facts (if they already exist on those subjects & properties).
+#' Sends data to the Fluree v4 native `/upsert` endpoint. Replaces the values
+#' of every supplied predicate on each subject; predicates not mentioned are
+#' left unchanged. Idempotent.
 #' 
 #' @param transaction (`list()`)\cr
 #'   The upsert transaction to send to the Fluree instance.

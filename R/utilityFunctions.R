@@ -63,12 +63,17 @@ stopDockerContainer <- function(name = NULL) {
 #' @param config (`list()`)\cr
 #'   The configuration parameters of the current active transaction or query instance.
 #' @param endpoint (`string`)\cr
-#'   The Fluree v4 endpoint name: 'query', 'sparql', 'insert', 'upsert', 'update', 'create', or 'history'.
+#'   The Fluree v4 endpoint name: 'query', 'insert', 'upsert', 'update', 'create', or 'history'.
+#'   Appended to the versioned base path `/v1/fluree/`.
 #' @param contentType (`string`)\cr
 #'   In the case of an unsigned message 'application/json' is used ('application/jwt' if signed).
-#' 
+#'   Use 'application/sparql-query' for raw SPARQL strings.
+#' @param ledger (`string`)\cr
+#'   Optional ledger name appended to the URL path (e.g. 'myorg/mydb').
+#'   When provided the ledger is taken from the URL rather than the request body.
+#'
 #' @return (`list()`)
-generateFetchParams <- function(config, endpoint, contentType = "application/json") {
+generateFetchParams <- function(config, endpoint, contentType = "application/json", ledger = NULL) {
   
   host <- config$host
   port <- config$port
@@ -79,8 +84,11 @@ generateFetchParams <- function(config, endpoint, contentType = "application/jso
   if (!is.null(port)) {
     url <- paste0(url, ":", port)
   }
-  url <- paste0(url, "/fluree/", endpoint)
-  
+  url <- paste0(url, "/v1/fluree/", endpoint)
+  if (!is.null(ledger)) {
+    url <- paste0(url, "/", ledger)
+  }
+
   header <- c(
     'Content-Type' = contentType)
   

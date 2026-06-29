@@ -104,22 +104,17 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
       return(self)
     },
 
-#' testLedgers
-#'
-#' @returns
-#' @export
-#'
-#' @examples
+    #' @description
+    #' Tests the connection by running a minimal query against the ledger.
+    #'
+    #' @return The query result (a single subject IRI), or an error if the connection fails.
     testLedgers = function() {
-      qry <- '{
-          "where": {
-             "@id": "?s",
-             "?p": "?o",
-           },
-           "select": ["?s"],
-           "limit": 1
-      }'
-      queryInstance = self$query(qry)
+      qry <- list(
+        select = list("?s"),
+        where  = list(list("@id" = "?s", "?p" = "?o")),
+        limit  = 1L
+      )
+      queryInstance <- self$query(qry)
       return(queryInstance$send())
     },
 
@@ -218,11 +213,7 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
       if (!self$connected) {
         stop("You must connect before querying. Try using $connect()$sparql() instead", call. = FALSE)
       }
-      body <- list(query = sparql)
-      if (!is.null(reasoning)) {
-        body$reasoning <- reasoning
-      }
-      return(QueryInstance$new(body, self$config, endpoint = 'sparql'))
+      return(QueryInstance$new(sparql, self$config))
     },
 
     #' @description
@@ -293,19 +284,15 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     },
 
     #' @description
-    #' Create a new instance of the HistoryInstance class.
-    #' This new HistoryInstance can then be used to transact with the Fluree database.
+    #' Fetch the commit log for the configured ledger.
+    #' Returns a summary of each commit: t-value, commit ID, timestamp, assert/retract counts.
     #'
     #' @param query (`list()`)\cr
-    #'   Representation of the transaction to send to the active Fluree instance.
+    #'   Optional parameters: `limit` (integer), `from-t` (start t value), `to-t` (end t value).
     #' @return [HistoryQueryInstance].
-    history = function(query) {
+    history = function(query = list()) {
       if (!self$connected) {
-        stop("You must connect before querying history. Try using $connect()$transact() instead", call. = FALSE)
-      }
-
-      if (is.null(query$from)) {
-        query$from <- self$config$ledger
+        stop("You must connect before querying history. Try using $connect()$history() instead", call. = FALSE)
       }
       return(HistoryQueryInstance$new(query, self$config))
     },
