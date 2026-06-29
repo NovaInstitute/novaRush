@@ -35,8 +35,11 @@ Indicates whether connection to the Fluree instance has been established.}
 \item \href{#method-FlureeInstance-connect}{\code{FlureeInstance$connect()}}
 \item \href{#method-FlureeInstance-create}{\code{FlureeInstance$create()}}
 \item \href{#method-FlureeInstance-query}{\code{FlureeInstance$query()}}
+\item \href{#method-FlureeInstance-sparql}{\code{FlureeInstance$sparql()}}
+\item \href{#method-FlureeInstance-insert}{\code{FlureeInstance$insert()}}
 \item \href{#method-FlureeInstance-transact}{\code{FlureeInstance$transact()}}
 \item \href{#method-FlureeInstance-upsert}{\code{FlureeInstance$upsert()}}
+\item \href{#method-FlureeInstance-update}{\code{FlureeInstance$update()}}
 \item \href{#method-FlureeInstance-delete}{\code{FlureeInstance$delete()}}
 \item \href{#method-FlureeInstance-history}{\code{FlureeInstance$history()}}
 \item \href{#method-FlureeInstance-setKey}{\code{FlureeInstance$setKey()}}
@@ -112,17 +115,20 @@ The new configuration parameters to be merged with the existing set.}
 }
 \subsection{Returns}{
 \link{FlureeInstance}.
-testLedgers
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-FlureeInstance-testLedgers"></a>}}
 \if{latex}{\out{\hypertarget{method-FlureeInstance-testLedgers}{}}}
 \subsection{Method \code{testLedgers()}}{
+Tests the connection by running a minimal query against the ledger.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$testLedgers()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+The query result (a single subject IRI), or an error if the connection fails.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-FlureeInstance-connect"></a>}}
@@ -168,7 +174,6 @@ new ledger (optional).}
 \if{latex}{\out{\hypertarget{method-FlureeInstance-query}{}}}
 \subsection{Method \code{query()}}{
 Create a new instance of the QueryInstance class.
-This new QueryInstance can then be used to transact with the Fluree database.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$query(query)}\if{html}{\out{</div>}}
 }
@@ -177,7 +182,7 @@ This new QueryInstance can then be used to transact with the Fluree database.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{query}}{(\code{list()})\cr
-Representation of the query to perform on the active Fluree instance.}
+Representation of the JSON-LD query to perform on the active Fluree instance.}
 }
 \if{html}{\out{</div>}}
 }
@@ -186,11 +191,56 @@ Representation of the query to perform on the active Fluree instance.}
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-sparql"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-sparql}{}}}
+\subsection{Method \code{sparql()}}{
+Create a new QueryInstance for a raw SPARQL 1.1 query.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$sparql(sparql, reasoning = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{sparql}}{(\code{character})\cr
+A SPARQL 1.1 query string.}
+
+\item{\code{reasoning}}{(\code{character})\cr
+Optional reasoning mode: 'rdfs', 'owl2ql', 'owl2rl', 'datalog', or 'none'.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+\link{QueryInstance}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-insert"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-insert}{}}}
+\subsection{Method \code{insert()}}{
+Create a new TransactionInstance to insert data into the Fluree ledger.
+Insert adds new triples without touching existing ones.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$insert(transaction)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{transaction}}{(\code{list()})\cr
+A list with a \verb{@graph} key containing the data to insert.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+\link{TransactionInstance}.
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-FlureeInstance-transact"></a>}}
 \if{latex}{\out{\hypertarget{method-FlureeInstance-transact}{}}}
 \subsection{Method \code{transact()}}{
-Create a new instance of the TransactionInstance class.
-This new TransactionInstance can then be used to transact with the Fluree database.
+Alias for \code{insert()} for backward compatibility.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$transact(transaction)}\if{html}{\out{</div>}}
 }
@@ -199,7 +249,7 @@ This new TransactionInstance can then be used to transact with the Fluree databa
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{transaction}}{(\code{list()})\cr
-Representation of the transaction to send to the active Fluree instance.}
+A list with a \verb{@graph} key containing the data to insert.}
 }
 \if{html}{\out{</div>}}
 }
@@ -211,15 +261,9 @@ Representation of the transaction to send to the active Fluree instance.}
 \if{html}{\out{<a id="method-FlureeInstance-upsert"></a>}}
 \if{latex}{\out{\hypertarget{method-FlureeInstance-upsert}{}}}
 \subsection{Method \code{upsert()}}{
-Create a new TransactionInstance for upserting with the Fluree database.
-
-Upsert is not an API endpoint in Fluree. This function merely transforms
-an upsert transaction into an insert/where/delete transaction.
-
-Upsert assumes that the facts provided in the transaction should be treated
-as the true & accurate state of the data after the transaction is processed.
-i.e. the facts in the transaction should be inserted (if new) and should
-replace existing facts (if they already exist on those subjects & properties).
+Create a new TransactionInstance to upsert data into the Fluree ledger.
+Upsert replaces values for the predicates supplied on each subject;
+predicates not mentioned are left untouched.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$upsert(transaction)}\if{html}{\out{</div>}}
 }
@@ -228,7 +272,29 @@ replace existing facts (if they already exist on those subjects & properties).
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{transaction}}{(\code{list()})\cr
-The upsert transaction to send to the Fluree instance.}
+A list with a \verb{@graph} key containing the subjects and properties to upsert.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+\link{TransactionInstance}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-update"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-update}{}}}
+\subsection{Method \code{update()}}{
+Create a new TransactionInstance for a conditional update (where/delete/insert).
+Use when you need to bind current values before replacing them.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$update(transaction)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{transaction}}{(\code{list()})\cr
+A list with \code{where}, \code{delete}, and optionally \code{insert} keys.}
 }
 \if{html}{\out{</div>}}
 }
@@ -240,14 +306,7 @@ The upsert transaction to send to the Fluree instance.}
 \if{html}{\out{<a id="method-FlureeInstance-delete"></a>}}
 \if{latex}{\out{\hypertarget{method-FlureeInstance-delete}{}}}
 \subsection{Method \code{delete()}}{
-Create a new TransactionInstance for deleting subjects by @id in the Fluree database.
-
-Delete is not an API endpoint in Fluree. This function merely transforms
-a single or list of subject identifiers ( @id ) into a where/delete transaction
-that deletes the subject and all facts about the subject.
-
-Delete assumes that all facts for the provided subjects should be retracted
-from the database.
+Delete all triples for the given subject IRI(s).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$delete(id)}\if{html}{\out{</div>}}
 }
@@ -255,8 +314,8 @@ from the database.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{id}}{(\code{list()})\cr
-The subject identifier/identifiers to retract from the Fluree instance.}
+\item{\code{id}}{(\code{character})\cr
+One or more subject IRIs to retract.}
 }
 \if{html}{\out{</div>}}
 }
@@ -268,17 +327,17 @@ The subject identifier/identifiers to retract from the Fluree instance.}
 \if{html}{\out{<a id="method-FlureeInstance-history"></a>}}
 \if{latex}{\out{\hypertarget{method-FlureeInstance-history}{}}}
 \subsection{Method \code{history()}}{
-Create a new instance of the HistoryInstance class.
-This new HistoryInstance can then be used to transact with the Fluree database.
+Fetch the commit log for the configured ledger.
+Returns a summary of each commit: t-value, commit ID, timestamp, assert/retract counts.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$history(query)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$history(query = list())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{query}}{(\code{list()})\cr
-Representation of the transaction to send to the active Fluree instance.}
+Optional parameters: \code{limit} (integer), \code{from-t} (start t value), \code{to-t} (end t value).}
 }
 \if{html}{\out{</div>}}
 }

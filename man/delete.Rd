@@ -14,12 +14,8 @@ The subject identifier/identifiers to retract from the Fluree database.}
 And instance of a delete transaction (as a list).
 }
 \description{
-Delete is not an API endpoint in Fluree. This function merely transforms
-a single or list of subject identifier(s) ( @id's ) into a where/delete transaction
-that deletes the subject and all facts about the subject.
-
-Delete assumes that all facts for the provided subjects should be retracted
-from the database.
+Deletes all triples for one or more subjects by routing through the Fluree v4
+\verb{/update} endpoint with a wildcard where/delete pattern.
 }
 \examples{
 # Existing data:

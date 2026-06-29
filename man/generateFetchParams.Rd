@@ -4,17 +4,28 @@
 \alias{generateFetchParams}
 \title{Constructs arguments for httr::POST}
 \usage{
-generateFetchParams(config, endpoint, contentType = "application/json")
+generateFetchParams(
+  config,
+  endpoint,
+  contentType = "application/json",
+  ledger = NULL
+)
 }
 \arguments{
 \item{config}{(\code{list()})\cr
 The configuration parameters of the current active transaction or query instance.}
 
 \item{endpoint}{(\code{string})\cr
-The endpoint to which the http request is made (either '/transact', '/query', '/create' or '/history').}
+The Fluree v4 endpoint name: 'query', 'insert', 'upsert', 'update', 'create', or 'history'.
+Appended to the versioned base path \verb{/v1/fluree/}.}
 
 \item{contentType}{(\code{string})\cr
-In the case of an unsigned message 'application/json' is used ('application/jwt' if signed).}
+In the case of an unsigned message 'application/json' is used ('application/jwt' if signed).
+Use 'application/sparql-query' for raw SPARQL strings.}
+
+\item{ledger}{(\code{string})\cr
+Optional ledger name appended to the URL path (e.g. 'myorg/mydb').
+When provided the ledger is taken from the URL rather than the request body.}
 }
 \value{
 (\code{list()})

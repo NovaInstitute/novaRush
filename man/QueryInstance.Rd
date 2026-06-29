@@ -20,6 +20,9 @@ Configuration parameters of the instance.}
 
 \item{\code{signedQuery}}{(\code{string})\cr
 The JWT of the query.}
+
+\item{\code{endpoint}}{(\code{string})\cr
+The Fluree v4 query endpoint. Always 'query'; SPARQL is detected by content-type.}
 }
 \if{html}{\out{</div>}}
 }
@@ -40,7 +43,7 @@ The JWT of the query.}
 \subsection{Method \code{new()}}{
 Creates a new instance of this \link[R6:R6Class]{R6} class.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{QueryInstance$new(query, config)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{QueryInstance$new(query, config, endpoint = "query")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -51,6 +54,9 @@ The query to be sent to the Fluree instance.}
 
 \item{\code{config}}{(\code{list()})\cr
 Configuration parameters of the instance.}
+
+\item{\code{endpoint}}{(\code{string})\cr
+Ignored — always 'query'. Kept for backward compatibility.}
 }
 \if{html}{\out{</div>}}
 }

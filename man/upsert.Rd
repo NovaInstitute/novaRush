@@ -12,13 +12,9 @@ The upsert transaction to send to the Fluree instance.
 Note alternatively the transaction can simply be passed as a JSON \code{character} string.}
 }
 \description{
-Upsert is not an API endpoint in Fluree. This function merely transforms
-an upsert transaction into an insert/where/delete transaction.
-
-Upsert assumes that the facts provided in the transaction should be treated
-as the true & accurate state of the data after the transaction is processed.
-i.e. the facts in the transaction should be inserted (if new) and should
-replace existing facts (if they already exist on those subjects & properties).
+Sends data to the Fluree v4 native \verb{/upsert} endpoint. Replaces the values
+of every supplied predicate on each subject; predicates not mentioned are
+left unchanged. Idempotent.
 }
 \examples{
 # Existing data:

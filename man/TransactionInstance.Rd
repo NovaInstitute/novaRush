@@ -20,6 +20,9 @@ Configuration parameters of the instance.}
 
 \item{\code{signedTransaction}}{(\code{string})\cr
 The JWT of the transaction.}
+
+\item{\code{endpoint}}{(\code{string})\cr
+The Fluree v4 endpoint: 'insert', 'upsert', or 'update'.}
 }
 \if{html}{\out{</div>}}
 }
@@ -40,7 +43,7 @@ The JWT of the transaction.}
 \subsection{Method \code{new()}}{
 Creates a new instance of this \link[R6:R6Class]{R6} class.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TransactionInstance$new(transaction, config)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TransactionInstance$new(transaction, config, endpoint = "insert")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -51,6 +54,9 @@ The transaction to be sent to the Fluree instance.}
 
 \item{\code{config}}{(\code{list()})\cr
 Configuration parameters of the instance.}
+
+\item{\code{endpoint}}{(\code{string})\cr
+The Fluree v4 endpoint to use: 'insert', 'upsert', or 'update'.}
 }
 \if{html}{\out{</div>}}
 }
