@@ -3,8 +3,8 @@ library(httr)
 library(jsonlite)
 library(tidyverse)
 
-CJP1_APIKEY <- "Qcv6uCMxzYRhHyZbixzgl8FuV5jfS2s16qml4nzATe1GNVl7XEJIMnhaUP61ygqjNczHVJEp_4U7ow0gqtb59g"
-#key_prefix <- "dfdlb"
+CJP1_APIKEY <- Sys.getenv(dataFlureeAPIKEY)
+# key_prefix <- "dfdlb"
 fluree_base_url <- "https://data.flur.ee/api/fluree/" # [ query | transact | history ]
 ledger_base <- "christiaanpauw"
 transaction_type <- c("transact", "query", "history")[2]
