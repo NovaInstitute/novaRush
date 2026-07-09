@@ -9,10 +9,10 @@
 
 ## nova-skills
 
-- [ ] `/fluree-temporal` — time travel queries, git-style branching, history
-- [ ] `/fluree-policy` — graph-native per-query/transaction access control
-- [ ] `/fluree-iceberg` — Iceberg/Parquet as a Fluree graph source
-- [ ] `/fluree-ai` — MCP server, vector search, RAG integration
+- [x] `/fluree-temporal` — time travel (`@t:` suffix on ledger name), branching, merge, commit log
+- [x] `/fluree-policy` — graph-native access control: `f:AccessPolicy` vocabulary, `f:query` subquery, identity/policy-class wiring, combining algorithm, patterns
+- [x] `/fluree-iceberg` — Iceberg/Parquet graph sources via R2RML: REST catalog, direct S3, CLI/HTTP/Rust API, querying, joins with ledger data, time travel, partition pruning
+- [x] `/fluree-ai` — MCP server (server `/mcp` + CLI `fluree mcp`), Fluree Memory, vector search (`@vector`, inline functions, HNSW), BM25, Agent JSON output, graph-aware RAG pattern
 
 ## Broader semantic expansion (GHG_methodologies)
 
