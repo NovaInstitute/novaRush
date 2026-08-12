@@ -40,6 +40,32 @@ test_that("the request executor encodes and decodes JSON", {
   expect_true(jsonlite::validate(captured$body))
 })
 
+test_that("request query parameters are URL encoded", {
+  captured <- NULL
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  testthat::local_mocked_bindings(
+    .fluree_perform_request = function(method, url, headers, timeout, body) {
+      captured <<- url
+      list(status = 200L, text = '{"t":1}')
+    },
+    .package = "novaRush"
+  )
+  novaRush:::fluree_request(
+    config, "insert", method = "POST", body = list("@id" = "ex:a"),
+    query = list(ledger = "demo:review")
+  )
+  expect_match(captured, "ledger=demo%3Areview", fixed = TRUE)
+})
+
+test_that("POST query timeouts are not classified as uncertain writes", {
+  condition <- novaRush:::.fluree_transport_error(
+    simpleError("Timeout was reached"), "query",
+    "http://localhost/query", "POST"
+  )
+  expect_s3_class(condition, "fluree_request_error")
+  expect_false(inherits(condition, "fluree_uncertain_write"))
+})
+
 test_that("HTTP failures return structured Fluree errors", {
   config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
   testthat::local_mocked_bindings(

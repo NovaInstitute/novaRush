@@ -152,40 +152,8 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #'   The list representation of a transaction to be entered into the
     #'   new ledger (optional).
     create = function(ledgerName = NULL, transaction = NULL) {
-      config <- self$config
-      ledger <- config$ledger
-      signMessages <- config$signMessages
-      privateKey <- config$privateKey
-
-      params <- generateFetchParams(config, 'create')
-      url <- params$url
-
-      body <- list(ledger = ledgerName %||% ledger)
-      if (!is.null(transaction)) {
-        body <- modifyList(body, transaction)
-      }
-
-      contentType <- 'application/json'
-      finalBody <- do.call(jsonlite::toJSON, c(list(x = body), novaRush:::getDefaultToJSONargs()))
-
-      if (isTRUE(signMessages) && !is.null(privateKey)) {
-        finalBody <- flureeCrypto:::serialize_jws(as.character(finalBody), privateKey)
-        contentType <- 'application/jwt'
-      }
-
-      response <- POST(
-        url = url,
-        add_headers(`Content-Type` = contentType),
-        body = finalBody,
-        encode = "raw"
-      )
-
-      resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
-      if (httr::http_error(response)) {
-        stop("Failed to create ledger: ", resp_text)
-      }
-
-      do.call(jsonlite::fromJSON, c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()))
+      createLedger(self$config, ledgerName = ledgerName,
+                   transaction = transaction)
     },
 
     #' @description

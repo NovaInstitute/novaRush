@@ -53,7 +53,7 @@ Transact = function(...) {
 #'
 #' @export
 Insert = function(...) {
-  t <- transact(...)
+  t <- transact(..., endpoint = "insert")
   sendTransaction(t)
 }
 
@@ -72,7 +72,7 @@ Insert = function(...) {
 #'
 #' @export
 Update = function(...) {
-  t <- transact(...)
+  t <- transact(..., endpoint = "update")
   sendTransaction(t)
 }
 
@@ -131,15 +131,16 @@ transact = function(
     transaction, 
     signTransaction = NULL, 
     privateKey = NULL,
-    apiKey = NULL) {
-  
+    apiKey = NULL,
+    endpoint = NULL) {
+  if (is.null(config)) {
+    config = setConfig(ledger = ledger)
+  }
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
     stop("Please provide a ledger name. Either as argument or within the config.")
   }
-  if (is.null(config)) {
-    config = setConfig(ledger = ledger)
-  }
+  ledgerRef <- flureeLedgerRef(ledgerName, config$branch %||% "main")
   
   if (is.character(transaction)) {
     if (!jsonlite::validate(transaction)) {
@@ -151,10 +152,6 @@ transact = function(
         list(txt = transaction),
         novaRush:::getDefaultFromJSONargs()), 
       quote = FALSE)
-  }
-  
-  if (is.null(transaction$ledger)) {
-    transaction$ledger <- ledgerName
   }
   
   defaultContext <- config$defaultContext %||% list()
@@ -180,15 +177,22 @@ transact = function(
       stop("Please provide a private key for signing.  Either as argument or set one using `setKey()`.")
     }
     body <- list(
-      contentType = 'application/jwt', 
-      txn = signTransaction(list(configuration = config, transaction = body), privateKey))
+      contentType = 'application/jwt',
+      txn = novaRush::signTransaction(
+        list(configuration = config, transaction = body), key
+      )$transaction$txn)
   }
   
   if (length(apiKey) == 1) {
     config$apiKey <- apiKey
   }
   
-  return(list(configuration = config, transaction = body))
+  endpoint <- endpoint %||% if (!is.null(transaction$where)) "update" else "insert"
+  if (!endpoint %in% c("insert", "update")) {
+    stop("`endpoint` must be 'insert' or 'update'.", call. = FALSE)
+  }
+  return(list(configuration = config, transaction = body,
+              ledger = ledgerRef, endpoint = endpoint))
 }
 
 
@@ -222,9 +226,8 @@ transact = function(
 delete = function(config, id) {
   idAlias <- findIdAlias(config$defaultContext)
   resultingTransaction <- handleDelete(id, idAlias)
-  resultingTransaction$ledger <- config$ledger
-  
-  transact(transaction = resultingTransaction)
+  transact(config = config, transaction = resultingTransaction,
+           endpoint = "update")
 }
 
 
@@ -297,31 +300,11 @@ upsert = function(config, transaction) {
     transaction[["@context"]] <- mergeContexts(defaultContext, txnContext)
   }
 
-  body <- list(contentType = 'application/json', txn = transaction)
-  params <- generateFetchParams(config = config, endpoint = 'upsert', contentType = 'application/json')
-  url <- params$url
-  fetchOptions <- params$config
-
-  txnJson <- do.call(
-    what = jsonlite::toJSON,
-    args = c(list(x = body$txn), novaRush:::getDefaultToJSONargs()),
-    quote = FALSE)
-
-  response <- POST(
-    url = url,
-    config = add_headers(.headers = fetchOptions$headers),
-    body = charToRaw(txnJson),
-    encode = "raw")
-
-  resp_text <- httr::content(x = response, as = "text", encoding = "UTF-8")
-  if (httr::http_error(response)) {
-    stop("Upsert failed: ", resp_text)
-  }
-
-  do.call(
-    what = jsonlite::fromJSON,
-    args = c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()),
-    quote = FALSE)
+  ledgerRef <- flureeLedgerRef(config$ledger, config$branch %||% "main")
+  fluree_request(
+    config, endpoint = "upsert", method = "POST", body = transaction,
+    query = list(ledger = ledgerRef), operation = "upsert"
+  )
 }
 
 #' Send a Transaction
@@ -356,40 +339,26 @@ sendTransaction = function(transactionVariables) {
         list(x = body$txn), 
         novaRush:::getDefaultToJSONargs()), 
       quote = FALSE)
-  } else if (contentType == 'application/jwt') {
+  } else if (contentType %in% c('application/jwt', 'application/jose')) {
     transaction <- body$txn
   } else {
     stop("Unsupported content type: ", contentType)
   }
   
-  endpoint <- if (!is.null(body$txn$where)) 'update' else 'insert'
-  params <- generateFetchParams(
-    config = config,
-    endpoint = endpoint,
-    contentType = contentType)
-  url <- params$url
-  fetchOptions <- params$config
-
-  response <- POST(
-    url = url,
-    config = add_headers(.headers = fetchOptions$headers),
-    body = charToRaw(transaction),
-    encode = "raw")
-  
-  resp_text <- httr::content(
-    x = response, 
-    as = "text", 
-    encoding = "UTF-8")
-  if (httr::http_error(response)) {
-    stop("Transaction failed: ", resp_text)
+  endpoint <- transactionVariables$endpoint %||%
+    if (!is.null(body$txn$where)) "update" else "insert"
+  ledgerRef <- transactionVariables$ledger %||%
+    flureeLedgerRef(config$ledger, config$branch %||% "main")
+  requestContentType <- if (identical(contentType, "application/jwt")) {
+    "application/jose"
+  } else {
+    contentType
   }
-  
-  json_response <- do.call(
-    what = jsonlite::fromJSON, 
-    args = c(
-      list(txt = resp_text),
-      novaRush:::getDefaultFromJSONargs()), 
-    quote = FALSE)
+  json_response <- fluree_request(
+    config, endpoint = endpoint, method = "POST", body = transaction,
+    query = list(ledger = ledgerRef), contentType = requestContentType,
+    operation = endpoint
+  )
 
   pretty_json <- do.call(
     what = jsonlite::toJSON, 

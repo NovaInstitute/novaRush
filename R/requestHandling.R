@@ -34,8 +34,10 @@ fluree_trace_payload <- function(x) {
         ignore.case = TRUE)
 }
 
-.fluree_transport_error <- function(error, operation, url, method) {
-  uncertain <- method %in% c("POST", "PUT", "PATCH", "DELETE") &&
+.fluree_transport_error <- function(error, operation, url, method,
+                                    write = operation %in%
+                                      c("insert", "upsert", "update", "create")) {
+  uncertain <- isTRUE(write) &&
     .is_timeout_error(error)
   suffix <- if (uncertain) {
     "; the write outcome is uncertain, so verify remote state before retrying"
@@ -66,11 +68,17 @@ fluree_trace_payload <- function(x) {
 
 fluree_request <- function(config, endpoint, method = "GET", body = NULL,
                            ledger = NULL, contentType = "application/json",
-                           operation = endpoint, allowStatus = integer()) {
+                           operation = endpoint, allowStatus = integer(),
+                           query = NULL, returnResponse = FALSE,
+                           write = endpoint %in% c("insert", "upsert", "update",
+                                                   "create")) {
   params <- generateFetchParams(
     config = config, endpoint = endpoint, contentType = contentType,
     ledger = ledger, method = method
   )
+  if (!is.null(query) && length(query)) {
+    params$url <- httr::modify_url(params$url, query = query)
+  }
   method <- params$config$method
   requestBody <- NULL
   if (!is.null(body)) {
@@ -89,7 +97,9 @@ fluree_request <- function(config, endpoint, method = "GET", body = NULL,
       body = requestBody
     ),
     error = function(error) {
-      stop(.fluree_transport_error(error, operation, params$url, method))
+      stop(.fluree_transport_error(
+        error, operation, params$url, method, write = write
+      ))
     }
   )
 
@@ -104,10 +114,16 @@ fluree_request <- function(config, endpoint, method = "GET", body = NULL,
       operation, params$url, method, status, summary
     ))
   }
-  if (!nzchar(responseText)) return(invisible(NULL))
-  if (!jsonlite::validate(responseText)) return(responseText)
-  do.call(jsonlite::fromJSON,
-          c(list(txt = responseText), getDefaultFromJSONargs()))
+  value <- if (!nzchar(responseText)) {
+    NULL
+  } else if (!jsonlite::validate(responseText)) {
+    responseText
+  } else {
+    do.call(jsonlite::fromJSON,
+            c(list(txt = responseText), getDefaultFromJSONargs()))
+  }
+  if (isTRUE(returnResponse)) return(list(status = status, body = value))
+  value
 }
 
 fluree_health_check <- function(config) {
