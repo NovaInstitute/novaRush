@@ -125,14 +125,14 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' @return [FlureeInstance].
     connect = function() {
       self$checkConfig(self$config, TRUE)
-      self$connected <- TRUE
-
       tryCatch({
+        fluree_health_check(self$config)
         if (isTRUE(self$config$create)) {
           self$create()
+        } else {
+          fluree_ledger_info(self$config)
         }
-        #self$testLedger()
-
+        self$connected <- TRUE
       }, error = function(err) {
         self$connected <- FALSE
         stop(err)
