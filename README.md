@@ -3,6 +3,67 @@
 This serves as a R wrapper around the Fluree API, providing a more convenient way of interacting (transacting, querying & deleting) with Fluree V3 databases.
 It is largely based on the Fluree client SDK written for TypeScript/JavaScript which can be found [here](https://github.com/fluree/fluree-client/tree/main).
 
+## Package scope and legacy utilities
+
+The intended long-term responsibility of `novaRush` is generic communication
+with Fluree. This includes connection configuration, authentication, ledger and
+branch management, transactions, queries, named graphs, history, vector search,
+and Fluree developer memory operations.
+
+The package currently also contains survey-domain, RDF-transformation,
+visualization, and data-wrangling utilities inherited from its earlier role.
+These functions are being retained unchanged so that existing users and Nova
+Institute colleagues can inspect them before repository ownership is decided.
+Being listed below does not mean that a function is obsolete or approved for
+removal.
+
+Most of these utilities are expected eventually to live in, or be incorporated
+into, `novaGraphDB`, because that package owns conversion of legacy survey forms
+into ontology-aligned JSON-LD. Migration will happen only after the functions'
+purpose, consumers, tests, and replacement path have been reviewed.
+
+### Likely `novaGraphDB` candidates
+
+Survey and form conversion:
+
+- `SurveyOntologyNotas.R`
+- `cto_to_jsonld.R`
+- `formdef2graph.R`
+- `make_surveycto_context.R`
+- `map_cto_to_rdf.R`
+- `parseCTOMetadata.R`
+
+Generic RDF and JSON-LD transformation used by the survey pipeline:
+
+- `createSPO.R`
+- `entitiesFromOnt.R`
+- `expandIRIs.R`
+- `nodify.R`
+- `properties2kv.R`
+- `rdf_from_tibble.R`
+- `schema_from_tripples.R`
+- `triples_to_jsonld.R`
+- `tripples_to_jsonld_helpers.R`
+
+RDF inspection and visualization:
+
+- `plot_rdf_triples_generic_p.R`
+- `plot_rdf_triples_interactive.R`
+- `plot_rdf_tripples_generic.R`
+
+Supporting data reshaping:
+
+- `pivot_longer_with_type.R`
+- `system2tibble.R`
+- `unnest_all.R`
+
+### Review rule
+
+No flagged function should be removed, unexported, deprecated, or moved until
+its current consumers have been identified and equivalent behavior is covered
+by tests in its destination package. Until then, the current API remains
+available from `novaRush`.
+
 ## Usage
 
 Below follows a quick walk through of the functions included in this packages.
@@ -248,7 +309,6 @@ exampleQuery <- '{
 Query(config = conf, ledger = 'demo', exampleQuery, signQuery = FALSE)
 
 ```
-
 
 
 
