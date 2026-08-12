@@ -9,6 +9,12 @@ node_modules
 temp.js
 .RData
 
+#html
+rdf_graph.html
+
+# data
+data/
+
 # Build artifacts
 *.tar.gz
 *.Rcheck/
