@@ -24,8 +24,10 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' small_pred <- mapPredicates(varnames, predIRIs, domains, ranges)
 #' geprefix <- prefixIRIs(small_pred)
+#' }
 #' 
 prefixIRIs <- function(data, add_context = NULL) {
   context <- c(

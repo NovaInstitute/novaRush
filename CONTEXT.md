@@ -23,7 +23,15 @@ Retraction of triples from a ledger, expressed as an update with a wildcard `del
 _Avoid_: remove, drop, retract
 
 **Query**:
-A JSON-LD query sent to Fluree's `/fluree/query` endpoint. Expressed with `select`, `where`, `filter`, `groupBy`, `orderBy`, and optionally `reasoning` fields.
+A JSON-LD query sent to Fluree's `/fluree/query` endpoint. Expressed with `from`, `select`, `where`, `groupBy`, `orderBy`, `limit`, `offset`, and optionally `reasoning` fields.
+
+**Filter**:
+A constraint on bound values, written **inside** the `where` clause as a two-element
+array — `["filter", "(> ?age 35)"]` — using prefix s-expressions. Verified against
+Fluree 4.1: a top-level `filter` field is silently ignored, and an infix expression
+such as `"?age > 35"` parses but matches nothing. Both fail without an error, so
+compose filters with `fq_filter()` rather than by hand.
+_Avoid_: where-clause filter, having, predicate (which means something else in RDF)
 _Avoid_: select, read, fetch, FlureeQL (v3 term)
 
 **SPARQL**:

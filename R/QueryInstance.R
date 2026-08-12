@@ -73,9 +73,12 @@ QueryInstance <- R6::R6Class("QueryInstance",
         body <- do.call(jsonlite::toJSON, c(list(x = self$query), novaRush:::getDefaultToJSONargs()))
       }
 
+      # generateFetchParams() returns headers as a named character vector, so it has
+      # to be passed with .headers; subsetting it with $ errored on every send and
+      # also dropped the Authorization header.
       response <- POST(
         url = params$url,
-        add_headers(`Content-Type` = params$config$headers$`Content-Type`),
+        add_headers(.headers = params$config$headers),
         body = body,
         encode = "raw"
       )

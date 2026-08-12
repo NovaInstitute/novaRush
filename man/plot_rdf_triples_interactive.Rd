@@ -13,6 +13,7 @@ plot_rdf_triples_interactive(triples_df, context_map)
 Take the dataframe of tripples made by map_cto_to_rdf and create a graph.
 }
 \examples{
+\dontrun{
 kia_adapt <- novaCTO::readCTO("KiA_adaptation_ACTIVE")
 surveycto_context <- make_surveycto_context()
 formdef <- kia_adapt$fromschema$kia_adaptation
@@ -21,4 +22,5 @@ p1 <- plot_rdf_triples_interactive(fromRDF, surveycto_context)
 p1
 htmlwidgets::saveWidget(p1, file = "~/tmp/rdf_graph.html", selfcontained = TRUE)
 utils::browseURL("~/tmp/rdf_graph.html")
+}
 }

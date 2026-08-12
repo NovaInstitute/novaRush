@@ -34,7 +34,9 @@ context <- c(
 )
 }
 \examples{
+\dontrun{
 small_pred <- mapPredicates(varnames, predIRIs, domains, ranges)
 geprefix <- prefixIRIs(small_pred)
+}
 
 }

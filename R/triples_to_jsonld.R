@@ -11,11 +11,13 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' srv <- "KiA_adaptation_ACTIVE"
 #' kia_adapt <- novaCTO::readCTO(srv)
 #' formdef <- kia_adapt$fromschema$kia_adaptation
 #' fromRDF <- map_cto_to_rdf(formdef, base_uri = glue::glue("https://novapc.surveycto.com/{srv}/"), instrument = "KiA_adaptation_ACTIVE")
 #' js <- triples_to_jsonld(fromRDF, make_surveycto_centext())
+#' }
 #'
 
 triples_to_jsonld <- function(triples,

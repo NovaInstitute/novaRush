@@ -18,6 +18,7 @@ jsonld object
 jsonld_from_rdf
 }
 \examples{
+\dontrun{
 jsonld_from_rdf(rdf1)
-jsonld_from_rdf(rdf1, format = "application/n-quads")
+}
 }

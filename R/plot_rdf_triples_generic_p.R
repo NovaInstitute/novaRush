@@ -27,6 +27,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' triples <- tibble::tibble(
 #'   subject = c("id1", "id1", "id1", "id1", "id1", "id2"),
 #'   predicate = c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species", "Sepal.Length"),
@@ -43,6 +44,7 @@
 #' )
 #' htmlwidgets::saveWidget(p, file = "rdf_graph.html", selfcontained = TRUE)
 #' utils::browseURL("rdf_graph.html")
+#' }
 
 plot_rdf_triples_generic <- function(
   triples_df,

@@ -1,0 +1,295 @@
+---
+title: "Fluree the tidy way"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Fluree the tidy way}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+Tibbles in, tibbles out, pipes throughout. Nothing here needs you to call a `$`
+method: `fluree_connect()` hands back an opaque handle, every verb takes it as its
+first argument, and `collect()` gives you a tibble.
+
+The lower-level R6 interface (`FlureeInstance` and friends) is unchanged and still
+available — see `vignette("fluree_v4_api")`. It remains the way to control the
+request cycle by hand.
+
+**Prerequisites**: Fluree v4 and a running server.
+
+```bash
+cd my-project && fluree init && fluree create novaRush/demo
+fluree server start --listen-addr 127.0.0.1:8090
+```
+
+## Connect
+
+```{r connect}
+library(novaRush)
+
+con <- fluree_connect("127.0.0.1", ledger = "novaRush/demo", port = 8090,
+                      context = c(schema = "http://schema.org/",
+                                  ex     = "http://example.org/"))
+con
+#> <fluree_connection>
+#>   host   127.0.0.1:8090
+#>   ledger novaRush/demo
+#>   signed no
+#>   context 2 prefix(es): schema, ex
+```
+
+The context is merged into every later query and transaction, so prefixes need not
+be repeated. To sign messages, pass a key explicitly — the keyring is never read for
+you, because unlocking it can prompt and that would hang a script.
+
+```{r signing}
+con <- fluree_connect("127.0.0.1", ledger = "novaRush/demo", port = 8090,
+                      sign = TRUE, private_key = getKey())
+```
+
+## Write
+
+`fluree_insert()` takes a triple table. The `datatype` column decides what lands in
+the ledger, so numbers stay numbers rather than becoming strings.
+
+```{r insert}
+people <- tibble::tribble(
+  ~subject,   ~predicate,     ~object,         ~object_type, ~datatype,
+  "ex:alice", "rdf:type",     "schema:Person", "uri",        NA,
+  "ex:alice", "schema:name",  "Alice",         "literal",    "string",
+  "ex:alice", "schema:age",   "30",            "literal",    "integer",
+  "ex:alice", "schema:knows", "ex:bob",        "uri",        NA,
+  "ex:bob",   "rdf:type",     "schema:Person", "uri",        NA,
+  "ex:bob",   "schema:name",  "Bob",           "literal",    "string",
+  "ex:bob",   "schema:age",   "25",            "literal",    "integer")
+
+fluree_insert(con, people)
+```
+
+Any data frame reaches the same place via semanticModelR, which derives the types
+from the column classes:
+
+```{r insert-df}
+triples <- semanticModelR::pivot_longer_with_type(head(iris, 10))
+fluree_insert(con, triples)
+```
+
+An ordinary data frame is refused rather than guessed at, because minting IRIs from
+columns is a modelling decision, not a formatting one.
+
+`fluree_upsert()` replaces the predicates you supply and leaves the rest alone, so
+running it twice changes nothing the second time. `fluree_update()` takes a full
+`where`/`delete`/`insert` body for when the old value must be bound first, and
+`fluree_delete()` retracts a subject.
+
+```{r write-others}
+fluree_upsert(con, people)
+fluree_delete(con, "ex:bob")
+```
+
+## Read
+
+Build the query with `fq_*` verbs, then `collect()`.
+
+```{r query}
+fluree_query(con) |>
+  fq_where(`@id` = "?s", `@type` = "schema:Person",
+           `schema:name` = "?name", `schema:age` = "?age") |>
+  fq_select(name, age) |>
+  fq_order_by(desc(age)) |>
+  fq_limit(10) |>
+  collect()
+#> # A tibble: 2 × 2
+#>   name    age
+#>   <chr> <int>
+#> 1 Alice    30
+#> 2 Bob      25
+```
+
+Nothing is sent until `collect()`, so a partly built query is a reusable value:
+
+```{r reuse}
+adults <- fluree_query(con) |>
+  fq_where(`@id` = "?s", `schema:name` = "?name", `schema:age` = "?age") |>
+  fq_select(name, age)
+
+collect(fq_limit(adults, 5))
+collect(fq_order_by(adults, desc(age)))
+```
+
+### Filters
+
+Write filters as ordinary R expressions.
+
+```{r filter}
+fluree_query(con) |>
+  fq_where(`@id` = "?s", `schema:name` = "?name", `schema:age` = "?age") |>
+  fq_select(name, age) |>
+  fq_filter(age > 25, startsWith(name, "A")) |>
+  collect()
+```
+
+This translation earns its keep. Fluree v4.1 expects filters **inside** the `where`
+clause as prefix s-expressions, and gets both alternatives wrong *silently*:
+
+| What you write | What Fluree does |
+|---|---|
+| `"where": [{…}, ["filter", "(> ?age 25)"]]` | filters correctly |
+| `"where": [{…}, ["filter", "?age > 25"]]` | returns **zero rows**, no error |
+| top-level `"filter": [...]` | **ignored**, returns everything |
+
+`fq_filter()` always produces the first form. Use `show_query()` to confirm:
+
+```{r show-query}
+fluree_query(con) |>
+  fq_where(`@id` = "?s", `schema:age` = "?age") |>
+  fq_select(age) |>
+  fq_filter(age > 25) |>
+  show_query()
+#> {
+#>   "from": "novaRush/demo",
+#>   "where": [
+#>     { "@id": "?s", "schema:age": "?age" },
+#>     [ "filter", "(> ?age 25)" ]
+#>   ],
+#>   "select": [ "?age" ],
+#>   "@context": { "schema": "http://schema.org/", "ex": "http://example.org/" }
+#> }
+```
+
+Supported translations:
+
+| R | Fluree |
+|---|---|
+| `age > 25`, `age != 30` | `(> ?age 25)`, `(!= ?age 30)` |
+| `age > 25 & age < 40` | `(and (> ?age 25) (< ?age 40))` |
+| `!is.na(age)` | `(bound ?age)` |
+| `startsWith(name, "A")` | `(strStarts ?name "A")` |
+| `grepl("^A", name)` | `(regex ?name "^A")` |
+| `nchar(name) > 3` | `(> (strlen ?name) 3)` |
+| `age %in% c(25, 30)` | `(in ?age [25 30])` |
+
+Bare names become query variables. To use a value from the calling environment,
+unquote it with `!!`. Unrecognised function names pass straight through, so any
+Fluree function can be called, and a plain string is used verbatim:
+
+```{r filter-escape}
+cutoff <- 25
+fq_filter(adults, age > !!cutoff)
+fq_filter(adults, "(> ?age 25)")
+```
+
+### Whole nodes
+
+`fq_crawl()` returns nodes rather than columns — one row per subject, one column per
+predicate, with references as `@id` list-columns.
+
+```{r crawl}
+fluree_query(con) |>
+  fq_where(`@id` = "?s", `@type` = "schema:Person") |>
+  fq_crawl("?s") |>
+  collect()
+```
+
+### Reasoning and time travel
+
+```{r reasoning}
+fluree_query(con) |>
+  fq_where(`@id` = "?s", `schema:name` = "?name") |>
+  fq_select(name) |>
+  fq_reasoning("rdfs") |>
+  collect()
+
+# a transaction number, a commit hash, or an ISO-8601 timestamp
+fluree_query(con) |>
+  fq_where(`@id` = "?s", `schema:name` = "?name") |>
+  fq_select(name) |>
+  fq_at(1) |>
+  collect()
+
+fluree_history(con, limit = 5)
+```
+
+### SPARQL
+
+```{r sparql}
+fluree_sparql(con, "
+  PREFIX schema: <http://schema.org/>
+  SELECT ?name ?age
+  WHERE { ?s a schema:Person ; schema:name ?name ; schema:age ?age . }
+  ORDER BY ?name")
+```
+
+Values are coerced from the datatypes in the response, so `?age` comes back as an
+integer. If you would rather not write SPARQL by hand, the
+[glitter](https://github.com/lvaudor/glitter) package composes it with
+tidyverse-style verbs and `spq_assemble()` returns the string:
+
+```{r glitter}
+library(glitter)
+
+spq_init() |>
+  spq_add("?s schema:name ?name") |>
+  spq_head(10) |>
+  spq_assemble() |>
+  fluree_sparql(con = con)
+```
+
+## Work on the graph
+
+`fluree_graph()` returns a [tidygraph](https://tidygraph.data-imaginist.com/) graph,
+so the ledger becomes something you can traverse with dplyr verbs.
+
+```{r graph}
+library(tidygraph)
+library(semanticModelR)
+
+g <- fluree_graph(con, subject_type = "schema:Person")
+g
+#> # A tbl_graph: 2 nodes and 1 edges
+#> # Node Data: 2 × 4 (active)
+#>   name     rdf_type      `schema:age` `schema:name`
+#>   <chr>    <chr>         <chr>        <chr>
+#> 1 ex:alice schema:Person 30           Alice
+#> 2 ex:bob   schema:Person 25           Bob
+#> # Edge Data: 1 × 3
+#>    from    to predicate
+#>   <int> <int> <chr>
+#> 1     1     2 schema:knows
+
+rdf_summary(g)
+rdf_predicates(g)
+
+g |>
+  activate(nodes) |>
+  mutate(degree = centrality_degree(mode = "all")) |>
+  filter(degree > 0)
+
+rdf_neighbourhood(g, "ex:alice", order = 2)
+rdf_ggraph(g)
+```
+
+Because triples remain the canonical form, a graph can go straight back:
+
+```{r graph-write}
+people_only <- g |>
+  activate(nodes) |>
+  filter(rdf_type == "schema:Person")
+
+fluree_insert(con, people_only)
+```
+
+## What maps to what
+
+| Tidy verb | Underneath |
+|---|---|
+| `fluree_connect()` | `FlureeInstance$new()$connect()` |
+| `fluree_query() |> … |> collect()` | `$query()$send()`, response parsed to a tibble |
+| `fluree_insert()` / `fluree_upsert()` | `$insert()` / `$upsert()`, with the ledger and JSON-LD assembled |
+| `fluree_sparql()` | `$sparql()$send()`, W3C bindings parsed to a tibble |
+| `fluree_history()` | `$history()$send()` |
+| `fluree_graph()` | a crawl query plus `semanticModelR::triples_to_tbl_graph()` |

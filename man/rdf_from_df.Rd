@@ -28,5 +28,7 @@ rdf object
 rdf_from_df
 }
 \examples{
+\dontrun{
 irisrdf <- rdf_from_df(iris)
+}
 }

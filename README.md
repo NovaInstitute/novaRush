@@ -1,257 +1,184 @@
-# NovaRush
+# novaRush
 
-This serves as a R wrapper around the Fluree API, providing a more convenient way of interacting (transacting, querying & deleting) with Fluree V3 databases.
-It is largely based on the Fluree client SDK written for TypeScript/JavaScript which can be found [here](https://github.com/fluree/fluree-client/tree/main).
+An R client for the [Fluree](https://flur.ee) v4 graph database. Tibbles in, tibbles
+out, pipes throughout.
 
-## Usage
+```r
+library(novaRush)
 
-Below follows a quick walk through of the functions included in this packages.
+con <- fluree_connect("127.0.0.1", ledger = "novaRush/demo", port = 8090,
+                      context = c(schema = "http://schema.org/"))
 
-Before starting it is important to note that this package makes use of the `keyring` R package to handle private keys.
-Of which the documentation can be found [here](https://cran.r-project.org/web/packages/keyring/keyring.pdf).
-
-#### Configuration
-
-##### Setting the configuration parameters
-
-The first step is to configure the parameters needed to interact with the Fluree instance.
-
-```
-conf <- setConfig(host = datadudes2.xyz, ledger = "demo", signMessages = TRUE))
-```
-
-Additionally a port number may be specified. 
-The ledger name is the only mandatory field.  If none of the other arguments are specified, the following default values will be used:
-
-- host = "datadudes2.xyz"
-- port = NULL
-- signMessages = TRUE
-
-
-##### Updating the configuration parameters
-
-Once a configuration has been set, individual fields can be updated as follows
-
-```
-conf <- updateConfig(config, newConfig = list(ledger = "test", signMessages(FALSE)))
+fluree_query(con) |>
+  fq_where(`@id` = "?s", `@type` = "schema:Person",
+           `schema:name` = "?name", `schema:age` = "?age") |>
+  fq_select(name, age) |>
+  fq_filter(age > 25, startsWith(name, "A")) |>
+  fq_order_by(desc(age)) |>
+  fq_limit(10) |>
+  collect()
+#> # A tibble: 1 × 2
+#>   name    age
+#>   <chr> <int>
+#> 1 Alice    30
 ```
 
-In the example given above the existing `ledger` and `signMessages` fields in the old config will be replaced with the new ones
-to produce the new, merged config.
+Full walkthrough: `vignette("tidy_fluree")`.
 
+## Install
 
-#### Context
-
-##### Setting the default context 
-
-The default context being set will be included in all future transactions and queries.
-
-```
-c <- list(
-  "f" = "https://ns.flur.ee/ledger#",
-  "ex" = "http://example.org/",
-  "schema" = "http://schema.org/")
-  
-conf <- setContext(currentConfig = conf, context = c) {
+```r
+# install.packages("remotes")
+remotes::install_github("NovaInstitute/novaRush@novaRush_v2")
 ```
 
-##### Updating the default context
+`semanticModelR` (>= 0.2.0) is required and comes from the same organisation.
 
-The function described above (`setContext()`) replaces the default context with the the new context passed as argument.
-If one wishes to simply update or add to the default context (without replacing it entirely) the following function can be used.
+## Reading
 
-```
-newElements <- list(
-  "rdfs" = "http://www.w3.org/2000/01/rdf-schema#",
-  "owl" = "http://www.w3.org/2002/07/owl#"
-)
+Queries are composed locally and sent only by `collect()`, so a partly built query is
+a value you can reuse.
 
-conf <- addToContext(currentConfig = conf, context = newElements)
+| Verb | Purpose |
+|---|---|
+| `fluree_query(con)` | start a JSON-LD Query |
+| `fq_where()` | add a node pattern; call it repeatedly |
+| `fq_select()` / `fq_crawl()` | columns, or whole nodes |
+| `fq_filter()` | filter, written as R expressions |
+| `fq_order_by()` / `fq_group_by()` | `desc()` supported |
+| `fq_limit()` / `fq_offset()` | paging |
+| `fq_context()` / `fq_reasoning()` / `fq_at()` | prefixes, RDFS/OWL inference, time travel |
+| `collect()` | send, and return a tibble |
+| `show_query()` | print the query without sending it |
 
-```
+Also `fluree_sparql(con, query)` for SPARQL 1.1 and `fluree_history(con)` for the
+commit log. Both return tibbles, with values coerced from the datatypes in the
+response.
 
-This will return the updated config with the default context now including the two new elements
-together with any previously configured ones.
+### Filters are translated, and that matters
 
+Fluree v4.1 expects filters **inside** the `where` clause as prefix s-expressions.
+Both plausible alternatives fail *silently* — no error, just a wrong answer:
 
+| What is sent | What Fluree does |
+|---|---|
+| `"where": [{…}, ["filter", "(> ?age 25)"]]` | filters correctly |
+| `"where": [{…}, ["filter", "?age > 25"]]` | returns **zero rows** |
+| top-level `"filter": [...]` | **ignored**, returns everything |
 
-#### Transacting 
+`fq_filter()` always emits the first form:
 
-When it comes to transacting two functions are used.  The first configures the transaction and
-the second actually sends it to the Fluree HTTP endpoint.
-
-##### Configuring & signing the transaction
-
-```
-exampleData <- '{
-      "insert": [
-          {
-              "@id": "ex:andrew",
-              "@type": [
-                  "ex:Yeti",
-                  "schema:Person"
-              ],
-              "schema:age": 35,
-              "schema:follows": [
-                  {
-                      "@id": "ex:freddy"
-                  },
-                  {
-                      "@id": "ex:letty"
-                  },
-                  {
-                      "@id": "ex:betty"
-                  }
-              ],
-              "schema:givenName": "Andrew",
-              "schema:name": [
-                  "Andrew Johnson",
-                  "Andy the Yeti"
-              ]
-          },
-          {
-              "@id": "ex:betty",
-              "@type": "ex:Yeti",
-              "ex:firstName": "Betty",
-              "schema:age": 82,
-              "schema:follows": {
-                  "@id": "ex:freddy"
-              },
-              "schema:name": "Betty"
-          },
-          {
-              "@id": "ex:freddy",
-              "@type": "ex:Yeti",
-              "ex:verified": true,
-              "schema:name": "Freddy",
-              "schema:age": 4
-          },
-          {
-              "@id": "ex:letty",
-              "@type": "ex:Yeti",
-              "ex:firstName": "Leticia",
-              "ex:nickname": "Letty",
-              "schema:age": 2,
-              "schema:follows": {
-                  "@id": "ex:freddy"
-              },
-              "schema:name": "Leticia"
-          }
-      ]
-}'
-
-
-transactionInstance <- transact(exampleData)
-
+```r
+fq_filter(q, age > 25)              # (> ?age 25)
+fq_filter(q, age > 25 & age < 40)   # (and (> ?age 25) (< ?age 40))
+fq_filter(q, !is.na(age))           # (bound ?age)
+fq_filter(q, startsWith(name, "A")) # (strStarts ?name "A")
+fq_filter(q, grepl("^A", name))     # (regex ?name "^A")
+fq_filter(q, nchar(name) > 3)       # (> (strlen ?name) 3)
+fq_filter(q, age %in% c(25, 30))    # (in ?age [25 30])
 ```
 
-This creates an "instance" of the transaction, which can then be signed or interacted with as follows:
+Bare names become query variables; unquote a local value with `!!`. Unrecognised
+function names pass through, so any Fluree function can be called, and a plain string
+is used verbatim as an escape hatch.
 
-```
-signedTransaction <- signTransaction(transactionInstance)
+## Writing
 
-txn <- getTransactionText(signedTransaction)
-sig <- getTransactionSignature(signedTransaction)
-```
+`fluree_insert()`, `fluree_upsert()`, `fluree_update()` and `fluree_delete()` accept a
+triple table, a `tidygraph` graph, or raw JSON-LD.
 
-##### Sending the transaction
+```r
+people <- tibble::tribble(
+  ~subject,   ~predicate,    ~object,         ~object_type, ~datatype,
+  "ex:alice", "rdf:type",    "schema:Person", "uri",        NA,
+  "ex:alice", "schema:name", "Alice",         "literal",    "string",
+  "ex:alice", "schema:age",  "30",            "literal",    "integer")
 
-Once configured the signed/unsigned transaction can be sent as follows:
+fluree_insert(con, people)
 
-```
-sendTransaction(transactionInstance)
-
-// OR
-
-sendTransaction(signedTransaction)
-```
-
-
-###### Querying
-
-Querying follows the same logic as transacting.
-
-##### Configuring & signing the query
-
-```
-exampleQuery <- '{
-  "select": {
-    "?s": ["*"]
-  },
-  "where": {
-      "@id": "?s",
-      "schema:name": "?name"
-  }
-}'
-
-queryInstance <- query(simpleQuery)
-
+# any data frame, via semanticModelR
+fluree_insert(con, semanticModelR::pivot_longer_with_type(head(iris, 10)))
 ```
 
-This creates an "instance" of the query, which can then be signed or interacted with as follows:
+The `datatype` column decides the JSON type, so numbers are stored as numbers rather
+than strings. An ordinary data frame is refused rather than guessed at — minting IRIs
+from columns is a modelling decision.
 
-```
-signedQuery <- signQuery(queryInstance)
+## Working on the graph
 
-qry <- getQueryText(signedQuery)
-sig <- getQuerySignature(signedQuery)
+`fluree_graph()` returns a [tidygraph](https://tidygraph.data-imaginist.com/) graph,
+so a ledger extract can be traversed with dplyr verbs and plotted with ggraph.
 
-```
+```r
+library(tidygraph)
+library(semanticModelR)
 
-##### Sending the query
+g <- fluree_graph(con, subject_type = "schema:Person")
 
-Once configured the signed/unsigned query can be sent as follows:
+g |> activate(nodes) |> mutate(degree = centrality_degree(mode = "all"))
+rdf_neighbourhood(g, "ex:alice", order = 2)
+rdf_summary(g)
+rdf_ggraph(g)
 
-```
-sendQuery(queryInstance)
-
-// OR
-
-sendQuery(signedQuery)
-```
-
-#### Of note:
-
-For convenience two wrapper functions have also been implemented namely `Transact()` and `Query()`.
-These functions handle both the configuration and sending of any transactions or queries respectively,
-by calling the relevant functions, thereby not requiring a transaction/query to be configured
-before sending it to Fluree.
-
-Below follows an example:
-
-```
-exampleData <- '{
-      "insert": [
-          {
-              "@id": "ex:andrew",
-              "@type": [
-                  "ex:Yeti",
-                  "schema:Person"
-              ],
-              "schema:age": 35
-          }
-      ]
-  }'
-  
-Transact(config = conf, ledger = 'demo', exampleData, signTransaction = FALSE)
-
-exampleQuery <- '{
-  "select": {
-    "?s": ["*"]
-  },
-  "where": {
-      "@id": "?s",
-      "schema:name": "?name"
-  }
-}'
-
-Query(config = conf, ledger = 'demo', exampleQuery, signQuery = FALSE)
-
+fluree_insert(con, g)   # and back again
 ```
 
+## Signing
 
+```r
+setKey()   # prompts once, stores in the system keyring
+con <- fluree_connect("127.0.0.1", ledger = "novaRush/demo", port = 8090,
+                      sign = TRUE, private_key = getKey())
+```
 
+`private_key` must be passed explicitly. The keyring is deliberately never read for
+you, because unlocking it can prompt, which would hang a non-interactive script.
 
+## Lower-level interfaces
 
+Both older interfaces are unchanged and still exported.
 
+**R6** — full control of the request cycle; see `vignette("fluree_v4_api")`.
 
+```r
+db <- FlureeInstance$new(list(host = "localhost", port = 8090,
+                              ledger = "novaRush/demo"))$connect()
+db$query(list(select = list("?s"), where = list(list(`@id` = "?s", `?p` = "?o"))))$send()
+```
+
+**Functional** — `setConfig()`, `setContext()`, `query()`/`sendQuery()`,
+`transact()`/`sendTransaction()`, and the `Query()`/`Transact()`/`Insert()`/`Update()`
+wrappers.
+
+The tidy verbs are built on the R6 classes, so the three interfaces can be mixed;
+`con$instance` is the underlying `FlureeInstance` if you need to reach it.
+
+## What changed in 0.2.0
+
+- The tidy interface above, and the first test suite this package has had — 120
+  offline tests plus 29 that run against a live ledger when `FLUREE_TEST_HOST` is set.
+- **Fixed: the R6 query and transaction paths could not send at all.**
+  `QueryInstance$send()` and `TransactionInstance$send()` read the `Content-Type`
+  header with `$` from what `generateFetchParams()` returns as a *named character
+  vector*, so every call raised `$ operator is invalid for atomic vectors`. This also
+  dropped the `Authorization` header. The functional path was unaffected.
+- **Fixed: `DESCRIPTION` omitted five packages the code imports** — `R6`,
+  `flureeCrypto`, `httr`, `jsonlite`, `keyring` — so `R CMD check` failed at
+  `checking package dependencies`.
+- Terminology follows Fluree v4: the native JSON query language is **JSON-LD Query**.
+  "FlureeQL" was the v2/v3 name.
+
+## Known issues
+
+- **`License` is unset** in `DESCRIPTION` (`What license is it under?`), so
+  `R CMD check` warns. Picking one is a decision for the maintainers.
+- **The semantic modelling functions are still exported from here as well as from
+  `semanticModelR`** — `create_uri_safe()`, `map_cto_to_rdf()`,
+  `pivot_longer_with_type()`, `triples_to_jsonld()` and about thirty others. Attaching
+  both packages produces masking warnings. Removing them from novaRush is a separate,
+  coordinated change, since novaGraphDB and the existing vignettes call them.
+- `tidyr`, `dplyr` and `magrittr` are in `Depends` rather than `Imports`, so they are
+  attached for every user.
+- `FlureeInstance$create()` sets its own `Content-Type` and so does not send the
+  `Authorization` header, which will matter for ledger creation against the hosted
+  service.

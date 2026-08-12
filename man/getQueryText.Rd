@@ -15,8 +15,10 @@ If the query instance has already been signed,  the signature is deserialized
 before returning the raw JSON string.
 }
 \examples{
+\dontrun{
 queryInstance <- query(exampleQuery)
 
 qry <- getQueryText(queryInstance)
 
+}
 }

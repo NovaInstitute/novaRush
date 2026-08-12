@@ -11,12 +11,14 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' srv <- "KiA_adaptation_ACTIVE"
 #' kia_adapt <- novaCTO::readCTO(srv)
 #' formdef <- kia_adapt$fromschema$kia_adaptation
 #' cto_to_jsonld(formdef,
 #'   base_uri = glue::glue("https://novapc.surveycto.com/{srv}"),
 #'   instrument = "KiA_adaptation_ACTIVE")
+#' }
 
 cto_to_jsonld <- function(formdef,
                           base_uri = "https://https://novapc.surveycto.com/",

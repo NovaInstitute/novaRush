@@ -15,9 +15,11 @@ Note this function can only be used if a private key had been configured and
 the transaction has been signed.
 }
 \examples{
+\dontrun{
 transactionInstance <- transact(exampleData)
 signedTransactionInstance <- signTransaction(transactionInstance)
 
 sig <- getTransactionSignature(signedTransactionInstance)
 
+}
 }

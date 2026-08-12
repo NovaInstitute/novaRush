@@ -16,7 +16,9 @@ A named list representing the key-value map.
 Convert a properties tibble to a key-value map suitable for JSON-LD serialization.
 }
 \examples{
+\dontrun{
 dfprops <- structure(list(predicate = c("rdf:type", "rdfs:label", "survey:hasQuestion", "survey:hasQuestion", "survey:hasQuestion"), object = c("survey:Survey", "SurveyCTO Form", "https://novapc.surveycto.com/KiA_adaptation_ACTIVE/question/starttime", "https://novapc.surveycto.com/KiA_adaptation_ACTIVE/question/endtime", "https://novapc.surveycto.com/KiA_adaptation_ACTIVE/question/deviceid"), object_type = c("uri", "literal", "uri", "uri", "uri")), row.names = c(NA, -5L), class = c("tbl_df", "tbl", "data.frame"))
 res <- properties2kv(dfprops, id = "https://novapc.surveycto.com/KiA_adaptation_ACTIVE_partial")
 cat(toJSON(res, auto_unbox = TRUE, pretty = TRUE))
+}
 }

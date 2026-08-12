@@ -10,9 +10,11 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' iristriples <- pivot_longer_with_type(iris)
 #' rdfiris <- rdf_from_df3(iristriples, base = "http://example.com/iris/", vocab = "http://example.com/irisvocab/#")
 #' rdf_serialize(rdfiris, "rdfiris.json", format = "jsonld")
+#' }
 
 rdf_from_df3 <- function(df,
                          subject = "subject",
@@ -47,7 +49,9 @@ rdf_from_df3 <- function(df,
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' irisrdf <- rdf_from_df(iris)
+#' }
 
 rdf_from_df <- function(df, subject = "subject", predicate = "predicate", object = "object", ...) {
   df <- pivot_longer_with_type(df, ...)
@@ -61,8 +65,9 @@ rdf_from_df <- function(df, subject = "subject", predicate = "predicate", object
 #' @return jsonld object
 #' @export
 #' @examples
+#' \dontrun{
 #' jsonld_from_rdf(rdf1)
-#' jsonld_from_rdf(rdf1, format = "application/n-quads")
+#' }
 
 jsonld_from_rdf <- function(rdf) {
   # Make the rdf character first by wriring it for file

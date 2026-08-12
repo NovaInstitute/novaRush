@@ -14,6 +14,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' pred_tb <- tibble(
 #'   predicate = c("prov:startedAtTime", "prov:endedAtTime", "rdf:type"),
 #'   `rdfs:domain` = c(":Interview", ":Interview", "owl:Thing"),
@@ -29,6 +30,7 @@
 #' )
 #'
 #' pivotLongerSPO(small_data, pred_tb)
+#' }
 #' @seealso [mapPredicates()], [predicateTibble()]
 #'
 pivotLongerSPO <- function(data, pred_tb) {
@@ -96,6 +98,7 @@ pivotLongerSPO <- function(data, pred_tb) {
 #' @return [data.frame] `long_data` with the correct subject for each row according to the domain of the predicate
 #'
 #' @examples
+#' \dontrun{
 #' small_pred_tb <- tibble(
 #'   predicate = c("prov:startedAtTime", "prov:endedAtTime", "rdf:type"),
 #'   `rdfs:domain` = c(":Survey", ":Survey", "owl:Thing"),
@@ -121,6 +124,7 @@ pivotLongerSPO <- function(data, pred_tb) {
 #'# 1 uuid:fe690b51-ee58-4294-b7b6-9f941b47b741  starttime    2024-02-27 14:18:19    prov:startedAtTime :Survey      xsd:dateTime
 #'# 2 uuid:fe690b51-ee58-4294-b7b6-9f941b47b741. endtime      2024-02-27 14:41:43    prov:endedAtTime   :Survey      xsd:dateTime
 #'
+#' }
 #' @seealso [identify_nodes()], [pivotLongerSPO()]
 #' @export
 

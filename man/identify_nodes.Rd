@@ -27,6 +27,7 @@ This function creates node specifications implied by a dataframe according to a 
 It amends \code{data} to include columns that are used as the the subject for triples concerning each class.
 }
 \examples{
+\dontrun{
 interview_spec <- list(
   type = "https://nova.org.za/nova-o#Interview",
   id_col = "instanceid",
@@ -52,4 +53,5 @@ node_spec <- list(interview_spec, hh_spec, hh_addr_spec, survey_spec)
 result <- identify_nodes(node_spec, small_kia_data)
 small_kia_data <- result$data
 id_tb <- result$id_tb
+}
 }

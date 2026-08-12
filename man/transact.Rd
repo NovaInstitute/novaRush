@@ -41,6 +41,7 @@ The function returns a list containing all the information necessary to interact
 with the Fluree instance via \code{sendTransaction()}.
 }
 \examples{
+\dontrun{
 exampleData <- '{
    "insert": [
       {
@@ -61,4 +62,5 @@ transactionInstance <- transact(config = conf, ledger = 'demo', exampleData, sig
 dataList <- fromJSON(exampleData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 transactionInstance <- transact(config = conf, ledger = 'demo', dataList, signTransaction = FALSE)
 
+}
 }

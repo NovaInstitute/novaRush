@@ -19,6 +19,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' interview_spec <- list(
 #'   type = "https://nova.org.za/nova-o#Interview",
 #'   id_col = "instanceid",
@@ -44,6 +45,7 @@
 #' result <- identify_nodes(node_spec, small_kia_data)
 #' small_kia_data <- result$data
 #' id_tb <- result$id_tb
+#' }
 
 identify_nodes <- function(node_spec, data) {
   # create the specification

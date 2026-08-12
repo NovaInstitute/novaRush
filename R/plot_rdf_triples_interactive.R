@@ -14,6 +14,7 @@
 #'
 #' @examples
 #' @examples
+#' \dontrun{
 #' kia_adapt <- novaCTO::readCTO("KiA_adaptation_ACTIVE")
 #' surveycto_context <- make_surveycto_context()
 #' formdef <- kia_adapt$fromschema$kia_adaptation
@@ -22,6 +23,7 @@
 #' p1
 #' htmlwidgets::saveWidget(p1, file = "~/tmp/rdf_graph.html", selfcontained = TRUE)
 #' utils::browseURL("~/tmp/rdf_graph.html")
+#' }
 
 plot_rdf_triples_interactive <- function(triples_df, context_map) {
   # --- 1. Prepare Data for `visNetwork` ---

@@ -13,8 +13,10 @@ JSON string representation of the transaction body
 This function returns the transaction body as a JSON string.
 }
 \examples{
+\dontrun{
 transactionInstance <- transact(exampleData)
 
 txn  <- getTransactionText(transactionInstance)
 
+}
 }

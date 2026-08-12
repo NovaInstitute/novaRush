@@ -62,9 +62,11 @@ setConfig = function(host = NULL, port = NULL, ledger, signMessages = NULL) {
 #' @returns The new combined list of configuration parameters.
 #' 
 #' @examples
+#' \dontrun{
 #' newConfig <- list(ledger = "test2", port = "8090")
 #' updatedConfig <- updateConfig(config, newConfig)
 #' 
+#' }
 #' @export
 updateConfig = function(config, newConfig = list()) {
   

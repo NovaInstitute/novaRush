@@ -29,7 +29,9 @@ rdf object
 rdf_from_df3
 }
 \examples{
+\dontrun{
 iristriples <- pivot_longer_with_type(iris)
 rdfiris <- rdf_from_df3(iristriples, base = "http://example.com/iris/", vocab = "http://example.com/irisvocab/#")
 rdf_serialize(rdfiris, "rdfiris.json", format = "jsonld")
+}
 }

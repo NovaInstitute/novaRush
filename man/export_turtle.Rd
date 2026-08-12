@@ -13,6 +13,8 @@ export_turtle(triples, context_df = make_surveycto_centext())
 Takes the output of \code{map_cto_to_rdf()} and converts it to Turtle format.
 }
 \examples{
+\dontrun{
 fromRDF <- map_cto_to_rdf(formdef, base_uri = "https://novapc.surveycto.com/", instrument = "KiA_adaptation_ACTIVE")
 export_turtle(fromRDF, context_df = make_surveycto_centext())
+}
 }

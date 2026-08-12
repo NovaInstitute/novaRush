@@ -25,7 +25,9 @@ new contexts are merged to form the updated \code{defaultContext}.
 The merged \code{newConfig} is then returned.
 }
 \examples{
+\dontrun{
 newConfig <- list(ledger = "test2", port = "8090")
 updatedConfig <- updateConfig(config, newConfig)
 
+}
 }

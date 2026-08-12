@@ -15,9 +15,11 @@ Note this function can only be used if a private key had been configured and
 the query has been signed.
 }
 \examples{
+\dontrun{
 queryInstance <- query(exampleQuery)
 signedQueryInstance <- signQuery(queryInstance)
 
 sig <- getQuerySignature(signedQueryInstance)
 
+}
 }

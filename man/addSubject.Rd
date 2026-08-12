@@ -20,6 +20,7 @@ You can use \code{\link[=mapPredicates]{mapPredicates()}} and \code{\link[=predi
 Adjust dataframe to have correct subject according to domain and range specifications in \code{pred_tb}. Helper function used in \code{\link[=pivotLongerSPO]{pivotLongerSPO()}}.
 }
 \examples{
+\dontrun{
 small_pred_tb <- tibble(
   predicate = c("prov:startedAtTime", "prov:endedAtTime", "rdf:type"),
   `rdfs:domain` = c(":Survey", ":Survey", "owl:Thing"),
@@ -45,6 +46,7 @@ long_data <- addSubject(long_data, pred_tb)
 # 1 uuid:fe690b51-ee58-4294-b7b6-9f941b47b741  starttime    2024-02-27 14:18:19    prov:startedAtTime :Survey      xsd:dateTime
 # 2 uuid:fe690b51-ee58-4294-b7b6-9f941b47b741. endtime      2024-02-27 14:41:43    prov:endedAtTime   :Survey      xsd:dateTime
 
+}
 }
 \seealso{
 \code{\link[=identify_nodes]{identify_nodes()}}, \code{\link[=pivotLongerSPO]{pivotLongerSPO()}}

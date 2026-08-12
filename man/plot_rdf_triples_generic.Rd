@@ -79,6 +79,7 @@ Create an interactive network diagram from a tibble of RDF triples, treating all
 Create an interactive network diagram from a tibble of RDF triples, treating all objects as nodes, with stabilized layout, optional edge labels, optional ID shortening, complex query filtering, and customizable physics parameters.
 }
 \examples{
+\dontrun{
 triples <- tibble::tibble(
   subject = c("id1", "id1", "id1", "id1", "id1", "id2"),
   predicate = c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species", "Sepal.Length"),
@@ -95,6 +96,8 @@ p <- plot_rdf_triples_generic(
 )
 htmlwidgets::saveWidget(p, file = "rdf_graph.html", selfcontained = TRUE)
 utils::browseURL("rdf_graph.html")
+}
+\dontrun{
 triples <- tibble::tibble(
   subject = c("id1", "id1", "id1", "id1", "id1", "id2"),
   predicate = c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species", "Sepal.Length"),
@@ -111,4 +114,5 @@ p <- plot_rdf_triples_generic(
 )
 htmlwidgets::saveWidget(p, file = "rdf_graph.html", selfcontained = TRUE)
 utils::browseURL("rdf_graph.html")
+}
 }

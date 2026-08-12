@@ -75,6 +75,7 @@ Query = function(...) {
 #' This includes all the necessary parameters as well as the signed/unsigned query itself.
 #' 
 #' @examples
+#' \dontrun{
 #' # Existing data:
 #' #  [
 #' #    { "@id": "freddy", "name": "Freddy" },
@@ -98,6 +99,7 @@ Query = function(...) {
 #' queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' queryInstance <- query(queryList)
 #' 
+#' }
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
 #' @export
@@ -182,9 +184,11 @@ query = function(
 #' @return A character string containing the JSON response content.
 #' 
 #' @examples
+#' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' sendQuery(queryInstance)
 #' 
+#' }
 #' @importFrom jsonlite toJSON
 #' @importFrom jsonlite fromJSON
 #' 
@@ -354,9 +358,11 @@ history = function(
 #' @return A character string containing the response content.
 #' 
 #' @examples
+#' \dontrun{
 #' historyQueryInstance <- history(exampleHistoryQuery)
 #' sendHistoryQuery(historyQueryInstance)
 #' 
+#' }
 #' @export
 sendHistoryQuery = function(queryVariables) {
   
@@ -425,9 +431,11 @@ sendHistoryQuery = function(queryVariables) {
 #' This includes all the necessary parameters as well as the signed query itself.
 #' 
 #' @examples
+#' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' signedQueryInstance <- signQuery(queryInstance)
 #' 
+#' }
 #' @export
 signQuery = function(queryVariables = NULL, privateKey = NULL) {
   
@@ -475,11 +483,13 @@ signQuery = function(queryVariables = NULL, privateKey = NULL) {
 #' @returns Character string representing the JWT of the signed query.
 #' 
 #' @examples
+#' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' signedQueryInstance <- signQuery(queryInstance)
 #' 
 #' sig <- getQuerySignature(signedQueryInstance)
 #' 
+#' }
 #' @export
 getQuerySignature = function(queryVariables = NULL) {
   if (is.null(queryVariables)) {
@@ -508,10 +518,12 @@ getQuerySignature = function(queryVariables = NULL) {
 #' @returns JSON string representation of the query body
 #' 
 #' @examples
+#' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' 
 #' qry <- getQueryText(queryInstance)
 #' 
+#' }
 #' @export
 getQueryText = function(queryVariables = NULL, pretty = TRUE) {
   if (is.null(queryVariables)) {

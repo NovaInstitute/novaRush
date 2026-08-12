@@ -17,6 +17,7 @@ of every supplied predicate on each subject; predicates not mentioned are
 left unchanged. Idempotent.
 }
 \examples{
+\dontrun{
 # Existing data:
 #  [
 #    { "@id": "freddy", "name": "Freddy" },
@@ -51,4 +52,5 @@ sendTransaction(upsertInstance)
 #    { "@id": "alice", "name": "Alice", "age": 25 }
 #  ]
 
+}
 }

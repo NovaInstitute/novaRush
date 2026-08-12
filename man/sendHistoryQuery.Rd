@@ -18,7 +18,9 @@ This function makes use of the \code{httr} package to send the configured histor
 query to the Fluree \verb{/history} API endpoint.
 }
 \examples{
+\dontrun{
 historyQueryInstance <- history(exampleHistoryQuery)
 sendHistoryQuery(historyQueryInstance)
 
+}
 }

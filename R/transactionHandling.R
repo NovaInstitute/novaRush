@@ -101,6 +101,7 @@ Update = function(...) {
 #' This includes all the necessary parameters as well as the signed/unsigned transaction itself.
 #' 
 #' @examples
+#' \dontrun{
 #' exampleData <- '{
 #'    "insert": [
 #'       {
@@ -121,6 +122,7 @@ Update = function(...) {
 #' dataList <- fromJSON(exampleData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' transactionInstance <- transact(config = conf, ledger = 'demo', dataList, signTransaction = FALSE)
 #' 
+#' }
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
 #' 
@@ -204,6 +206,7 @@ transact = function(
 #' @returns And instance of a delete transaction (as a list).
 #' 
 #' @examples
+#' \dontrun{
 #' # Existing data:
 #' #  [
 #' #    { "@id": "freddy", "name": "Freddy" },
@@ -218,6 +221,7 @@ transact = function(
 #' #    { "@id": "alice", "name": "Alice" }
 #' #  ]
 #' 
+#' }
 #' @export
 delete = function(config, id) {
   idAlias <- findIdAlias(config$defaultContext)
@@ -240,6 +244,7 @@ delete = function(config, id) {
 #'   Note alternatively the transaction can simply be passed as a JSON `character` string.
 #' 
 #' @examples
+#' \dontrun{
 #' # Existing data:
 #' #  [
 #' #    { "@id": "freddy", "name": "Freddy" },
@@ -274,6 +279,7 @@ delete = function(config, id) {
 #' #    { "@id": "alice", "name": "Alice", "age": 25 }
 #' #  ]
 #' 
+#' }
 #' @importFrom jsonlite validate
 #' 
 #' @export
@@ -336,9 +342,11 @@ upsert = function(config, transaction) {
 #' @return A character string containing the response content.
 #' 
 #' @examples
+#' \dontrun{
 #' transactionInstance <- transact(exampleData)
 #' sendTransaction(transactionInstance)
 #' 
+#' }
 #' @importFrom httr POST
 #' 
 #' @export
@@ -418,9 +426,11 @@ sendTransaction = function(transactionVariables) {
 #' This includes all the necessary parameters as well as the signed transaction itself.
 #' 
 #' @examples
+#' \dontrun{
 #' transactionInstance <- transact(exampleData)
 #' signedTransactionInstance <- signTransaction(transactionInstance)
 #' 
+#' }
 #' @export
 signTransaction = function(transactionVariables = NULL, privateKey = NULL) {
 
@@ -473,11 +483,13 @@ signTransaction = function(transactionVariables = NULL, privateKey = NULL) {
 #' @returns Character string representing the JWT of the signed transaction.
 #' 
 #' @examples
+#' \dontrun{
 #' transactionInstance <- transact(exampleData)
 #' signedTransactionInstance <- signTransaction(transactionInstance)
 #' 
 #' sig <- getTransactionSignature(signedTransactionInstance)
 #' 
+#' }
 #' @export
 getTransactionSignature = function(transactionVariables = NULL) {
   if (is.null(transactionVariables)) {
@@ -504,10 +516,12 @@ getTransactionSignature = function(transactionVariables = NULL) {
 #' @returns JSON string representation of the transaction body
 #' 
 #' @examples
+#' \dontrun{
 #' transactionInstance <- transact(exampleData)
 #' 
 #' txn  <- getTransactionText(transactionInstance)
 #' 
+#' }
 #' @export
 getTransactionText = function(transactionVariables = NULL) {
   if (is.null(transactionVariables)) {

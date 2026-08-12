@@ -18,6 +18,7 @@ Deletes all triples for one or more subjects by routing through the Fluree v4
 \verb{/update} endpoint with a wildcard where/delete pattern.
 }
 \examples{
+\dontrun{
 # Existing data:
 #  [
 #    { "@id": "freddy", "name": "Freddy" },
@@ -32,4 +33,5 @@ sendTransaction(deleteInstance)
 #    { "@id": "alice", "name": "Alice" }
 #  ]
 
+}
 }
