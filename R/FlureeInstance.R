@@ -366,6 +366,8 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' with existing ones, instead it will replace the existing
     #' `defaultContext` entirely.
     #'
+    #' @param context (`list()`)\cr
+    #'   A named list of JSON-LD prefixes to use as the default context.
     #' @return [FlureeInstance].
     setContext = function(context) {
       self$configure(list(defaultContext = context))

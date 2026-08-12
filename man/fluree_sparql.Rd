@@ -36,14 +36,6 @@ fluree_sparql(con, "
   WHERE { ?s a schema:Person ; schema:name ?name ; schema:age ?age . }
   ORDER BY ?name
 ")
-
-# composed with glitter
-library(glitter)
-spq_init() |>
-  spq_add("?s schema:name ?name") |>
-  spq_head(10) |>
-  spq_assemble() |>
-  fluree_sparql(con = con)
 }
 }
 \seealso{

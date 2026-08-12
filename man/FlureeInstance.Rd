@@ -432,6 +432,14 @@ with existing ones, instead it will replace the existing
 \if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$setContext(context)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{context}}{(\code{list()})\cr
+A named list of JSON-LD prefixes to use as the default context.}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 \link{FlureeInstance}.
 }

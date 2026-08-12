@@ -155,8 +155,25 @@ The tidy verbs are built on the R6 classes, so the three interfaces can be mixed
 
 ## What changed in 0.2.0
 
-- The tidy interface above, and the first test suite this package has had — 120
-  offline tests plus 29 that run against a live ledger when `FLUREE_TEST_HOST` is set.
+- The tidy interface above, and the first test suite this package has had — offline
+  tests covering query construction, filter translation and response parsing, plus 29
+  that run against a live ledger when `FLUREE_TEST_HOST` is set.
+- **The semantic modelling functions moved to
+  [semanticModelR](https://github.com/NovaInstitute/semanticModelR).** Turning tables
+  and SurveyCTO form definitions into RDF is modelling, not client work, and keeping
+  two copies meant they could drift. The 31 names are still exported here and forward
+  to semanticModelR, warning once per session, so existing scripts keep working:
+
+  ```r
+  create_uri_safe("A B")
+  #> Warning: create_uri_safe() has moved to semanticModelR and will be removed from
+  #>   novaRush in a future version. Use semanticModelR::create_uri_safe() instead.
+  ```
+
+  They will be removed in a future version — see `?"novaRush-moved"`. semanticModelR
+  also carries fixes never applied here, and adds a tidygraph bridge.
+  This dropped 27 files and about 2,900 lines from novaRush, and took roxygen from 31
+  warnings to none.
 - **Fixed: the R6 query and transaction paths could not send at all.**
   `QueryInstance$send()` and `TransactionInstance$send()` read the `Content-Type`
   header with `$` from what `generateFetchParams()` returns as a *named character
@@ -172,13 +189,11 @@ The tidy verbs are built on the R6 classes, so the three interfaces can be mixed
 
 - **`License` is unset** in `DESCRIPTION` (`What license is it under?`), so
   `R CMD check` warns. Picking one is a decision for the maintainers.
-- **The semantic modelling functions are still exported from here as well as from
-  `semanticModelR`** — `create_uri_safe()`, `map_cto_to_rdf()`,
-  `pivot_longer_with_type()`, `triples_to_jsonld()` and about thirty others. Attaching
-  both packages produces masking warnings. Removing them from novaRush is a separate,
-  coordinated change, since novaGraphDB and the existing vignettes call them.
 - `tidyr`, `dplyr` and `magrittr` are in `Depends` rather than `Imports`, so they are
   attached for every user.
+- The vignettes live in `Vignettes/` with a capital V and there is no
+  `VignetteBuilder` field, so they are not built. That works on a case-insensitive
+  filesystem like macOS but would not on Linux or CI.
 - `FlureeInstance$create()` sets its own `Content-Type` and so does not send the
   `Authorization` header, which will matter for ledger creation against the hosted
   service.
