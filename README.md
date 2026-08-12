@@ -64,6 +64,50 @@ its current consumers have been identified and equivalent behavior is covered
 by tests in its destination package. Until then, the current API remains
 available from `novaRush`.
 
+## Live Fluree integration test
+
+The ordinary test suite uses mocked HTTP requests and does not require Fluree.
+An additional opt-in test verifies the complete create, insert, query, upsert,
+and conditional-update workflow against a real Fluree v4 server.
+
+Start Docker Desktop, then start a local Fluree container:
+
+```bash
+docker run -d \
+  --name novarush-fluree-test \
+  -p 8090:8090 \
+  -v novarush-fluree-test-data:/var/lib/fluree \
+  -e FLUREE_LISTEN_ADDR=0.0.0.0:8090 \
+  fluree/server:latest
+```
+
+Confirm that it is ready:
+
+```bash
+curl http://localhost:8090/health
+```
+
+From the `novaRush` package directory, run only the live test:
+
+```bash
+FLUREE_LIVE_TEST=true \
+FLUREE_BASE_URL=http://localhost:8090 \
+FLUREE_TEST_LEDGER=novarush-integration \
+Rscript -e 'devtools::test(filter = "live-core")'
+```
+
+Optional settings are `FLUREE_TEST_BRANCH`, `FLUREE_API_TOKEN`, and
+`FLUREE_REQUEST_TIMEOUT`. The test ledger and its uniquely identified test
+entities are retained for inspection. Cleanup is deliberately manual:
+
+```bash
+docker stop novarush-fluree-test
+docker rm novarush-fluree-test
+docker volume rm novarush-fluree-test-data
+```
+
+Removing the Docker volume permanently deletes the retained test ledger.
+
 ## Usage
 
 Below follows a quick walk through of the functions included in this packages.
@@ -309,7 +353,6 @@ exampleQuery <- '{
 Query(config = conf, ledger = 'demo', exampleQuery, signQuery = FALSE)
 
 ```
-
 
 
 
