@@ -62,8 +62,11 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
               stop("Cannot create a ledger through the Fluree hosted service API", call. = FALSE)
             }
           } else {
-            if (is.null(host)) {
-              stop("Host is required on either FlureeInstance or connect", call. = FALSE)
+            # baseUrl is an alternative to host/port, not an addition to it:
+            # generateFetchParams() prefers it and derives one from the other.
+            if (is.null(host) && is.null(config$baseUrl)) {
+              stop("Either `host` or `baseUrl` is required on FlureeInstance or connect",
+                   call. = FALSE)
             }
           }
           if (is.null(ledger)) {

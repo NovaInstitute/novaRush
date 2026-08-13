@@ -30,3 +30,23 @@ test_that("a failed connection does not leave the instance connected", {
   expect_error(db$connect(), "not healthy")
   expect_false(db$connected)
 })
+
+# base_url is an alternative to host/port, not an addition. checkConfig() only knew
+# about host, so a base_url-only connection could never connect - which the live
+# suite caught and the offline suite did not, because check = FALSE skips connect().
+test_that("a base_url-only config passes connection validation", {
+  instance <- FlureeInstance$new(list(baseUrl = "http://fluree.test", ledger = "demo"))
+
+  expect_silent(instance$checkConfig(instance$config, TRUE))
+  expect_error(
+    FlureeInstance$new(list(ledger = "demo"))$checkConfig(list(ledger = "demo"), TRUE),
+    "Either `host` or `baseUrl` is required")
+})
+
+test_that("a base_url-only connection prints its address rather than ?", {
+  con <- fluree_connect(base_url = "http://fluree.test:8090", ledger = "demo",
+                        check = FALSE)
+
+  expect_output(print(con), "http://fluree.test:8090", fixed = TRUE)
+  expect_no_match(format(con), "?", fixed = TRUE)
+})

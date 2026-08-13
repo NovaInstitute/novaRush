@@ -108,6 +108,8 @@ print.fluree_connection <- function(x, ...) {
   cfg <- x$instance$config
   where <- if (isTRUE(cfg$isFlureeHosted)) {
     "Fluree hosted"
+  } else if (!is.null(cfg$baseUrl)) {
+    cfg$baseUrl
   } else {
     paste0(cfg$host %||% "?", if (!is.null(cfg$port)) paste0(":", cfg$port) else "")
   }
@@ -130,8 +132,8 @@ print.fluree_connection <- function(x, ...) {
 #' @export
 format.fluree_connection <- function(x, ...) {
   cfg <- x$instance$config
-  paste0("<fluree_connection ", cfg$host %||% "hosted", "/", cfg$ledger %||% "?",
-         ":", cfg$branch %||% "main", ">")
+  paste0("<fluree_connection ", cfg$host %||% cfg$baseUrl %||% "hosted", "/",
+         cfg$ledger %||% "?", ":", cfg$branch %||% "main", ">")
 }
 
 #' Is this a Fluree connection?
