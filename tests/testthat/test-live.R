@@ -1,21 +1,18 @@
-# End-to-end tests against a real ledger. Skipped unless FLUREE_TEST_HOST is set,
-# so the suite stays runnable with no server.
-#
-#   cd $(mktemp -d) && fluree init && fluree create scratch
-#   fluree server start --listen-addr 127.0.0.1:8099
-#   FLUREE_TEST_HOST=127.0.0.1:8099 FLUREE_TEST_LEDGER=scratch Rscript -e 'devtools::test()'
-#   fluree server stop
+# End-to-end tests against a real ledger, through the tidy interface. Gated on the
+# same FLUREE_LIVE_TEST switch as the other live files - see helper-live-fluree.R
+# and the Testing section of README.md for how to start a server.
 
 live_connection <- function() {
-  host <- Sys.getenv("FLUREE_TEST_HOST")
-  skip_if(host == "", "set FLUREE_TEST_HOST to run the live tests")
+  skip_if_no_live_fluree()
+  cfg <- live_fluree_config()
 
-  parts <- strsplit(host, ":", fixed = TRUE)[[1]]
   fluree_connect(
-    parts[1],
-    ledger  = Sys.getenv("FLUREE_TEST_LEDGER", "scratch"),
-    port    = if (length(parts) > 1) as.integer(parts[2]) else NULL,
-    context = c(ex = "http://example.org/", schema = "http://schema.org/"))
+    base_url = cfg$baseUrl,
+    ledger   = cfg$ledger,
+    branch   = if (is.null(cfg$branch)) "main" else cfg$branch,
+    api_key  = cfg$apiKey,
+    timeout  = if (is.null(cfg$timeout)) 60 else cfg$timeout,
+    context  = c(ex = "http://example.org/", schema = "http://schema.org/"))
 }
 
 # A subject unique to every call. A time-based id collides between tests in the same

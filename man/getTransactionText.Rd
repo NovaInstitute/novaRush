@@ -17,6 +17,6 @@ This function returns the transaction body as a JSON string.
 transactionInstance <- transact(exampleData)
 
 txn  <- getTransactionText(transactionInstance)
-
 }
+
 }

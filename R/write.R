@@ -81,8 +81,12 @@ fluree_delete <- function(con, id) {
 }
 
 # Fluree wants the ledger in the transaction body; none of the R6 methods add it.
+# It must carry the branch, or the body names a different target from the
+# branch-qualified reference TransactionInstance$send() puts on the request.
 with_ledger <- function(con, body) {
-  if (is.null(body$ledger)) body$ledger <- fluree_ledger(con)
+  if (is.null(body$ledger)) {
+    body$ledger <- flureeLedgerRef(fluree_ledger(con), fluree_branch(con))
+  }
   body
 }
 

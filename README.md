@@ -135,6 +135,62 @@ rdf_ggraph(g)
 fluree_insert(con, g)   # and back again
 ```
 
+## Branches and named graphs
+
+Branches and named graphs solve different problems. A **branch** isolates a mutable
+state of the whole ledger — an unaccepted tagging run, say. **Named graphs** partition
+categories of knowledge *inside* that state: survey data, embeddings, candidate
+hierarchies, review decisions.
+
+```r
+listBranches(config = config)
+createBranch(config = config, branch = "candidate-01", from = "main")
+branchExists(config = config, branch = "candidate-01")
+```
+
+```r
+survey_graph <- "https://data.nova.org/graphs/survey"
+
+upsertNamedGraph(document = questionnaire_jsonld, graph = survey_graph,
+                 config = config, branch = "main")
+
+questions <- queryNamedGraph(query = taggable_question_query, graph = survey_graph,
+                             config = config, branch = "main")
+```
+
+A named graph is registered implicitly when its first resource is written. novaRush
+treats graph contents as generic JSON-LD and does not interpret survey, embedding,
+hierarchy, tag or reviewer semantics.
+
+## Vector search
+
+Embeddings are stored with Fluree's native `@vector` datatype and searched with exact
+inline similarity functions. You supply every property IRI, so the client imposes no
+tagging ontology:
+
+```r
+embedding_graph <- "https://data.nova.org/graphs/embeddings/model-v1"
+embedding_property <- "https://data.nova.org/tagging/embedding"
+
+upsertVectors(
+  records = embedding_records, graph = embedding_graph,
+  vector_property = embedding_property,
+  model = "text-embedding-3-small",
+  model_property = "https://data.nova.org/tagging/embeddingModel",
+  dimension_property = "https://data.nova.org/tagging/embeddingDimension",
+  config = config, branch = "main")
+
+nearest <- searchVectors(
+  graph = embedding_graph, vector_property = embedding_property,
+  query_vector = query_embedding, metric = "cosine", limit = 10,
+  config = config, branch = "main")
+```
+
+Vectors must be numeric, finite, non-empty and consistently dimensioned; Fluree stores
+them as 32-bit floats. Query literals use the full `f:embeddingVector` datatype because
+`@vector` is transaction shorthand. HNSW indexing is a future optimisation — the search
+API is deliberately independent of it.
+
 ## Signing
 
 ```r
@@ -165,11 +221,58 @@ wrappers.
 The tidy verbs are built on the R6 classes, so the three interfaces can be mixed;
 `con$instance` is the underlying `FlureeInstance` if you need to reach it.
 
+## Testing
+
+The offline suite mocks HTTP and needs no server. The live suite is opt-in:
+
+```bash
+docker run -d --name novarush-fluree-test -p 8090:8090 \
+  -v novarush-fluree-test-data:/var/lib/fluree \
+  -e FLUREE_LISTEN_ADDR=0.0.0.0:8090 fluree/server:latest
+curl http://localhost:8090/health
+```
+
+```bash
+FLUREE_LIVE_TEST=true FLUREE_BASE_URL=http://localhost:8090 \
+FLUREE_TEST_LEDGER=novarush-integration \
+Rscript -e 'devtools::test()'
+```
+
+Also honoured: `FLUREE_TEST_BRANCH`, `FLUREE_API_TOKEN`, `FLUREE_REQUEST_TIMEOUT`.
+Filter to one area with `devtools::test(filter = "live-core")` — or `live-branch`,
+`live-named-graph`, `live-vector`.
+
+Test ledgers, branches and graphs are deliberately **retained** for inspection;
+cleanup is manual, and removing the Docker volume deletes them permanently:
+
+```bash
+docker stop novarush-fluree-test && docker rm novarush-fluree-test
+docker volume rm novarush-fluree-test-data
+```
+
+## What changed in 0.3.0
+
+- **Branches, named graphs and vector search**, and a single `fluree_request()` layer
+  underneath every HTTP call — centralised timeouts, and structured transport errors
+  that distinguish a timeout from a refusal and flag whether the failed operation was
+  a write.
+- **Fixed: signed queries and transactions were assembled wrongly.** The signing
+  helpers were passed a `qry`/`transaction` key where they expected `query`, and their
+  nested result was never unwrapped, so a list was sent where a JWT string belonged.
+  Signed requests also now go out as `application/jose`, which is what Fluree v4
+  expects; `application/jwt` is still accepted as an input alias.
+- **Writes route explicitly.** `transact()` takes an `endpoint` argument, and
+  `fluree_insert()`/`fluree_update()` pass it rather than relying on inference from the
+  presence of a `where` clause — a misrouted write is one of the failures Fluree v4
+  does not report.
+- Connections carry a `branch`, and `fluree_connect()` accepts the full v4
+  configuration (`branch`, `timeout`, `api_key`, `base_url`, `api_path`).
+
 ## What changed in 0.2.0
 
 - The tidy interface above, and the first test suite this package has had — offline
-  tests covering query construction, filter translation and response parsing, plus 29
-  that run against a live ledger when `FLUREE_TEST_HOST` is set.
+  tests covering query construction, filter translation and response parsing, plus a
+  live suite that runs when `FLUREE_LIVE_TEST=true`.
 - **The semantic modelling functions moved to
   [semanticModelR](https://github.com/NovaInstitute/semanticModelR).** Turning tables
   and SurveyCTO form definitions into RDF is modelling, not client work, and keeping

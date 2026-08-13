@@ -22,6 +22,6 @@ the Fluree \verb{/query} API endpoint.
 \dontrun{
 queryInstance <- query(exampleQuery)
 sendQuery(queryInstance)
-
 }
+
 }

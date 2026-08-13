@@ -23,10 +23,19 @@
 #' @param fluree_hosted Set `TRUE` for the hosted service, which takes no host or
 #'   port.
 #' @param create Whether to create the ledger if it does not exist.
+#' @param branch Ledger branch to read and write. Every query and transaction made
+#'   through this connection is scoped to it.
+#' @param timeout Request timeout in seconds.
+#' @param base_url Full base URL, e.g. `"http://localhost:8090"`. Overrides `host`
+#'   and `port` when given.
+#' @param api_path API path prefix. Defaults to `"/v1/fluree"`.
+#' @param check Whether to verify the server is reachable and the ledger exists.
+#'   `FALSE` builds a handle without any request, which is what makes offline query
+#'   construction possible - but the handle cannot send until it is connected.
 #'
 #' @returns A `fluree_connection`.
 #' @seealso [fluree_query()] to read, [fluree_insert()] to write,
-#'   [fluree_graph()] for a tidygraph view.
+#'   [fluree_graph()] for a tidygraph view, [fluree_branch()] for the branch.
 #' @export
 #'
 #' @examples
@@ -35,6 +44,10 @@
 #'                       context = c(schema = "http://schema.org/",
 #'                                   ex     = "http://example.org/"))
 #' con
+#'
+#' # a candidate branch, isolated from main
+#' fluree_connect("localhost", ledger = "novaRush/demo", port = 8090,
+#'                branch = "candidate-01")
 #' }
 fluree_connect <- function(host = NULL,
                            ledger,
@@ -44,9 +57,17 @@ fluree_connect <- function(host = NULL,
                            private_key = NULL,
                            api_key = NULL,
                            fluree_hosted = FALSE,
-                           create = FALSE) {
+                           create = FALSE,
+                           branch = "main",
+                           timeout = 60,
+                           base_url = NULL,
+                           api_path = NULL,
+                           check = TRUE) {
   if (missing(ledger) || is.null(ledger)) {
     stop("`ledger` is required.", call. = FALSE)
+  }
+  if (length(branch) != 1L || is.na(branch) || !nzchar(branch)) {
+    stop("`branch` must be one non-empty string.", call. = FALSE)
   }
 
   # Deliberately no implicit getKey(): unlocking a keyring can prompt, and a
@@ -60,16 +81,20 @@ fluree_connect <- function(host = NULL,
     host           = host,
     port           = port,
     ledger         = ledger,
+    branch         = branch,
     signMessages   = sign,
     privateKey     = private_key,
     apiKey         = api_key,
+    baseUrl        = base_url,
+    apiPath        = api_path,
+    timeout        = timeout,
     isFlureeHosted = if (isTRUE(fluree_hosted)) TRUE else NULL,
     create         = if (isTRUE(create)) TRUE else NULL
   ))
 
   instance <- FlureeInstance$new(config)
   if (!is.null(context)) instance$setContext(as_context_list(context))
-  instance$connect()
+  if (isTRUE(check)) instance$connect()
 
   new_fluree_connection(instance)
 }
@@ -90,6 +115,7 @@ print.fluree_connection <- function(x, ...) {
   cat("<fluree_connection>\n")
   cat("  host   ", where, "\n", sep = "")
   cat("  ledger ", cfg$ledger %||% "?", "\n", sep = "")
+  cat("  branch ", cfg$branch %||% "main", "\n", sep = "")
   cat("  signed ", if (isTRUE(cfg$signMessages)) "yes" else "no", "\n", sep = "")
 
   ctx <- cfg$defaultContext
@@ -104,7 +130,8 @@ print.fluree_connection <- function(x, ...) {
 #' @export
 format.fluree_connection <- function(x, ...) {
   cfg <- x$instance$config
-  paste0("<fluree_connection ", cfg$host %||% "hosted", "/", cfg$ledger %||% "?", ">")
+  paste0("<fluree_connection ", cfg$host %||% "hosted", "/", cfg$ledger %||% "?",
+         ":", cfg$branch %||% "main", ">")
 }
 
 #' Is this a Fluree connection?
@@ -138,6 +165,22 @@ check_connection <- function(con, arg = "con") {
 fluree_ledger <- function(con) {
   check_connection(con)
   con$instance$config$ledger
+}
+
+#' The branch a connection points at
+#'
+#' @param con A `fluree_connection`.
+#' @returns The branch name, as a string.
+#' @seealso [listBranches()] and [createBranch()] to administer branches.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' fluree_branch(con)
+#' }
+fluree_branch <- function(con) {
+  check_connection(con)
+  con$instance$config$branch %||% "main"
 }
 
 #' The default JSON-LD context of a connection

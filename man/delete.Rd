@@ -32,6 +32,6 @@ sendTransaction(deleteInstance)
 #  [
 #    { "@id": "alice", "name": "Alice" }
 #  ]
-
 }
+
 }

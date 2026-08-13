@@ -1,7 +1,9 @@
-# fluree_connect() only performs a request when create = TRUE, so a handle can be
-# built offline and used for every query-construction test.
-test_connection <- function(ledger = "novaRush/test", context = c(schema = "http://schema.org/")) {
-  fluree_connect("localhost", ledger = ledger, port = 8090, context = context)
+# check = FALSE builds a handle without touching the network, so every
+# query-construction test runs offline.
+test_connection <- function(ledger = "novaRush/test", context = c(schema = "http://schema.org/"),
+                            branch = "main") {
+  fluree_connect("localhost", ledger = ledger, port = 8090, context = context,
+                 branch = branch, check = FALSE)
 }
 
 # the filter s-expression a single fq_filter() expression assembles to

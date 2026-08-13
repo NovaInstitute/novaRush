@@ -27,6 +27,6 @@ instance as a JWT (JSON Web Token).
 \dontrun{
 queryInstance <- query(exampleQuery)
 signedQueryInstance <- signQuery(queryInstance)
-
 }
+
 }

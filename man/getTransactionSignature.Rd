@@ -20,6 +20,6 @@ transactionInstance <- transact(exampleData)
 signedTransactionInstance <- signTransaction(transactionInstance)
 
 sig <- getTransactionSignature(signedTransactionInstance)
-
 }
+
 }

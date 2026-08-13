@@ -21,6 +21,6 @@ query to the Fluree \verb{/history} API endpoint.
 \dontrun{
 historyQueryInstance <- history(exampleHistoryQuery)
 sendHistoryQuery(historyQueryInstance)
-
 }
+
 }

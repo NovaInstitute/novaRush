@@ -20,6 +20,6 @@ queryInstance <- query(exampleQuery)
 signedQueryInstance <- signQuery(queryInstance)
 
 sig <- getQuerySignature(signedQueryInstance)
-
 }
+
 }

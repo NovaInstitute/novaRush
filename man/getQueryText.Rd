@@ -19,6 +19,6 @@ before returning the raw JSON string.
 queryInstance <- query(exampleQuery)
 
 qry <- getQueryText(queryInstance)
-
 }
+
 }

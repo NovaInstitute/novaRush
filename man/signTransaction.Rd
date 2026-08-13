@@ -27,6 +27,6 @@ instance as a JWT (JSON Web Token).
 \dontrun{
 transactionInstance <- transact(exampleData)
 signedTransactionInstance <- signTransaction(transactionInstance)
-
 }
+
 }

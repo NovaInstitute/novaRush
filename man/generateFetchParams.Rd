@@ -2,13 +2,14 @@
 % Please edit documentation in R/utilityFunctions.R
 \name{generateFetchParams}
 \alias{generateFetchParams}
-\title{Constructs arguments for httr::POST}
+\title{Construct parameters for a Fluree v4 HTTP request}
 \usage{
 generateFetchParams(
   config,
   endpoint,
   contentType = "application/json",
-  ledger = NULL
+  ledger = NULL,
+  method = "POST"
 )
 }
 \arguments{
@@ -24,13 +25,15 @@ In the case of an unsigned message 'application/json' is used ('application/jwt'
 Use 'application/sparql-query' for raw SPARQL strings.}
 
 \item{ledger}{(\code{string})\cr
-Optional ledger name appended to the URL path (e.g. 'myorg/mydb').
+Optional ledger reference appended to the URL path.
 When provided the ledger is taken from the URL rather than the request body.}
+
+\item{method}{HTTP method.}
 }
 \value{
 (\code{list()})
 }
 \description{
-This function is a generic function to construct the parameters needed by
-\code{httr} to execute a \code{POST()} request of a transaction or query.
+This compatibility helper constructs the URL, headers, and timeout used by
+the package's Fluree v4 request executor.
 }

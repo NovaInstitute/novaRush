@@ -13,7 +13,12 @@ fluree_connect(
   private_key = NULL,
   api_key = NULL,
   fluree_hosted = FALSE,
-  create = FALSE
+  create = FALSE,
+  branch = "main",
+  timeout = 60,
+  base_url = NULL,
+  api_path = NULL,
+  check = TRUE
 )
 }
 \arguments{
@@ -39,6 +44,20 @@ the keyring can prompt, which would block any non-interactive script.}
 port.}
 
 \item{create}{Whether to create the ledger if it does not exist.}
+
+\item{branch}{Ledger branch to read and write. Every query and transaction made
+through this connection is scoped to it.}
+
+\item{timeout}{Request timeout in seconds.}
+
+\item{base_url}{Full base URL, e.g. \code{"http://localhost:8090"}. Overrides \code{host}
+and \code{port} when given.}
+
+\item{api_path}{API path prefix. Defaults to \code{"/v1/fluree"}.}
+
+\item{check}{Whether to verify the server is reachable and the ledger exists.
+\code{FALSE} builds a handle without any request, which is what makes offline query
+construction possible - but the handle cannot send until it is connected.}
 }
 \value{
 A \code{fluree_connection}.
@@ -55,9 +74,13 @@ con <- fluree_connect("localhost", ledger = "novaRush/demo", port = 8090,
                       context = c(schema = "http://schema.org/",
                                   ex     = "http://example.org/"))
 con
+
+# a candidate branch, isolated from main
+fluree_connect("localhost", ledger = "novaRush/demo", port = 8090,
+               branch = "candidate-01")
 }
 }
 \seealso{
 \code{\link[=fluree_query]{fluree_query()}} to read, \code{\link[=fluree_insert]{fluree_insert()}} to write,
-\code{\link[=fluree_graph]{fluree_graph()}} for a tidygraph view.
+\code{\link[=fluree_graph]{fluree_graph()}} for a tidygraph view, \code{\link[=fluree_branch]{fluree_branch()}} for the branch.
 }

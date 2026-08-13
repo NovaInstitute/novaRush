@@ -71,6 +71,6 @@ queryInstance <- query(exampleQuery)
 
 queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 queryInstance <- query(queryList)
-
 }
+
 }

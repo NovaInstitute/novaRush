@@ -1,5 +1,19 @@
 # Outstanding Work
 
+## Repository ownership review
+
+- [ ] Review the survey and form conversion utilities currently retained in
+  `novaRush` and map their behavior to `novaGraphDB`.
+- [ ] Review the generic RDF/JSON-LD transformation utilities and identify
+  which are required by the `novaGraphDB` extraction pipeline.
+- [ ] Decide whether RDF visualization helpers belong in `novaGraphDB` or in a
+  separate reusable package.
+- [ ] Review the supporting data-reshaping utilities for external consumers and
+  duplication in `novaGraphDB`.
+- [ ] Add destination-package tests before moving any retained utility.
+- [ ] Do not remove, unexport, deprecate, or migrate a flagged utility until its
+  consumers and replacement path have been confirmed by the team.
+
 ## novaRush v4 update
 
 - [x] Fix `testLedgers()` in `FlureeInstance.R` — updated to v4 JSON-LD Query format (list, not JSON string)

@@ -10,7 +10,8 @@ transact(
   transaction,
   signTransaction = NULL,
   privateKey = NULL,
-  apiKey = NULL
+  apiKey = NULL,
+  endpoint = NULL
 )
 }
 \arguments{
@@ -61,6 +62,6 @@ transactionInstance <- transact(config = conf, ledger = 'demo', exampleData, sig
 
 dataList <- fromJSON(exampleData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 transactionInstance <- transact(config = conf, ledger = 'demo', dataList, signTransaction = FALSE)
-
 }
+
 }

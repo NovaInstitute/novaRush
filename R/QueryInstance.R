@@ -60,35 +60,31 @@ QueryInstance <- R6::R6Class("QueryInstance",
     #' If `signMessages = TRUE` the JWT will be sent to the host.
     send = function() {
       isSparql <- is.character(self$query)
-
       if (isSparql) {
-        ledger <- self$config$ledger
-        params <- generateFetchParams(self$config, 'query', 'application/sparql-query', ledger = ledger)
-        body <- self$query
+        ledger <- flureeLedgerRef(
+          self$config$ledger, self$config$branch %||% "main"
+        )
+        return(fluree_request(
+          self$config, endpoint = "query", method = "POST",
+          body = self$query, ledger = ledger,
+          contentType = "application/sparql-query", operation = "SPARQL query"
+        ))
       } else if (nzchar(self$signedQuery)) {
-        params <- generateFetchParams(self$config, self$endpoint, 'application/jwt')
-        body <- self$signedQuery
-      } else {
-        params <- generateFetchParams(self$config, self$endpoint, 'application/json')
-        body <- do.call(jsonlite::toJSON, c(list(x = self$query), novaRush:::getDefaultToJSONargs()))
+        return(fluree_request(
+          self$config, endpoint = "query", method = "POST",
+          body = self$signedQuery, contentType = "application/jose",
+          operation = "signed query"
+        ))
       }
-
-      # generateFetchParams() returns headers as a named character vector, so it has
-      # to be passed with .headers; subsetting it with $ errored on every send and
-      # also dropped the Authorization header.
-      response <- POST(
-        url = params$url,
-        add_headers(.headers = params$config$headers),
-        body = body,
-        encode = "raw"
+      if (is.null(self$query$from)) {
+        self$query$from <- flureeLedgerRef(
+          self$config$ledger, self$config$branch %||% "main"
+        )
+      }
+      fluree_request(
+        self$config, endpoint = "query", method = "POST", body = self$query,
+        operation = "query"
       )
-
-      resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
-      if (httr::http_error(response)) {
-        stop("Query failed: ", resp_text)
-      }
-
-      do.call(jsonlite::fromJSON, c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()))
     },
 
     #' @description

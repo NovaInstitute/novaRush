@@ -21,6 +21,6 @@ to the Fluree \verb{/transact} API endpoint.
 \dontrun{
 transactionInstance <- transact(exampleData)
 sendTransaction(transactionInstance)
-
 }
+
 }

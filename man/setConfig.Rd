@@ -2,31 +2,55 @@
 % Please edit documentation in R/configHandling.R
 \name{setConfig}
 \alias{setConfig}
-\title{Set the Fluree Configuration Parameters}
+\title{Configure a Fluree connection}
 \usage{
-setConfig(host = NULL, port = NULL, ledger, signMessages = NULL)
+setConfig(
+  host = NULL,
+  port = NULL,
+  ledger = NULL,
+  signMessages = FALSE,
+  baseUrl = NULL,
+  branch = "main",
+  apiKey = NULL,
+  timeout = 60,
+  apiPath = "/v1/fluree",
+  defaultContext = NULL,
+  create = FALSE,
+  isFlureeHosted = FALSE
+)
 }
 \arguments{
-\item{host}{(\code{string})\cr
-The host name to send the transactions/queries to.}
+\item{host}{Host name without a protocol. Retained for compatibility.}
 
-\item{ledger}{(\code{string})\cr
-The name of the ledger to be transacted to.}
+\item{port}{Optional HTTP port. Retained for compatibility.}
 
-\item{signMessages}{(\code{logical})\cr
-Set to \code{TRUE} if all messages should be signed before transacting.}
+\item{ledger}{Ledger name without a branch suffix.}
+
+\item{signMessages}{Whether requests should use legacy JWS signing.}
+
+\item{baseUrl}{Complete server URL, for example \verb{http://localhost:8090}.}
+
+\item{branch}{Default ledger branch.}
+
+\item{apiKey}{Optional bearer token. Prefer supplying this through an
+environment variable rather than source code.}
+
+\item{timeout}{Request timeout in seconds.}
+
+\item{apiPath}{Fluree HTTP API base path.}
+
+\item{defaultContext}{Default JSON-LD context merged into operations.}
+
+\item{create}{Whether \link{FlureeInstance} should create the ledger when it
+connects.}
+
+\item{isFlureeHosted}{Whether the connection targets a hosted Fluree server.}
 }
 \value{
-The configuration parameters configured as a R list.
+A \code{nova_fluree_config} list.
 }
 \description{
-This function returns a default configuration for the Fluree instance.
-It is invoked whenever a transaction/query is attempted without providing a
-relevant config.
-Optionally partial parameters may be provided with defaults configured for
-any omitted ones.
-}
-\examples{
-config <- setConfig(ledger = "test1")
-
+Creates the connection configuration used by the functional API and the
+\link{FlureeInstance} R6 client. The legacy \code{host} and \code{port} arguments remain
+supported, while \code{baseUrl} is the preferred Fluree v4 form.
 }

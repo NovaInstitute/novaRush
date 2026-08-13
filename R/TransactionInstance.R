@@ -59,36 +59,24 @@ TransactionInstance <- R6::R6Class("TransactionInstance",
     #' If `signMessages = TRUE` the JWT will be sent to the host.
     send = function() {
       if (nzchar(self$signedTransaction)) {
-        contentType <- 'application/jwt'
+        contentType <- 'application/jose'
       } else {
         contentType <- 'application/json'
       }
 
-      params <- generateFetchParams(self$config, self$endpoint, contentType)
-      url <- params$url
-
       body <- if (nzchar(self$signedTransaction)) {
         self$signedTransaction
       } else {
-        do.call(jsonlite::toJSON, c(list(x = self$transaction), novaRush:::getDefaultToJSONargs()))
+        self$transaction
       }
-
-      # generateFetchParams() returns headers as a named character vector, so it has
-      # to be passed with .headers; subsetting it with $ errored on every send and
-      # also dropped the Authorization header.
-      response <- POST(
-        url = url,
-        add_headers(.headers = params$config$headers),
-        body = body,
-        encode = "raw"
+      ledger <- flureeLedgerRef(
+        self$config$ledger, self$config$branch %||% "main"
       )
-
-      resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
-      if (httr::http_error(response)) {
-        stop("Transaction failed: ", resp_text)
-      }
-
-      do.call(jsonlite::fromJSON, c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()))
+      fluree_request(
+        self$config, endpoint = self$endpoint, method = "POST", body = body,
+        query = list(ledger = ledger), contentType = contentType,
+        operation = self$endpoint
+      )
     },
 
     #' @description

@@ -11,6 +11,7 @@
 #' @seealso [sendQuery()]
 #' 
 #' @examples
+#' \dontrun{
 #' # Existing data:
 #' #  [
 #' #    { "@id": "freddy", "name": "Freddy" },
@@ -33,6 +34,7 @@
 #' 
 #' queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' Query(config = conf, ledger = 'demo', queryList, signQuery = FALSE)
+#' }
 #' 
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
@@ -98,8 +100,8 @@ Query = function(...) {
 #' 
 #' queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' queryInstance <- query(queryList)
-#' 
 #' }
+#' 
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
 #' @export
@@ -111,13 +113,14 @@ query = function(
     privateKey = NULL, 
     apiKey = NULL) {
   
+  if (is.null(config)) {
+    config = setConfig(ledger = ledger)
+  }
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
     stop("Please provide a ledger name. Either as argument or within the config.")
   }
-  if (is.null(config)) {
-    config = setConfig(ledger = ledger)
-  }
+  ledgerRef <- flureeLedgerRef(ledgerName, config$branch %||% "main")
 
   if (is.character(query)) {
     if (!jsonlite::validate(query)) {
@@ -132,7 +135,7 @@ query = function(
   }
   
   if (is.null(query$from)) {
-    query$from <- ledgerName
+    query$from <- ledgerRef
   }
   
   # merge contexts if applicable
@@ -159,8 +162,10 @@ query = function(
       stop("Please provide a private key for signing. Either as argument or set one using `setKey()`.", call. = FALSE)
     } else {
       body <- list(
-        contentType = 'application/jwt', 
-        qry = signQuery(list(configuration = config, qry = body), key))
+        contentType = 'application/jwt',
+        qry = novaRush::signQuery(
+          list(configuration = config, query = body), key
+        )$query$qry)
     }
   }
   
@@ -168,7 +173,7 @@ query = function(
     config$apiKey <- apiKey
   }
   
-  return(list(configuration = config, query = body))
+  return(list(configuration = config, query = body, ledger = ledgerRef))
 }
 
 #' Send a Query
@@ -187,8 +192,8 @@ query = function(
 #' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' sendQuery(queryInstance)
-#' 
 #' }
+#' 
 #' @importFrom jsonlite toJSON
 #' @importFrom jsonlite fromJSON
 #' 
@@ -210,33 +215,21 @@ sendQuery = function(queryVariables) {
         list(x = body$qry), 
         novaRush:::getDefaultToJSONargs()), 
       quote = FALSE)
-  } else if (contentType == 'application/jwt') {
+  } else if (contentType %in% c('application/jwt', 'application/jose')) {
     finalQueryString <- body$qry
   } else {
     stop("Unsupported content type for query:", contentType)
   }
   
-  params <- generateFetchParams(config, 'query', contentType)
-  url <- params$url
-  
-  response <- httr::POST(
-    url = url,
-    config = add_headers(.headers = params$config$headers),
-    body = finalQueryString,
-    encode = "raw"
-  )
-  
-  resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
-  if (httr::http_error(response)) {
-    stop("Query failed: ", resp_text)
+  requestContentType <- if (identical(contentType, "application/jwt")) {
+    "application/jose"
+  } else {
+    contentType
   }
-  
-  json_response <- do.call(
-    what = jsonlite::fromJSON, 
-    args = c(
-      list(txt = resp_text),
-      novaRush:::getDefaultFromJSONargs()), 
-    quote = FALSE)
+  json_response <- fluree_request(
+    config, endpoint = "query", method = "POST", body = finalQueryString,
+    contentType = requestContentType, operation = "query"
+  )
   
   pretty_json <- do.call(
     what = jsonlite::toJSON, 
@@ -361,8 +354,8 @@ history = function(
 #' \dontrun{
 #' historyQueryInstance <- history(exampleHistoryQuery)
 #' sendHistoryQuery(historyQueryInstance)
-#' 
 #' }
+#' 
 #' @export
 sendHistoryQuery = function(queryVariables) {
   
@@ -434,8 +427,8 @@ sendHistoryQuery = function(queryVariables) {
 #' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' signedQueryInstance <- signQuery(queryInstance)
-#' 
 #' }
+#' 
 #' @export
 signQuery = function(queryVariables = NULL, privateKey = NULL) {
   
@@ -488,8 +481,8 @@ signQuery = function(queryVariables = NULL, privateKey = NULL) {
 #' signedQueryInstance <- signQuery(queryInstance)
 #' 
 #' sig <- getQuerySignature(signedQueryInstance)
-#' 
 #' }
+#' 
 #' @export
 getQuerySignature = function(queryVariables = NULL) {
   if (is.null(queryVariables)) {
@@ -522,8 +515,8 @@ getQuerySignature = function(queryVariables = NULL) {
 #' queryInstance <- query(exampleQuery)
 #' 
 #' qry <- getQueryText(queryInstance)
-#' 
 #' }
+#' 
 #' @export
 getQueryText = function(queryVariables = NULL, pretty = TRUE) {
   if (is.null(queryVariables)) {
