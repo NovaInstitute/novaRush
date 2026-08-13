@@ -302,11 +302,22 @@ docker volume rm novarush-fluree-test-data
 
 ## Known issues
 
+`R CMD check` is clean of errors. What remains:
+
 - `tidyr`, `dplyr` and `magrittr` are in `Depends` rather than `Imports`, so they are
-  attached for every user.
-- The vignettes live in `Vignettes/` with a capital V and there is no
-  `VignetteBuilder` field, so they are not built. That works on a case-insensitive
-  filesystem like macOS but would not on Linux or CI.
+  attached for every user. They are now also imported, so the namespace works
+  unattached, but the attachment side effect stands until the bare `dplyr`/`tidyr`
+  calls in `createBody.R` and `transactionUtils.R` are qualified.
+- Two `flureeCrypto:::` calls reach unexported functions (`serialize_jws`,
+  `deserialize_jws`). Fixing this needs those exported upstream.
+- `LICENSE` is not referenced from `DESCRIPTION`, which R notes. Apache 2.0 is not an
+  extensible licence, so `+ file LICENSE` is not permitted; the file is shipped anyway
+  because Apache 2.0 asks that the licence travel with the work.
+- `data/forms.Rda` is excluded from the build. R only recognises `.rda`/`.RData`, so
+  it has never been a loadable dataset, nothing references it, and it is survey data
+  that most likely belongs in `semanticModelR`.
 - `FlureeInstance$create()` sets its own `Content-Type` and so does not send the
   `Authorization` header, which will matter for ledger creation against the hosted
   service.
+- The vignettes are documentation, not executable: their code blocks are plain fenced
+  R rather than knitr chunks, because every example needs a live Fluree server.

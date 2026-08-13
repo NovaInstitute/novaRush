@@ -14,8 +14,16 @@ test_that("getDefaultFromJSONargs disables every form of simplification", {
   expect_false(args$flatten)
 })
 
+# R/ is only there when the tests run against the source tree, not the installed
+# package, so the two source-scanning guards below skip under R CMD check.
+source_dir <- function() {
+  d <- test_path("../../R")
+  if (dir.exists(d)) d else NA_character_
+}
+
 test_that("fluree_request parses response bodies with those settings", {
-  src <- paste(readLines(test_path("../../R/requestHandling.R"), warn = FALSE),
+  skip_if(is.na(source_dir()), "source tree not available")
+  src <- paste(readLines(file.path(source_dir(), "requestHandling.R"), warn = FALSE),
                collapse = "\n")
 
   expect_match(src, "getDefaultFromJSONargs\\(\\)", fixed = FALSE)
@@ -24,7 +32,8 @@ test_that("fluree_request parses response bodies with those settings", {
 })
 
 test_that("no response parse in the package silently takes jsonlite's defaults", {
-  files <- list.files(test_path("../../R"), pattern = "[.]R$", full.names = TRUE)
+  skip_if(is.na(source_dir()), "source tree not available")
+  files <- list.files(source_dir(), pattern = "[.]R$", full.names = TRUE)
 
   # signTransaction() reads a stored config out of an env var rather than a Fluree
   # response, and relies on simplification so privateKey is a string not a list.

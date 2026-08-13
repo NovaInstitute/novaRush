@@ -6,6 +6,10 @@
 \usage{
 getTransactionSignature(transactionVariables = NULL)
 }
+\arguments{
+\item{transactionVariables}{(\code{list()})\cr
+The signed transaction instance to read the signature from.}
+}
 \value{
 Character string representing the JWT of the signed transaction.
 }

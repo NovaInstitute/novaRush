@@ -7,6 +7,9 @@
 delete(config, id)
 }
 \arguments{
+\item{config}{(\code{list()})\cr
+The configuration list for the Fluree instance.}
+
 \item{id}{(\code{list()})\cr
 The subject identifier/identifiers to retract from the Fluree database.}
 }

@@ -6,6 +6,10 @@
 \usage{
 getTransactionText(transactionVariables = NULL)
 }
+\arguments{
+\item{transactionVariables}{(\code{list()})\cr
+The transaction instance to render as JSON.}
+}
 \value{
 JSON string representation of the transaction body
 }

@@ -7,6 +7,8 @@
 #' 
 #' @inheritParams transact
 #' 
+#' @param ... Passed to [transact()].
+#'
 #' @seealso [transact()]
 #' @seealso [sendTransaction()]
 #' 
@@ -36,6 +38,7 @@
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
 #' 
+#' @rdname Transact-wrapper
 #' @export
 Transact = function(...) {
   t <- transact(...)
@@ -50,6 +53,8 @@ Transact = function(...) {
 #' Fluree v4 `/insert` endpoint. Adds new triples without touching existing ones.
 #'
 #' @inheritParams transact
+#'
+#' @param ... Passed to [transact()].
 #'
 #' @seealso [transact()] [sendTransaction()]
 #'
@@ -69,6 +74,8 @@ Insert = function(...) {
 #' optional `insert` clause that adds new values.
 #'
 #' @inheritParams transact
+#'
+#' @param ... Passed to [transact()].
 #'
 #' @seealso [transact()] [sendTransaction()]
 #'
@@ -99,6 +106,11 @@ Update = function(...) {
 #' @param privateKey (`character`)\cr
 #'   The hexstring representation of the private key to use for message signing.
 #' 
+#' @param apiKey (`character`)\cr
+#'   API key for the Fluree hosted service. Overrides `config$apiKey`.
+#' @param endpoint (`character`)\cr
+#'   Either `"insert"` or `"update"`. When `NULL` it is inferred: a
+#'   transaction carrying a `where` clause is an update, anything else an insert.
 #' @return A list containing everything needed to transact with Fluree.
 #' This includes all the necessary parameters as well as the signed/unsigned transaction itself.
 #' 
@@ -154,7 +166,7 @@ transact = function(
       what = jsonlite::fromJSON, 
       args = c(
         list(txt = transaction),
-        novaRush:::getDefaultFromJSONargs()), 
+        getDefaultFromJSONargs()), 
       quote = FALSE)
   }
   
@@ -182,7 +194,7 @@ transact = function(
     }
     body <- list(
       contentType = 'application/jwt',
-      txn = novaRush::signTransaction(
+      txn = signTransaction(
         list(configuration = config, transaction = body), key
       )$transaction$txn)
   }
@@ -209,6 +221,8 @@ transact = function(
 #' @param id (`list()`)\cr
 #'   The subject identifier/identifiers to retract from the Fluree database.
 #' 
+#' @param config (`list()`)\cr
+#'   The configuration list for the Fluree instance.
 #' @returns And instance of a delete transaction (as a list).
 #' 
 #' @examples
@@ -285,6 +299,8 @@ delete = function(config, id) {
 #' #  ]
 #' }
 #' 
+#' @param config (`list()`)\cr
+#'   The configuration list for the Fluree instance.
 #' @importFrom jsonlite validate
 #' 
 #' @export
@@ -298,7 +314,7 @@ upsert = function(config, transaction) {
       what = jsonlite::fromJSON,
       args = c(
         list(txt = transaction),
-        novaRush:::getDefaultFromJSONargs()),
+        getDefaultFromJSONargs()),
       quote = FALSE)
   }
 
@@ -347,7 +363,7 @@ sendTransaction = function(transactionVariables) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$txn), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
   } else if (contentType %in% c('application/jwt', 'application/jose')) {
     transaction <- body$txn
@@ -374,7 +390,7 @@ sendTransaction = function(transactionVariables) {
     what = jsonlite::toJSON, 
     args = c(
       list(x = json_response), 
-      novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+      getDefaultToJSONargs(pretty = TRUE)), 
     quote = FALSE)
   
   return(pretty_json)
@@ -435,7 +451,7 @@ signTransaction = function(transactionVariables = NULL, privateKey = NULL) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$txn), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
   }
   
@@ -454,6 +470,8 @@ signTransaction = function(transactionVariables = NULL, privateKey = NULL) {
 #' Note this function can only be used if a private key had been configured and 
 #' the transaction has been signed.
 #' 
+#' @param transactionVariables (`list()`)\cr
+#'   The signed transaction instance to read the signature from.
 #' @returns Character string representing the JWT of the signed transaction.
 #' 
 #' @examples
@@ -487,6 +505,8 @@ getTransactionSignature = function(transactionVariables = NULL) {
 #' @description
 #' This function returns the transaction body as a JSON string.
 #' 
+#' @param transactionVariables (`list()`)\cr
+#'   The transaction instance to render as JSON.
 #' @returns JSON string representation of the transaction body
 #' 
 #' @examples
@@ -514,7 +534,7 @@ getTransactionText = function(transactionVariables = NULL) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = desrialized$payload), 
-        novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+        getDefaultToJSONargs(pretty = TRUE)), 
       quote = FALSE)
     
   } else {
@@ -523,7 +543,7 @@ getTransactionText = function(transactionVariables = NULL) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$txn), 
-        novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+        getDefaultToJSONargs(pretty = TRUE)), 
       quote = FALSE)
 
   }

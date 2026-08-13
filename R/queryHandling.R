@@ -7,6 +7,8 @@
 #' 
 #' @inheritParams query
 #' 
+#' @param ... Passed to [query()].
+#'
 #' @seealso [query()]
 #' @seealso [sendQuery()]
 #' 
@@ -39,6 +41,7 @@
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
 #' 
+#' @rdname Query-wrapper
 #' @export
 Query = function(...) {
   q <- query(...)
@@ -130,7 +133,7 @@ query = function(
       what = jsonlite::fromJSON, 
       args = c(
         list(txt = query),
-        novaRush:::getDefaultFromJSONargs()), 
+        getDefaultFromJSONargs()), 
       quote = FALSE)
   }
   
@@ -163,7 +166,7 @@ query = function(
     } else {
       body <- list(
         contentType = 'application/jwt',
-        qry = novaRush::signQuery(
+        qry = signQuery(
           list(configuration = config, query = body), key
         )$query$qry)
     }
@@ -213,7 +216,7 @@ sendQuery = function(queryVariables) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$qry), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
   } else if (contentType %in% c('application/jwt', 'application/jose')) {
     finalQueryString <- body$qry
@@ -235,7 +238,7 @@ sendQuery = function(queryVariables) {
     what = jsonlite::toJSON, 
     args = c(
       list(x = json_response), 
-      novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+      getDefaultToJSONargs(pretty = TRUE)), 
     quote = FALSE)
 
   return(pretty_json)
@@ -299,7 +302,7 @@ history = function(
       what = jsonlite::fromJSON, 
       args = c(
         list(txt = query),
-        novaRush:::getDefaultFromJSONargs()), 
+        getDefaultFromJSONargs()), 
       quote = FALSE)
   }
   
@@ -369,7 +372,7 @@ sendHistoryQuery = function(queryVariables) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$qry), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
   } else {
     query <- body$qry
@@ -393,14 +396,14 @@ sendHistoryQuery = function(queryVariables) {
     what = jsonlite::fromJSON, 
     args = c(
       list(txt = resp_text),
-      novaRush:::getDefaultFromJSONargs()), 
+      getDefaultFromJSONargs()), 
     quote = FALSE)
 
   pretty_json <- do.call(
     what = jsonlite::toJSON, 
     args = c(
       list(x = json_response), 
-      novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+      getDefaultToJSONargs(pretty = TRUE)), 
     quote = FALSE)
   
   return(pretty_json)
@@ -453,7 +456,7 @@ signQuery = function(queryVariables = NULL, privateKey = NULL) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$qry), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
   }
   
@@ -473,6 +476,8 @@ signQuery = function(queryVariables = NULL, privateKey = NULL) {
 #' Note this function can only be used if a private key had been configured and 
 #' the query has been signed.
 #' 
+#' @param queryVariables (`list()`)\cr
+#'   The signed query instance to read the signature from.
 #' @returns Character string representing the JWT of the signed query.
 #' 
 #' @examples
@@ -508,6 +513,10 @@ getQuerySignature = function(queryVariables = NULL) {
 #' If the query instance has already been signed,  the signature is deserialized
 #' before returning the raw JSON string.
 #' 
+#' @param queryVariables (`list()`)\cr
+#'   The query instance to render as JSON.
+#' @param pretty (`logical`)\cr
+#'   Whether to indent the JSON output.
 #' @returns JSON string representation of the query body
 #' 
 #' @examples
@@ -526,7 +535,7 @@ getQueryText = function(queryVariables = NULL, pretty = TRUE) {
   body <- queryVariables$query
   contentType <- body$contentType
   
-  toJsonArgs <- novaRush:::getDefaultToJSONargs(pretty = pretty)
+  toJsonArgs <- getDefaultToJSONargs(pretty = pretty)
   
   if (contentType == "application/jwt") {
     

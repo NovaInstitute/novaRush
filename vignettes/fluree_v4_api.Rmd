@@ -8,7 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = FALSE)
+knitr::opts_chunk$set(eval = FALSE, purl = FALSE)
 ```
 
 This vignette demonstrates every major operation against a locally running Fluree v4
@@ -19,7 +19,7 @@ directory initialised with `fluree init`).
 
 ## Configuration
 
-```{r config}
+```r
 library(novaRush)
 
 conf <- list(
@@ -31,7 +31,7 @@ conf <- list(
 
 A shared `@context` saves repeating namespace prefixes on every call.
 
-```{r context}
+```r
 ctx <- list(
   schema = "http://schema.org/",
   ex     = "http://example.org/"
@@ -40,7 +40,7 @@ ctx <- list(
 
 ## Connect
 
-```{r connect}
+```r
 db <- FlureeInstance$new(conf)$setContext(ctx)$connect()
 ```
 
@@ -49,7 +49,7 @@ db <- FlureeInstance$new(conf)$setContext(ctx)$connect()
 Insert is the right operation when subjects are new. Existing subjects are not
 touched.
 
-```{r insert}
+```r
 db$insert(list(
   insert = list(
     list(`@id` = "ex:alice", `@type` = "schema:Person",
@@ -65,7 +65,7 @@ db$insert(list(
 Upsert replaces every predicate you supply on the matching subject; predicates you
 omit are left unchanged. Running the same upsert twice produces the same ledger state.
 
-```{r upsert}
+```r
 db$upsert(list(
   upsert = list(
     list(`@id` = "ex:bob", `schema:age` = 26L)
@@ -78,7 +78,7 @@ db$upsert(list(
 Use update when you need to bind the current value before replacing it. The `where`
 clause matches existing triples; `delete` retracts them; `insert` adds the new ones.
 
-```{r update}
+```r
 db$update(list(
   where  = list(list(`@id` = "ex:alice", `schema:age` = "?age")),
   delete = list(list(`@id` = "ex:alice", `schema:age` = "?age")),
@@ -91,7 +91,7 @@ db$update(list(
 Delete routes through update with a wildcard pattern that retracts every triple for
 the given IRI(s).
 
-```{r delete}
+```r
 db$insert(list(
   insert = list(
     list(`@id` = "ex:temp", `schema:name` = "Temp")
@@ -106,7 +106,7 @@ db$delete("ex:temp")$send()
 Fluree's native query language uses `select`, `where`, and optional `filter`,
 `groupBy`, `orderBy`, `limit`, and `reasoning` fields.
 
-```{r query-basic}
+```r
 result <- db$query(list(
   select = list("?name", "?age"),
   where  = list(list(`@id` = "?s", `schema:name` = "?name", `schema:age` = "?age")),
@@ -120,7 +120,7 @@ result
 
 Declare `@type` relationships and query via `rdfs:subClassOf` inference:
 
-```{r query-reasoning}
+```r
 # Load a minimal ontology first
 db$insert(list(
   insert = list(
@@ -150,7 +150,7 @@ result
 SPARQL 1.1 SELECT queries are sent to the same `/query` endpoint with
 `Content-Type: application/sparql-query`. The ledger is taken from config.
 
-```{r sparql}
+```r
 result <- db$sparql('
   PREFIX schema: <http://schema.org/>
   PREFIX ex:     <http://example.org/>
@@ -172,7 +172,7 @@ result$results$bindings
 `$history()` returns the commit log: each entry records the t-value, commit ID,
 timestamp, and the number of triples asserted and retracted.
 
-```{r history}
+```r
 log <- db$history()$send()
 
 # Each commit
@@ -181,7 +181,7 @@ log$commits
 
 Limit to the two most recent commits:
 
-```{r history-limit}
+```r
 log <- db$history(list(limit = 2L))$send()
 log$commits
 ```
@@ -191,7 +191,7 @@ log$commits
 Query the ledger at a past commit using `t` in the query body. `t` is the integer
 transaction counter returned by every write operation.
 
-```{r time-travel}
+```r
 # State at t = 1 (initial insert)
 result <- db$query(list(
   select = list("?name", "?age"),

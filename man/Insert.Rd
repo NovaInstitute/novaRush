@@ -6,6 +6,9 @@
 \usage{
 Insert(...)
 }
+\arguments{
+\item{...}{Passed to \code{\link[=transact]{transact()}}.}
+}
 \description{
 Convenience wrapper: configures and sends an insert transaction to the
 Fluree v4 \verb{/insert} endpoint. Adds new triples without touching existing ones.

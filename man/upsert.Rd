@@ -7,6 +7,9 @@
 upsert(config, transaction)
 }
 \arguments{
+\item{config}{(\code{list()})\cr
+The configuration list for the Fluree instance.}
+
 \item{transaction}{(\code{list()})\cr
 The upsert transaction to send to the Fluree instance.
 Note alternatively the transaction can simply be passed as a JSON \code{character} string.}

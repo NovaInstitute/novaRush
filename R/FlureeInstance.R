@@ -27,6 +27,10 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     initialize = function(config = list()) {
       privateKey <- config$privateKey
       self$checkConfig(config)
+      # Ledger references are branch-qualified, and a config assembled by hand
+      # rather than by setConfig() carries no branch. Default it here so every
+      # downstream flureeLedgerRef() has one, rather than erroring on connect.
+      if (is.null(config$branch)) config$branch <- "main"
       self$config <- config
       if (!is.null(privateKey)) {
         self$setKey(privateKey)
@@ -160,7 +164,7 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' List all branches of the configured ledger.
     #' @return A list of Fluree branch records.
     listBranches = function() {
-      novaRush:::listBranches(self$config)
+      listBranches(self$config)
     },
 
     #' @description
@@ -169,7 +173,7 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #'   Branch name.
     #' @return A single logical value.
     branchExists = function(branch) {
-      novaRush:::branchExists(self$config, branch)
+      branchExists(self$config, branch)
     },
 
     #' @description
@@ -180,7 +184,7 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #'   Source branch. Defaults to the configured branch.
     #' @return The Fluree branch record or an idempotent existing-branch result.
     createBranch = function(branch, from = self$config$branch) {
-      novaRush:::createBranch(self$config, branch = branch, from = from)
+      createBranch(self$config, branch = branch, from = from)
     },
 
     #' @description
@@ -194,7 +198,7 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' @return The parsed Fluree transaction receipt.
     upsertNamedGraph = function(document, graph,
                                 branch = self$config$branch) {
-      novaRush:::upsertNamedGraph(
+      upsertNamedGraph(
         document, graph, self$config, branch = branch
       )
     },
@@ -210,7 +214,7 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' @return Parsed query results.
     queryNamedGraph = function(query, graph,
                                branch = self$config$branch) {
-      novaRush:::queryNamedGraph(
+      queryNamedGraph(
         query, graph, self$config, branch = branch
       )
     },
@@ -229,7 +233,7 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' @return The parsed Fluree transaction receipt.
     upsertVectors = function(records, graph, vector_property,
                              branch = self$config$branch, ...) {
-      novaRush:::upsertVectors(
+      upsertVectors(
         records, graph, vector_property, self$config,
         branch = branch, ...
       )
@@ -249,7 +253,7 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' @return Parsed similarity results.
     searchVectors = function(graph, vector_property, query_vector,
                              branch = self$config$branch, ...) {
-      novaRush:::searchVectors(
+      searchVectors(
         graph, vector_property, query_vector, self$config,
         branch = branch, ...
       )

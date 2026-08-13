@@ -137,8 +137,8 @@ convertTxnToWhereDelete <- function(flattenedTxn, idAlias) {
 #' @description
 #' Generates the correct where-delete format to delete the given id.
 #' 
-#' @param id (`string`)\cr
-#'   The entry to be deleted.
+#' @param ids (`character`)\cr
+#'   The entries to be deleted.
 #' @param idAlias (`string`)\cr
 #'   The alias used for the @id field in the context of the Fluree instance.
 #' 
@@ -166,13 +166,13 @@ generateWhereDeleteForIds = function(ids, idAlias) {
 #' This function serves to create the transaction body to be sent to the Fluree
 #' instance in order to perform the delete.
 #' 
-#' @param id (`string`)\cr
-#'   The entry to be deleted.
+#' @param upsertTxn (`list()`)\cr
+#'   The upsert transaction to rewrite.
 #' @param idAlias (`string`)\cr
 #'   The alias used for the @id field in the context of the Fluree instance.
-#' 
+#'
 #' @return (`list`)
-#' 
+#'
 #' @export
 handleUpsert = function(upsertTxn, idAlias) {
   flattenedTxn <- flattenTxn(upsertTxn, idAlias)

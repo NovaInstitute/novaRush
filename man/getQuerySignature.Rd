@@ -6,6 +6,10 @@
 \usage{
 getQuerySignature(queryVariables = NULL)
 }
+\arguments{
+\item{queryVariables}{(\code{list()})\cr
+The signed query instance to read the signature from.}
+}
 \value{
 Character string representing the JWT of the signed query.
 }

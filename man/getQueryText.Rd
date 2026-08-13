@@ -6,6 +6,13 @@
 \usage{
 getQueryText(queryVariables = NULL, pretty = TRUE)
 }
+\arguments{
+\item{queryVariables}{(\code{list()})\cr
+The query instance to render as JSON.}
+
+\item{pretty}{(\code{logical})\cr
+Whether to indent the JSON output.}
+}
 \value{
 JSON string representation of the query body
 }

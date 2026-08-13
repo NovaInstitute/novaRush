@@ -30,6 +30,13 @@ Determines whether the given transaction should be signed or not.}
 
 \item{privateKey}{(\code{character})\cr
 The hexstring representation of the private key to use for message signing.}
+
+\item{apiKey}{(\code{character})\cr
+API key for the Fluree hosted service. Overrides \code{config$apiKey}.}
+
+\item{endpoint}{(\code{character})\cr
+Either \code{"insert"} or \code{"update"}. When \code{NULL} it is inferred: a
+transaction carrying a \code{where} clause is an update, anything else an insert.}
 }
 \value{
 A list containing everything needed to transact with Fluree.

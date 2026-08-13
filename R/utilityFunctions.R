@@ -144,6 +144,9 @@ deep_merge <- function(x, y) {
 #'  To be called by any function in this package that makes use of 
 #'  jsonlite::toJSON. Ensures toJSON conversion consistency across all functions.
 #'
+#' @param pretty (`logical`)\cr
+#'   Whether to indent the JSON output.
+#' @noRd
 getDefaultToJSONargs <- function(pretty = FALSE) {
   return(
     list(
@@ -186,4 +189,5 @@ getDefaultFromJSONargs <- function() {
 #' @param b The fallback value to return if `a` is `NULL`.
 #' 
 #' @return The value of `a` if it is not `NULL`, otherwise the value of `b`.
+#' @noRd
 `%||%` <- function(a, b) if (!is.null(a)) a else b

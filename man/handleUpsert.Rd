@@ -7,11 +7,11 @@
 handleUpsert(upsertTxn, idAlias)
 }
 \arguments{
+\item{upsertTxn}{(\code{list()})\cr
+The upsert transaction to rewrite.}
+
 \item{idAlias}{(\code{string})\cr
 The alias used for the @id field in the context of the Fluree instance.}
-
-\item{id}{(\code{string})\cr
-The entry to be deleted.}
 }
 \value{
 (\code{list})
