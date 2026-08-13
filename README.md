@@ -33,10 +33,8 @@ in for you:
 
 ```r
 # install.packages("remotes")
-remotes::install_github("NovaInstitute/novaRush@novaRush_v2")
+remotes::install_github("NovaInstitute/novaRush")
 ```
-
-Once `novaRush_v2` is merged the `@novaRush_v2` suffix can be dropped.
 
 `install.packages()`, `R CMD INSTALL` and a bare `renv::restore()` all ignore
 `Remotes:`, so they fail with `there is no package called 'semanticModelR'`. If you hit
