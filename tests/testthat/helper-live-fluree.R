@@ -38,3 +38,10 @@ live_fluree_branch_name <- function(prefix = "integration") {
   value <- paste(prefix, stamp, Sys.getpid(), sep = "-")
   gsub("[^A-Za-z0-9-]", "", value)
 }
+
+live_fluree_graph_iri <- function(prefix = "integration") {
+  paste0(
+    "https://data.nova.org/test/graphs/",
+    live_fluree_branch_name(prefix)
+  )
+}

@@ -124,6 +124,47 @@ Rscript -e 'devtools::test(filter = "live-branch", reporter = "summary")'
 Created branches remain available for inspection. Automatic branch deletion is
 intentionally deferred until branch-drop safeguards are implemented.
 
+## Branches and named graphs
+
+Branches and named graphs solve different problems. A branch isolates a mutable
+state of the ledger, such as an unaccepted tagging run. Named graphs partition
+categories or versions of knowledge inside that state, such as survey data,
+embeddings, candidate hierarchies, and review decisions.
+
+```r
+survey_graph <- "https://data.nova.org/graphs/survey"
+
+upsertNamedGraph(
+  document = questionnaire_jsonld,
+  graph = survey_graph,
+  config = config,
+  branch = "main"
+)
+
+questions <- queryNamedGraph(
+  query = taggable_question_query,
+  graph = survey_graph,
+  config = config,
+  branch = "main"
+)
+```
+
+The named graph is registered implicitly when its first resource is written.
+`novaRush` treats graph contents as generic JSON-LD and does not interpret
+survey, embedding, hierarchy, tag, or reviewer semantics.
+
+Run the live graph-isolation test with:
+
+```bash
+FLUREE_LIVE_TEST=true \
+FLUREE_BASE_URL=http://localhost:8090 \
+FLUREE_TEST_LEDGER=novarush-integration \
+Rscript -e 'devtools::test(filter = "live-named-graph", reporter = "summary")'
+```
+
+The test writes uniquely named graphs and leaves them available for inspection.
+Named-graph deletion is intentionally not part of this API yet.
+
 ## Usage
 
 Below follows a quick walk through of the functions included in this packages.
@@ -369,7 +410,6 @@ exampleQuery <- '{
 Query(config = conf, ledger = 'demo', exampleQuery, signQuery = FALSE)
 
 ```
-
 
 
 

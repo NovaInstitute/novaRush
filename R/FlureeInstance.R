@@ -184,6 +184,38 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     },
 
     #' @description
+    #' Upsert JSON-LD resources into a user-defined named graph.
+    #' @param document (`list`)
+    #'   JSON-LD document, resource, or list of resources.
+    #' @param graph (`character`)
+    #'   Absolute named-graph IRI.
+    #' @param branch (`character`)
+    #'   Target branch. Defaults to the configured branch.
+    #' @return The parsed Fluree transaction receipt.
+    upsertNamedGraph = function(document, graph,
+                                branch = self$config$branch) {
+      novaRush:::upsertNamedGraph(
+        document, graph, self$config, branch = branch
+      )
+    },
+
+    #' @description
+    #' Query a user-defined named graph.
+    #' @param query (`list`)
+    #'   JSON-LD query.
+    #' @param graph (`character`)
+    #'   Absolute named-graph IRI.
+    #' @param branch (`character`)
+    #'   Source branch. Defaults to the configured branch.
+    #' @return Parsed query results.
+    queryNamedGraph = function(query, graph,
+                               branch = self$config$branch) {
+      novaRush:::queryNamedGraph(
+        query, graph, self$config, branch = branch
+      )
+    },
+
+    #' @description
     #' Create a new instance of the QueryInstance class.
     #'
     #' @param query (`list()`)\cr
