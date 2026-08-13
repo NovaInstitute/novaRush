@@ -2,9 +2,11 @@ Package: novaRush
 Type: Package
 Title: R Client for the Fluree v4 Graph Database
 Version: 0.2.0
-Authors@R: person("Christiaan", "Pauw",
-                  email = "christiaan.pauw@nova.org.za",
-                  role = c("aut", "cre"))
+Authors@R: c(
+    person("Christiaan", "Pauw",
+           email = "christiaan.pauw@nova.org.za",
+           role = c("aut", "cre")),
+    person("Nova Institute NPC", role = "cph"))
 Description: Read from and write to a Fluree v4 ledger. Queries are composed with
     pipeable verbs and return tibbles; JSON-LD Query, SPARQL and history queries
     are all supported, as are signed messages, time travel and RDFS/OWL reasoning.
@@ -12,7 +14,7 @@ Description: Read from and write to a Fluree v4 ledger. Queries are composed wit
     results come back as a tibble or a graph. The lower-level R6 interface
     ('FlureeInstance' and friends) remains available for full control of the
     request cycle.
-License: What license is it under?
+License: Apache License (>= 2.0)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2

@@ -27,12 +27,24 @@ Full walkthrough: `vignette("tidy_fluree")`.
 
 ## Install
 
+`semanticModelR` (>= 0.2.0) is required and is not on CRAN, so install with `remotes`
+(or `pak`, or `devtools`). Those read the `Remotes:` field in `DESCRIPTION` and pull it
+in for you:
+
 ```r
 # install.packages("remotes")
 remotes::install_github("NovaInstitute/novaRush@novaRush_v2")
 ```
 
-`semanticModelR` (>= 0.2.0) is required and comes from the same organisation.
+Once `novaRush_v2` is merged the `@novaRush_v2` suffix can be dropped.
+
+`install.packages()`, `R CMD INSTALL` and a bare `renv::restore()` all ignore
+`Remotes:`, so they fail with `there is no package called 'semanticModelR'`. If you hit
+that, or you already have a copy older than 0.2.0, install the dependency first:
+
+```r
+remotes::install_github("NovaInstitute/semanticModelR")
+```
 
 ## Reading
 
@@ -187,8 +199,6 @@ The tidy verbs are built on the R6 classes, so the three interfaces can be mixed
 
 ## Known issues
 
-- **`License` is unset** in `DESCRIPTION` (`What license is it under?`), so
-  `R CMD check` warns. Picking one is a decision for the maintainers.
 - `tidyr`, `dplyr` and `magrittr` are in `Depends` rather than `Imports`, so they are
   attached for every user.
 - The vignettes live in `Vignettes/` with a capital V and there is no
