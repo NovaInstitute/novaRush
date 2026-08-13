@@ -32,3 +32,9 @@ live_query_values <- function(result) {
   values <- unlist(result, recursive = TRUE, use.names = FALSE)
   as.character(values)
 }
+
+live_fluree_branch_name <- function(prefix = "integration") {
+  stamp <- format(Sys.time(), "%Y%m%dT%H%M%OS6", tz = "UTC")
+  value <- paste(prefix, stamp, Sys.getpid(), sep = "-")
+  gsub("[^A-Za-z0-9-]", "", value)
+}

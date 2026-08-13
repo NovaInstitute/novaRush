@@ -108,6 +108,22 @@ docker volume rm novarush-fluree-test-data
 
 Removing the Docker volume permanently deletes the retained test ledger.
 
+### Live branch-isolation test
+
+The branch test creates a uniquely named candidate branch from `main`, verifies
+that it inherits existing knowledge, writes candidate-only knowledge, and
+confirms that the new data is not visible on `main`:
+
+```bash
+FLUREE_LIVE_TEST=true \
+FLUREE_BASE_URL=http://localhost:8090 \
+FLUREE_TEST_LEDGER=novarush-integration \
+Rscript -e 'devtools::test(filter = "live-branch", reporter = "summary")'
+```
+
+Created branches remain available for inspection. Automatic branch deletion is
+intentionally deferred until branch-drop safeguards are implemented.
+
 ## Usage
 
 Below follows a quick walk through of the functions included in this packages.
@@ -353,7 +369,6 @@ exampleQuery <- '{
 Query(config = conf, ledger = 'demo', exampleQuery, signQuery = FALSE)
 
 ```
-
 
 
 

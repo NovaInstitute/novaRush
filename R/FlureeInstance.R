@@ -157,6 +157,33 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     },
 
     #' @description
+    #' List all branches of the configured ledger.
+    #' @return A list of Fluree branch records.
+    listBranches = function() {
+      novaRush:::listBranches(self$config)
+    },
+
+    #' @description
+    #' Test whether a branch exists in the configured ledger.
+    #' @param branch (`character`)
+    #'   Branch name.
+    #' @return A single logical value.
+    branchExists = function(branch) {
+      novaRush:::branchExists(self$config, branch)
+    },
+
+    #' @description
+    #' Create a branch in the configured ledger.
+    #' @param branch (`character`)
+    #'   New branch name.
+    #' @param from (`character`)
+    #'   Source branch. Defaults to the configured branch.
+    #' @return The Fluree branch record or an idempotent existing-branch result.
+    createBranch = function(branch, from = self$config$branch) {
+      novaRush:::createBranch(self$config, branch = branch, from = from)
+    },
+
+    #' @description
     #' Create a new instance of the QueryInstance class.
     #'
     #' @param query (`list()`)\cr
