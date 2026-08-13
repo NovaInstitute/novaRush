@@ -7,10 +7,13 @@
 #' 
 #' @inheritParams query
 #' 
+#' @param ... Passed to [query()].
+#'
 #' @seealso [query()]
 #' @seealso [sendQuery()]
 #' 
 #' @examples
+#' \dontrun{
 #' # Existing data:
 #' #  [
 #' #    { "@id": "freddy", "name": "Freddy" },
@@ -33,10 +36,12 @@
 #' 
 #' queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' Query(config = conf, ledger = 'demo', queryList, signQuery = FALSE)
+#' }
 #' 
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
 #' 
+#' @rdname Query-wrapper
 #' @export
 Query = function(...) {
   q <- query(...)
@@ -75,6 +80,7 @@ Query = function(...) {
 #' This includes all the necessary parameters as well as the signed/unsigned query itself.
 #' 
 #' @examples
+#' \dontrun{
 #' # Existing data:
 #' #  [
 #' #    { "@id": "freddy", "name": "Freddy" },
@@ -97,6 +103,7 @@ Query = function(...) {
 #' 
 #' queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' queryInstance <- query(queryList)
+#' }
 #' 
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
@@ -109,13 +116,14 @@ query = function(
     privateKey = NULL, 
     apiKey = NULL) {
   
+  if (is.null(config)) {
+    config = setConfig(ledger = ledger)
+  }
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
     stop("Please provide a ledger name. Either as argument or within the config.")
   }
-  if (is.null(config)) {
-    config = setConfig(ledger = ledger)
-  }
+  ledgerRef <- flureeLedgerRef(ledgerName, config$branch %||% "main")
 
   if (is.character(query)) {
     if (!jsonlite::validate(query)) {
@@ -125,12 +133,12 @@ query = function(
       what = jsonlite::fromJSON, 
       args = c(
         list(txt = query),
-        novaRush:::getDefaultFromJSONargs()), 
+        getDefaultFromJSONargs()), 
       quote = FALSE)
   }
   
   if (is.null(query$from)) {
-    query$from <- ledgerName
+    query$from <- ledgerRef
   }
   
   # merge contexts if applicable
@@ -157,8 +165,10 @@ query = function(
       stop("Please provide a private key for signing. Either as argument or set one using `setKey()`.", call. = FALSE)
     } else {
       body <- list(
-        contentType = 'application/jwt', 
-        qry = signQuery(list(configuration = config, qry = body), key))
+        contentType = 'application/jwt',
+        qry = signQuery(
+          list(configuration = config, query = body), key
+        )$query$qry)
     }
   }
   
@@ -166,7 +176,7 @@ query = function(
     config$apiKey <- apiKey
   }
   
-  return(list(configuration = config, query = body))
+  return(list(configuration = config, query = body, ledger = ledgerRef))
 }
 
 #' Send a Query
@@ -182,8 +192,10 @@ query = function(
 #' @return A character string containing the JSON response content.
 #' 
 #' @examples
+#' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' sendQuery(queryInstance)
+#' }
 #' 
 #' @importFrom jsonlite toJSON
 #' @importFrom jsonlite fromJSON
@@ -204,41 +216,29 @@ sendQuery = function(queryVariables) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$qry), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
-  } else if (contentType == 'application/jwt') {
+  } else if (contentType %in% c('application/jwt', 'application/jose')) {
     finalQueryString <- body$qry
   } else {
     stop("Unsupported content type for query:", contentType)
   }
   
-  params <- generateFetchParams(config, 'query', contentType)
-  url <- params$url
-  
-  response <- httr::POST(
-    url = url,
-    config = add_headers(.headers = params$config$headers),
-    body = finalQueryString,
-    encode = "raw"
-  )
-  
-  resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
-  if (httr::http_error(response)) {
-    stop("Query failed: ", resp_text)
+  requestContentType <- if (identical(contentType, "application/jwt")) {
+    "application/jose"
+  } else {
+    contentType
   }
-  
-  json_response <- do.call(
-    what = jsonlite::fromJSON, 
-    args = c(
-      list(txt = resp_text),
-      novaRush:::getDefaultFromJSONargs()), 
-    quote = FALSE)
+  json_response <- fluree_request(
+    config, endpoint = "query", method = "POST", body = finalQueryString,
+    contentType = requestContentType, operation = "query"
+  )
   
   pretty_json <- do.call(
     what = jsonlite::toJSON, 
     args = c(
       list(x = json_response), 
-      novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+      getDefaultToJSONargs(pretty = TRUE)), 
     quote = FALSE)
 
   return(pretty_json)
@@ -302,7 +302,7 @@ history = function(
       what = jsonlite::fromJSON, 
       args = c(
         list(txt = query),
-        novaRush:::getDefaultFromJSONargs()), 
+        getDefaultFromJSONargs()), 
       quote = FALSE)
   }
   
@@ -354,8 +354,10 @@ history = function(
 #' @return A character string containing the response content.
 #' 
 #' @examples
+#' \dontrun{
 #' historyQueryInstance <- history(exampleHistoryQuery)
 #' sendHistoryQuery(historyQueryInstance)
+#' }
 #' 
 #' @export
 sendHistoryQuery = function(queryVariables) {
@@ -370,7 +372,7 @@ sendHistoryQuery = function(queryVariables) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$qry), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
   } else {
     query <- body$qry
@@ -394,14 +396,14 @@ sendHistoryQuery = function(queryVariables) {
     what = jsonlite::fromJSON, 
     args = c(
       list(txt = resp_text),
-      novaRush:::getDefaultFromJSONargs()), 
+      getDefaultFromJSONargs()), 
     quote = FALSE)
 
   pretty_json <- do.call(
     what = jsonlite::toJSON, 
     args = c(
       list(x = json_response), 
-      novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+      getDefaultToJSONargs(pretty = TRUE)), 
     quote = FALSE)
   
   return(pretty_json)
@@ -425,8 +427,10 @@ sendHistoryQuery = function(queryVariables) {
 #' This includes all the necessary parameters as well as the signed query itself.
 #' 
 #' @examples
+#' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' signedQueryInstance <- signQuery(queryInstance)
+#' }
 #' 
 #' @export
 signQuery = function(queryVariables = NULL, privateKey = NULL) {
@@ -452,7 +456,7 @@ signQuery = function(queryVariables = NULL, privateKey = NULL) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$qry), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
   }
   
@@ -472,13 +476,17 @@ signQuery = function(queryVariables = NULL, privateKey = NULL) {
 #' Note this function can only be used if a private key had been configured and 
 #' the query has been signed.
 #' 
+#' @param queryVariables (`list()`)\cr
+#'   The signed query instance to read the signature from.
 #' @returns Character string representing the JWT of the signed query.
 #' 
 #' @examples
+#' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' signedQueryInstance <- signQuery(queryInstance)
 #' 
 #' sig <- getQuerySignature(signedQueryInstance)
+#' }
 #' 
 #' @export
 getQuerySignature = function(queryVariables = NULL) {
@@ -505,12 +513,18 @@ getQuerySignature = function(queryVariables = NULL) {
 #' If the query instance has already been signed,  the signature is deserialized
 #' before returning the raw JSON string.
 #' 
+#' @param queryVariables (`list()`)\cr
+#'   The query instance to render as JSON.
+#' @param pretty (`logical`)\cr
+#'   Whether to indent the JSON output.
 #' @returns JSON string representation of the query body
 #' 
 #' @examples
+#' \dontrun{
 #' queryInstance <- query(exampleQuery)
 #' 
 #' qry <- getQueryText(queryInstance)
+#' }
 #' 
 #' @export
 getQueryText = function(queryVariables = NULL, pretty = TRUE) {
@@ -521,7 +535,7 @@ getQueryText = function(queryVariables = NULL, pretty = TRUE) {
   body <- queryVariables$query
   contentType <- body$contentType
   
-  toJsonArgs <- novaRush:::getDefaultToJSONargs(pretty = pretty)
+  toJsonArgs <- getDefaultToJSONargs(pretty = pretty)
   
   if (contentType == "application/jwt") {
     

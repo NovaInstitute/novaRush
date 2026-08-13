@@ -24,7 +24,9 @@ This function is used to sign a query which can then be sent to the Fluree
 instance as a JWT (JSON Web Token).
 }
 \examples{
+\dontrun{
 queryInstance <- query(exampleQuery)
 signedQueryInstance <- signQuery(queryInstance)
+}
 
 }

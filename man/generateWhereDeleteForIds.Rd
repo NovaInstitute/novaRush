@@ -7,11 +7,11 @@
 generateWhereDeleteForIds(ids, idAlias)
 }
 \arguments{
+\item{ids}{(\code{character})\cr
+The entries to be deleted.}
+
 \item{idAlias}{(\code{string})\cr
 The alias used for the @id field in the context of the Fluree instance.}
-
-\item{id}{(\code{string})\cr
-The entry to be deleted.}
 }
 \value{
 (\code{list})

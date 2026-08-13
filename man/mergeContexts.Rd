@@ -28,9 +28,11 @@ Handles conflicts and duplicates in namespace abbreviations:
 }
 }
 \examples{
+\dontrun{
 mergeContexts("https://example.org/context1", "https://example.org/context2")
 mergeContexts("https://example.org/context1", list("https://example.org/context2"))
 mergeContexts(list("https://example.org/context1"), list("https://example.org/context2"))
 mergeContexts(list("https://example.org/context1"), list(a = "https://example.org/context2"))
 
+}
 }

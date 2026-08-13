@@ -6,6 +6,10 @@
 \usage{
 getTransactionSignature(transactionVariables = NULL)
 }
+\arguments{
+\item{transactionVariables}{(\code{list()})\cr
+The signed transaction instance to read the signature from.}
+}
 \value{
 Character string representing the JWT of the signed transaction.
 }
@@ -15,9 +19,11 @@ Note this function can only be used if a private key had been configured and
 the transaction has been signed.
 }
 \examples{
+\dontrun{
 transactionInstance <- transact(exampleData)
 signedTransactionInstance <- signTransaction(transactionInstance)
 
 sig <- getTransactionSignature(signedTransactionInstance)
+}
 
 }

@@ -1,22 +1,46 @@
 Package: novaRush
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: R Client for the Fluree v4 Graph Database
+Version: 0.3.0
+Authors@R: c(
+    person("Christiaan", "Pauw",
+           email = "christiaan.pauw@nova.org.za",
+           role = c("aut", "cre")),
+    person("Nova Institute NPC", role = "cph"))
+Description: Read from and write to a Fluree v4 ledger. Queries are composed with
+    pipeable verbs and return tibbles; JSON-LD Query, SPARQL and history queries
+    are all supported, as are signed messages, time travel and RDFS/OWL reasoning.
+    Data goes in as a triple table, a 'tidygraph' graph or raw JSON-LD, and query
+    results come back as a tibble or a graph. Ledger administration covers
+    branches, named graphs, and storage and exact similarity search over native
+    Fluree vectors. The lower-level R6 interface ('FlureeInstance' and friends)
+    remains available for full control of the request cycle.
+License: Apache License (>= 2.0)
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.3.3
+RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE, r6 = TRUE)
-Imports: 
+Imports:
+    flureeCrypto,
+    httr,
+    jsonlite,
+    keyring,
     purrr,
-    stringr,
+    R6,
+    rlang,
+    semanticModelR (>= 0.2.0),
+    stats,
     tibble,
-    visNetwork
-Depends: 
+    utils
+Depends:
     tidyr,
     dplyr,
     magrittr
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    tidygraph
+Remotes:
+    NovaInstitute/semanticModelR
+VignetteBuilder: knitr
+Config/testthat/edition: 3

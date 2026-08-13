@@ -27,6 +27,10 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     initialize = function(config = list()) {
       privateKey <- config$privateKey
       self$checkConfig(config)
+      # Ledger references are branch-qualified, and a config assembled by hand
+      # rather than by setConfig() carries no branch. Default it here so every
+      # downstream flureeLedgerRef() has one, rather than erroring on connect.
+      if (is.null(config$branch)) config$branch <- "main"
       self$config <- config
       if (!is.null(privateKey)) {
         self$setKey(privateKey)
@@ -58,8 +62,11 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
               stop("Cannot create a ledger through the Fluree hosted service API", call. = FALSE)
             }
           } else {
-            if (is.null(host)) {
-              stop("Host is required on either FlureeInstance or connect", call. = FALSE)
+            # baseUrl is an alternative to host/port, not an addition to it:
+            # generateFetchParams() prefers it and derives one from the other.
+            if (is.null(host) && is.null(config$baseUrl)) {
+              stop("Either `host` or `baseUrl` is required on FlureeInstance or connect",
+                   call. = FALSE)
             }
           }
           if (is.null(ledger)) {
@@ -125,14 +132,14 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' @return [FlureeInstance].
     connect = function() {
       self$checkConfig(self$config, TRUE)
-      self$connected <- TRUE
-
       tryCatch({
+        fluree_health_check(self$config)
         if (isTRUE(self$config$create)) {
           self$create()
+        } else {
+          fluree_ledger_info(self$config)
         }
-        #self$testLedger()
-
+        self$connected <- TRUE
       }, error = function(err) {
         self$connected <- FALSE
         stop(err)
@@ -152,40 +159,107 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #'   The list representation of a transaction to be entered into the
     #'   new ledger (optional).
     create = function(ledgerName = NULL, transaction = NULL) {
-      config <- self$config
-      ledger <- config$ledger
-      signMessages <- config$signMessages
-      privateKey <- config$privateKey
+      createLedger(self$config, ledgerName = ledgerName,
+                   transaction = transaction)
+    },
 
-      params <- generateFetchParams(config, 'create')
-      url <- params$url
+    #' @description
+    #' List all branches of the configured ledger.
+    #' @return A list of Fluree branch records.
+    listBranches = function() {
+      listBranches(self$config)
+    },
 
-      body <- list(ledger = ledgerName %||% ledger)
-      if (!is.null(transaction)) {
-        body <- modifyList(body, transaction)
-      }
+    #' @description
+    #' Test whether a branch exists in the configured ledger.
+    #' @param branch (`character`)
+    #'   Branch name.
+    #' @return A single logical value.
+    branchExists = function(branch) {
+      branchExists(self$config, branch)
+    },
 
-      contentType <- 'application/json'
-      finalBody <- do.call(jsonlite::toJSON, c(list(x = body), novaRush:::getDefaultToJSONargs()))
+    #' @description
+    #' Create a branch in the configured ledger.
+    #' @param branch (`character`)
+    #'   New branch name.
+    #' @param from (`character`)
+    #'   Source branch. Defaults to the configured branch.
+    #' @return The Fluree branch record or an idempotent existing-branch result.
+    createBranch = function(branch, from = self$config$branch) {
+      createBranch(self$config, branch = branch, from = from)
+    },
 
-      if (isTRUE(signMessages) && !is.null(privateKey)) {
-        finalBody <- flureeCrypto:::serialize_jws(as.character(finalBody), privateKey)
-        contentType <- 'application/jwt'
-      }
-
-      response <- POST(
-        url = url,
-        add_headers(`Content-Type` = contentType),
-        body = finalBody,
-        encode = "raw"
+    #' @description
+    #' Upsert JSON-LD resources into a user-defined named graph.
+    #' @param document (`list`)
+    #'   JSON-LD document, resource, or list of resources.
+    #' @param graph (`character`)
+    #'   Absolute named-graph IRI.
+    #' @param branch (`character`)
+    #'   Target branch. Defaults to the configured branch.
+    #' @return The parsed Fluree transaction receipt.
+    upsertNamedGraph = function(document, graph,
+                                branch = self$config$branch) {
+      upsertNamedGraph(
+        document, graph, self$config, branch = branch
       )
+    },
 
-      resp_text <- httr::content(response, as = "text", encoding = "UTF-8")
-      if (httr::http_error(response)) {
-        stop("Failed to create ledger: ", resp_text)
-      }
+    #' @description
+    #' Query a user-defined named graph.
+    #' @param query (`list`)
+    #'   JSON-LD query.
+    #' @param graph (`character`)
+    #'   Absolute named-graph IRI.
+    #' @param branch (`character`)
+    #'   Source branch. Defaults to the configured branch.
+    #' @return Parsed query results.
+    queryNamedGraph = function(query, graph,
+                               branch = self$config$branch) {
+      queryNamedGraph(
+        query, graph, self$config, branch = branch
+      )
+    },
 
-      do.call(jsonlite::fromJSON, c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()))
+    #' @description
+    #' Store vector-bearing JSON-LD resources in a named graph.
+    #' @param records (`list`)
+    #'   JSON-LD resources containing raw numeric embeddings.
+    #' @param graph (`character`)
+    #'   Absolute named-graph IRI.
+    #' @param vector_property (`character`)
+    #'   Absolute embedding property IRI.
+    #' @param branch (`character`)
+    #'   Target branch.
+    #' @param ... Additional arguments passed to [upsertVectors()].
+    #' @return The parsed Fluree transaction receipt.
+    upsertVectors = function(records, graph, vector_property,
+                             branch = self$config$branch, ...) {
+      upsertVectors(
+        records, graph, vector_property, self$config,
+        branch = branch, ...
+      )
+    },
+
+    #' @description
+    #' Search vectors in a named graph using exact similarity.
+    #' @param graph (`character`)
+    #'   Absolute named-graph IRI.
+    #' @param vector_property (`character`)
+    #'   Absolute embedding property IRI.
+    #' @param query_vector (`numeric`)
+    #'   Query embedding.
+    #' @param branch (`character`)
+    #'   Source branch.
+    #' @param ... Additional arguments passed to [searchVectors()].
+    #' @return Parsed similarity results.
+    searchVectors = function(graph, vector_property, query_vector,
+                             branch = self$config$branch, ...) {
+      searchVectors(
+        graph, vector_property, query_vector, self$config,
+        branch = branch, ...
+      )
     },
 
     #' @description
@@ -366,6 +440,8 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     #' with existing ones, instead it will replace the existing
     #' `defaultContext` entirely.
     #'
+    #' @param context (`list()`)\cr
+    #'   A named list of JSON-LD prefixes to use as the default context.
     #' @return [FlureeInstance].
     setContext = function(context) {
       self$configure(list(defaultContext = context))

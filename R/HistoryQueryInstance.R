@@ -62,7 +62,7 @@ HistoryQueryInstance <- R6::R6Class("HistoryQueryInstance",
         stop("History query failed: ", resp_text)
       }
 
-      do.call(jsonlite::fromJSON, c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()))
+      do.call(jsonlite::fromJSON, c(list(txt = resp_text), getDefaultFromJSONargs()))
     },
 
     #' @description

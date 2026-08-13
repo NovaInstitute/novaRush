@@ -19,7 +19,9 @@ This function makes use of the \code{httr} package to send the configured query 
 the Fluree \verb{/query} API endpoint.
 }
 \examples{
+\dontrun{
 queryInstance <- query(exampleQuery)
 sendQuery(queryInstance)
+}
 
 }

@@ -6,6 +6,10 @@
 \usage{
 getTransactionText(transactionVariables = NULL)
 }
+\arguments{
+\item{transactionVariables}{(\code{list()})\cr
+The transaction instance to render as JSON.}
+}
 \value{
 JSON string representation of the transaction body
 }
@@ -13,8 +17,10 @@ JSON string representation of the transaction body
 This function returns the transaction body as a JSON string.
 }
 \examples{
+\dontrun{
 transactionInstance <- transact(exampleData)
 
 txn  <- getTransactionText(transactionInstance)
+}
 
 }

@@ -6,6 +6,10 @@
 \usage{
 getQuerySignature(queryVariables = NULL)
 }
+\arguments{
+\item{queryVariables}{(\code{list()})\cr
+The signed query instance to read the signature from.}
+}
 \value{
 Character string representing the JWT of the signed query.
 }
@@ -15,9 +19,11 @@ Note this function can only be used if a private key had been configured and
 the query has been signed.
 }
 \examples{
+\dontrun{
 queryInstance <- query(exampleQuery)
 signedQueryInstance <- signQuery(queryInstance)
 
 sig <- getQuerySignature(signedQueryInstance)
+}
 
 }

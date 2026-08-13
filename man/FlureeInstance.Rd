@@ -34,6 +34,13 @@ Indicates whether connection to the Fluree instance has been established.}
 \item \href{#method-FlureeInstance-testLedgers}{\code{FlureeInstance$testLedgers()}}
 \item \href{#method-FlureeInstance-connect}{\code{FlureeInstance$connect()}}
 \item \href{#method-FlureeInstance-create}{\code{FlureeInstance$create()}}
+\item \href{#method-FlureeInstance-listBranches}{\code{FlureeInstance$listBranches()}}
+\item \href{#method-FlureeInstance-branchExists}{\code{FlureeInstance$branchExists()}}
+\item \href{#method-FlureeInstance-createBranch}{\code{FlureeInstance$createBranch()}}
+\item \href{#method-FlureeInstance-upsertNamedGraph}{\code{FlureeInstance$upsertNamedGraph()}}
+\item \href{#method-FlureeInstance-queryNamedGraph}{\code{FlureeInstance$queryNamedGraph()}}
+\item \href{#method-FlureeInstance-upsertVectors}{\code{FlureeInstance$upsertVectors()}}
+\item \href{#method-FlureeInstance-searchVectors}{\code{FlureeInstance$searchVectors()}}
 \item \href{#method-FlureeInstance-query}{\code{FlureeInstance$query()}}
 \item \href{#method-FlureeInstance-sparql}{\code{FlureeInstance$sparql()}}
 \item \href{#method-FlureeInstance-insert}{\code{FlureeInstance$insert()}}
@@ -167,6 +174,194 @@ The list representation of a transaction to be entered into the
 new ledger (optional).}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-listBranches"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-listBranches}{}}}
+\subsection{Method \code{listBranches()}}{
+List all branches of the configured ledger.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$listBranches()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A list of Fluree branch records.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-branchExists"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-branchExists}{}}}
+\subsection{Method \code{branchExists()}}{
+Test whether a branch exists in the configured ledger.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$branchExists(branch)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{branch}}{(\code{character})
+Branch name.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A single logical value.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-createBranch"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-createBranch}{}}}
+\subsection{Method \code{createBranch()}}{
+Create a branch in the configured ledger.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$createBranch(branch, from = self$config$branch)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{branch}}{(\code{character})
+New branch name.}
+
+\item{\code{from}}{(\code{character})
+Source branch. Defaults to the configured branch.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The Fluree branch record or an idempotent existing-branch result.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-upsertNamedGraph"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-upsertNamedGraph}{}}}
+\subsection{Method \code{upsertNamedGraph()}}{
+Upsert JSON-LD resources into a user-defined named graph.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$upsertNamedGraph(document, graph, branch = self$config$branch)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{document}}{(\code{list})
+JSON-LD document, resource, or list of resources.}
+
+\item{\code{graph}}{(\code{character})
+Absolute named-graph IRI.}
+
+\item{\code{branch}}{(\code{character})
+Target branch. Defaults to the configured branch.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The parsed Fluree transaction receipt.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-queryNamedGraph"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-queryNamedGraph}{}}}
+\subsection{Method \code{queryNamedGraph()}}{
+Query a user-defined named graph.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$queryNamedGraph(query, graph, branch = self$config$branch)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{query}}{(\code{list})
+JSON-LD query.}
+
+\item{\code{graph}}{(\code{character})
+Absolute named-graph IRI.}
+
+\item{\code{branch}}{(\code{character})
+Source branch. Defaults to the configured branch.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Parsed query results.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-upsertVectors"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-upsertVectors}{}}}
+\subsection{Method \code{upsertVectors()}}{
+Store vector-bearing JSON-LD resources in a named graph.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$upsertVectors(
+  records,
+  graph,
+  vector_property,
+  branch = self$config$branch,
+  ...
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{records}}{(\code{list})
+JSON-LD resources containing raw numeric embeddings.}
+
+\item{\code{graph}}{(\code{character})
+Absolute named-graph IRI.}
+
+\item{\code{vector_property}}{(\code{character})
+Absolute embedding property IRI.}
+
+\item{\code{branch}}{(\code{character})
+Target branch.}
+
+\item{\code{...}}{Additional arguments passed to \code{\link[=upsertVectors]{upsertVectors()}}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The parsed Fluree transaction receipt.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-FlureeInstance-searchVectors"></a>}}
+\if{latex}{\out{\hypertarget{method-FlureeInstance-searchVectors}{}}}
+\subsection{Method \code{searchVectors()}}{
+Search vectors in a named graph using exact similarity.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$searchVectors(
+  graph,
+  vector_property,
+  query_vector,
+  branch = self$config$branch,
+  ...
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{graph}}{(\code{character})
+Absolute named-graph IRI.}
+
+\item{\code{vector_property}}{(\code{character})
+Absolute embedding property IRI.}
+
+\item{\code{query_vector}}{(\code{numeric})
+Query embedding.}
+
+\item{\code{branch}}{(\code{character})
+Source branch.}
+
+\item{\code{...}}{Additional arguments passed to \code{\link[=searchVectors]{searchVectors()}}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Parsed similarity results.
 }
 }
 \if{html}{\out{<hr>}}
@@ -432,6 +627,14 @@ with existing ones, instead it will replace the existing
 \if{html}{\out{<div class="r">}}\preformatted{FlureeInstance$setContext(context)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{context}}{(\code{list()})\cr
+A named list of JSON-LD prefixes to use as the default context.}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 \link{FlureeInstance}.
 }

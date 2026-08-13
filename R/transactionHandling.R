@@ -7,10 +7,13 @@
 #' 
 #' @inheritParams transact
 #' 
+#' @param ... Passed to [transact()].
+#'
 #' @seealso [transact()]
 #' @seealso [sendTransaction()]
 #' 
 #' @examples
+#' \dontrun{
 #' exampleData <- '{
 #'    "insert": [
 #'       {
@@ -30,10 +33,12 @@
 #' 
 #' dataList <- fromJSON(exampleData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' Transact(config = conf, ledger = 'demo', dataList, signTransaction = FALSE)
+#' }
 #' 
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
 #' 
+#' @rdname Transact-wrapper
 #' @export
 Transact = function(...) {
   t <- transact(...)
@@ -49,11 +54,13 @@ Transact = function(...) {
 #'
 #' @inheritParams transact
 #'
+#' @param ... Passed to [transact()].
+#'
 #' @seealso [transact()] [sendTransaction()]
 #'
 #' @export
 Insert = function(...) {
-  t <- transact(...)
+  t <- transact(..., endpoint = "insert")
   sendTransaction(t)
 }
 
@@ -68,11 +75,13 @@ Insert = function(...) {
 #'
 #' @inheritParams transact
 #'
+#' @param ... Passed to [transact()].
+#'
 #' @seealso [transact()] [sendTransaction()]
 #'
 #' @export
 Update = function(...) {
-  t <- transact(...)
+  t <- transact(..., endpoint = "update")
   sendTransaction(t)
 }
 
@@ -97,10 +106,16 @@ Update = function(...) {
 #' @param privateKey (`character`)\cr
 #'   The hexstring representation of the private key to use for message signing.
 #' 
+#' @param apiKey (`character`)\cr
+#'   API key for the Fluree hosted service. Overrides `config$apiKey`.
+#' @param endpoint (`character`)\cr
+#'   Either `"insert"` or `"update"`. When `NULL` it is inferred: a
+#'   transaction carrying a `where` clause is an update, anything else an insert.
 #' @return A list containing everything needed to transact with Fluree.
 #' This includes all the necessary parameters as well as the signed/unsigned transaction itself.
 #' 
 #' @examples
+#' \dontrun{
 #' exampleData <- '{
 #'    "insert": [
 #'       {
@@ -120,6 +135,7 @@ Update = function(...) {
 #' 
 #' dataList <- fromJSON(exampleData, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 #' transactionInstance <- transact(config = conf, ledger = 'demo', dataList, signTransaction = FALSE)
+#' }
 #' 
 #' @importFrom jsonlite validate
 #' @importFrom jsonlite fromJSON
@@ -131,15 +147,16 @@ transact = function(
     transaction, 
     signTransaction = NULL, 
     privateKey = NULL,
-    apiKey = NULL) {
-  
+    apiKey = NULL,
+    endpoint = NULL) {
+  if (is.null(config)) {
+    config = setConfig(ledger = ledger)
+  }
   ledgerName <- ledger %||% config$ledger
   if (is.null(ledgerName)) {
     stop("Please provide a ledger name. Either as argument or within the config.")
   }
-  if (is.null(config)) {
-    config = setConfig(ledger = ledger)
-  }
+  ledgerRef <- flureeLedgerRef(ledgerName, config$branch %||% "main")
   
   if (is.character(transaction)) {
     if (!jsonlite::validate(transaction)) {
@@ -149,12 +166,8 @@ transact = function(
       what = jsonlite::fromJSON, 
       args = c(
         list(txt = transaction),
-        novaRush:::getDefaultFromJSONargs()), 
+        getDefaultFromJSONargs()), 
       quote = FALSE)
-  }
-  
-  if (is.null(transaction$ledger)) {
-    transaction$ledger <- ledgerName
   }
   
   defaultContext <- config$defaultContext %||% list()
@@ -180,15 +193,22 @@ transact = function(
       stop("Please provide a private key for signing.  Either as argument or set one using `setKey()`.")
     }
     body <- list(
-      contentType = 'application/jwt', 
-      txn = signTransaction(list(configuration = config, transaction = body), privateKey))
+      contentType = 'application/jwt',
+      txn = signTransaction(
+        list(configuration = config, transaction = body), key
+      )$transaction$txn)
   }
   
   if (length(apiKey) == 1) {
     config$apiKey <- apiKey
   }
   
-  return(list(configuration = config, transaction = body))
+  endpoint <- endpoint %||% if (!is.null(transaction$where)) "update" else "insert"
+  if (!endpoint %in% c("insert", "update")) {
+    stop("`endpoint` must be 'insert' or 'update'.", call. = FALSE)
+  }
+  return(list(configuration = config, transaction = body,
+              ledger = ledgerRef, endpoint = endpoint))
 }
 
 
@@ -201,9 +221,12 @@ transact = function(
 #' @param id (`list()`)\cr
 #'   The subject identifier/identifiers to retract from the Fluree database.
 #' 
+#' @param config (`list()`)\cr
+#'   The configuration list for the Fluree instance.
 #' @returns And instance of a delete transaction (as a list).
 #' 
 #' @examples
+#' \dontrun{
 #' # Existing data:
 #' #  [
 #' #    { "@id": "freddy", "name": "Freddy" },
@@ -217,14 +240,14 @@ transact = function(
 #' #  [
 #' #    { "@id": "alice", "name": "Alice" }
 #' #  ]
+#' }
 #' 
 #' @export
 delete = function(config, id) {
   idAlias <- findIdAlias(config$defaultContext)
   resultingTransaction <- handleDelete(id, idAlias)
-  resultingTransaction$ledger <- config$ledger
-  
-  transact(transaction = resultingTransaction)
+  transact(config = config, transaction = resultingTransaction,
+           endpoint = "update")
 }
 
 
@@ -240,6 +263,7 @@ delete = function(config, id) {
 #'   Note alternatively the transaction can simply be passed as a JSON `character` string.
 #' 
 #' @examples
+#' \dontrun{
 #' # Existing data:
 #' #  [
 #' #    { "@id": "freddy", "name": "Freddy" },
@@ -273,7 +297,10 @@ delete = function(config, id) {
 #' #    { "@id": "freddy", "name": "Freddy the Yeti" },
 #' #    { "@id": "alice", "name": "Alice", "age": 25 }
 #' #  ]
+#' }
 #' 
+#' @param config (`list()`)\cr
+#'   The configuration list for the Fluree instance.
 #' @importFrom jsonlite validate
 #' 
 #' @export
@@ -287,7 +314,7 @@ upsert = function(config, transaction) {
       what = jsonlite::fromJSON,
       args = c(
         list(txt = transaction),
-        novaRush:::getDefaultFromJSONargs()),
+        getDefaultFromJSONargs()),
       quote = FALSE)
   }
 
@@ -297,31 +324,11 @@ upsert = function(config, transaction) {
     transaction[["@context"]] <- mergeContexts(defaultContext, txnContext)
   }
 
-  body <- list(contentType = 'application/json', txn = transaction)
-  params <- generateFetchParams(config = config, endpoint = 'upsert', contentType = 'application/json')
-  url <- params$url
-  fetchOptions <- params$config
-
-  txnJson <- do.call(
-    what = jsonlite::toJSON,
-    args = c(list(x = body$txn), novaRush:::getDefaultToJSONargs()),
-    quote = FALSE)
-
-  response <- POST(
-    url = url,
-    config = add_headers(.headers = fetchOptions$headers),
-    body = charToRaw(txnJson),
-    encode = "raw")
-
-  resp_text <- httr::content(x = response, as = "text", encoding = "UTF-8")
-  if (httr::http_error(response)) {
-    stop("Upsert failed: ", resp_text)
-  }
-
-  do.call(
-    what = jsonlite::fromJSON,
-    args = c(list(txt = resp_text), novaRush:::getDefaultFromJSONargs()),
-    quote = FALSE)
+  ledgerRef <- flureeLedgerRef(config$ledger, config$branch %||% "main")
+  fluree_request(
+    config, endpoint = "upsert", method = "POST", body = transaction,
+    query = list(ledger = ledgerRef), operation = "upsert"
+  )
 }
 
 #' Send a Transaction
@@ -336,8 +343,10 @@ upsert = function(config, transaction) {
 #' @return A character string containing the response content.
 #' 
 #' @examples
+#' \dontrun{
 #' transactionInstance <- transact(exampleData)
 #' sendTransaction(transactionInstance)
+#' }
 #' 
 #' @importFrom httr POST
 #' 
@@ -354,48 +363,34 @@ sendTransaction = function(transactionVariables) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$txn), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
-  } else if (contentType == 'application/jwt') {
+  } else if (contentType %in% c('application/jwt', 'application/jose')) {
     transaction <- body$txn
   } else {
     stop("Unsupported content type: ", contentType)
   }
   
-  endpoint <- if (!is.null(body$txn$where)) 'update' else 'insert'
-  params <- generateFetchParams(
-    config = config,
-    endpoint = endpoint,
-    contentType = contentType)
-  url <- params$url
-  fetchOptions <- params$config
-
-  response <- POST(
-    url = url,
-    config = add_headers(.headers = fetchOptions$headers),
-    body = charToRaw(transaction),
-    encode = "raw")
-  
-  resp_text <- httr::content(
-    x = response, 
-    as = "text", 
-    encoding = "UTF-8")
-  if (httr::http_error(response)) {
-    stop("Transaction failed: ", resp_text)
+  endpoint <- transactionVariables$endpoint %||%
+    if (!is.null(body$txn$where)) "update" else "insert"
+  ledgerRef <- transactionVariables$ledger %||%
+    flureeLedgerRef(config$ledger, config$branch %||% "main")
+  requestContentType <- if (identical(contentType, "application/jwt")) {
+    "application/jose"
+  } else {
+    contentType
   }
-  
-  json_response <- do.call(
-    what = jsonlite::fromJSON, 
-    args = c(
-      list(txt = resp_text),
-      novaRush:::getDefaultFromJSONargs()), 
-    quote = FALSE)
+  json_response <- fluree_request(
+    config, endpoint = endpoint, method = "POST", body = transaction,
+    query = list(ledger = ledgerRef), contentType = requestContentType,
+    operation = endpoint
+  )
 
   pretty_json <- do.call(
     what = jsonlite::toJSON, 
     args = c(
       list(x = json_response), 
-      novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+      getDefaultToJSONargs(pretty = TRUE)), 
     quote = FALSE)
   
   return(pretty_json)
@@ -418,8 +413,10 @@ sendTransaction = function(transactionVariables) {
 #' This includes all the necessary parameters as well as the signed transaction itself.
 #' 
 #' @examples
+#' \dontrun{
 #' transactionInstance <- transact(exampleData)
 #' signedTransactionInstance <- signTransaction(transactionInstance)
+#' }
 #' 
 #' @export
 signTransaction = function(transactionVariables = NULL, privateKey = NULL) {
@@ -431,6 +428,9 @@ signTransaction = function(transactionVariables = NULL, privateKey = NULL) {
   if (!is.null(privateKey)) {
     key <- privateKey
   } else {
+    # Deliberately not getDefaultFromJSONargs(): this parses a stored config, not a
+    # Fluree response, and needs jsonlite's simplification so privateKey arrives as
+    # a string rather than a one-element list. See test-response-contract.R.
     config <- fromJSON(Sys.getenv("config"))
     key <- config$privateKey
   }
@@ -451,7 +451,7 @@ signTransaction = function(transactionVariables = NULL, privateKey = NULL) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$txn), 
-        novaRush:::getDefaultToJSONargs()), 
+        getDefaultToJSONargs()), 
       quote = FALSE)
   }
   
@@ -470,13 +470,17 @@ signTransaction = function(transactionVariables = NULL, privateKey = NULL) {
 #' Note this function can only be used if a private key had been configured and 
 #' the transaction has been signed.
 #' 
+#' @param transactionVariables (`list()`)\cr
+#'   The signed transaction instance to read the signature from.
 #' @returns Character string representing the JWT of the signed transaction.
 #' 
 #' @examples
+#' \dontrun{
 #' transactionInstance <- transact(exampleData)
 #' signedTransactionInstance <- signTransaction(transactionInstance)
 #' 
 #' sig <- getTransactionSignature(signedTransactionInstance)
+#' }
 #' 
 #' @export
 getTransactionSignature = function(transactionVariables = NULL) {
@@ -501,12 +505,16 @@ getTransactionSignature = function(transactionVariables = NULL) {
 #' @description
 #' This function returns the transaction body as a JSON string.
 #' 
+#' @param transactionVariables (`list()`)\cr
+#'   The transaction instance to render as JSON.
 #' @returns JSON string representation of the transaction body
 #' 
 #' @examples
+#' \dontrun{
 #' transactionInstance <- transact(exampleData)
 #' 
 #' txn  <- getTransactionText(transactionInstance)
+#' }
 #' 
 #' @export
 getTransactionText = function(transactionVariables = NULL) {
@@ -526,7 +534,7 @@ getTransactionText = function(transactionVariables = NULL) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = desrialized$payload), 
-        novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+        getDefaultToJSONargs(pretty = TRUE)), 
       quote = FALSE)
     
   } else {
@@ -535,7 +543,7 @@ getTransactionText = function(transactionVariables = NULL) {
       what = jsonlite::toJSON, 
       args = c(
         list(x = body$txn), 
-        novaRush:::getDefaultToJSONargs(pretty = TRUE)), 
+        getDefaultToJSONargs(pretty = TRUE)), 
       quote = FALSE)
 
   }

@@ -18,7 +18,7 @@ signed or not.}
 \item{apiKey}{character A Fluree API key.}
 }
 \value{
-The output of novaRush::sendTransaction.
+The output of sendTransaction.
 }
 \description{
 Inserts data into a Fluree ledger.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ledgerCreation.R
 \name{createLedger}
 \alias{createLedger}
-\title{Create a New Ledger}
+\title{Create a Fluree ledger}
 \usage{
 createLedger(
   config = NULL,
@@ -13,17 +13,24 @@ createLedger(
 )
 }
 \arguments{
-\item{config}{(\code{list})\cr
-The configuration parameters of the Fluree instance.}
+\item{config}{Fluree configuration created by \code{\link[=setConfig]{setConfig()}}.}
 
-\item{ledgerName}{(\code{string})\cr
-The name of the ledger to be created. If NULL, use \code{config$ledger}.}
+\item{ledgerName}{Ledger name. Defaults to \code{config$ledger}.}
 
-\item{transaction}{(\code{list})\cr
-The body of the initial transaction to add to the new ledger.}
+\item{transaction}{Optional initial JSON-LD transaction fields supported by
+the server's create endpoint.}
+
+\item{signMessage}{Retained for compatibility. Signed create requests are not
+implemented by this helper; use bearer authentication in \code{config}.}
+
+\item{privateKey}{Retained for compatibility.}
+}
+\value{
+The parsed Fluree response. For an existing ledger, a list with
+\code{created = FALSE}, \code{exists = TRUE}, and the server response is returned.
 }
 \description{
-This function creates a new ledger with the specified name.
-If no \code{config} is provided, the default parameters will be used.
-If no initial transaction is provided, a default transaction will be sent.
+Creates a ledger through the Fluree v4 \verb{/create} endpoint. Creation is
+idempotent: an HTTP 409 response indicating that the ledger already exists is
+returned as an existing-ledger result rather than raised as an error.
 }

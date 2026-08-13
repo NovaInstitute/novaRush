@@ -7,6 +7,9 @@
 delete(config, id)
 }
 \arguments{
+\item{config}{(\code{list()})\cr
+The configuration list for the Fluree instance.}
+
 \item{id}{(\code{list()})\cr
 The subject identifier/identifiers to retract from the Fluree database.}
 }
@@ -18,6 +21,7 @@ Deletes all triples for one or more subjects by routing through the Fluree v4
 \verb{/update} endpoint with a wildcard where/delete pattern.
 }
 \examples{
+\dontrun{
 # Existing data:
 #  [
 #    { "@id": "freddy", "name": "Freddy" },
@@ -31,5 +35,6 @@ sendTransaction(deleteInstance)
 #  [
 #    { "@id": "alice", "name": "Alice" }
 #  ]
+}
 
 }

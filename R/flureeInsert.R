@@ -7,7 +7,7 @@
 #'@param signTransaction logical Indicates whether the transaction should be 
 #'  signed or not.
 #'@param apiKey character A Fluree API key.
-#'@return The output of novaRush::sendTransaction.
+#'@return The output of sendTransaction.
 #'
 #'@export
 #'
@@ -38,11 +38,11 @@ flureeInsert <- function(data, config, signTransaction, apiKey = NULL) {
     what = jsonlite::toJSON, 
     args = c(
       list(x = x), 
-      novaRush:::getDefaultToJSONargs()), 
+      getDefaultToJSONargs()), 
     quote = FALSE)
   
   # Create the transaction.
-  tx <- novaRush::transact(
+  tx <- transact(
     config = config, 
     transaction = q, 
     signTransaction = signTransaction, 
@@ -50,7 +50,7 @@ flureeInsert <- function(data, config, signTransaction, apiKey = NULL) {
   
   # Send the transaction.
   res <- tryCatch({
-    novaRush::sendTransaction(tx)
+    sendTransaction(tx)
   }, error = function(e) {
     message(sprintf("ERROR: %s", as.character(e)))
     NULL

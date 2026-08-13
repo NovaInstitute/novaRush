@@ -54,11 +54,11 @@ stopDockerContainer <- function(name = NULL) {
   system(cmd)
 }
 
-#' Constructs arguments for httr::POST
+#' Construct parameters for a Fluree v4 HTTP request
 #' 
 #' @description
-#' This function is a generic function to construct the parameters needed by
-#' `httr` to execute a `POST()` request of a transaction or query.
+#' This compatibility helper constructs the URL, headers, and timeout used by
+#' the package's Fluree v4 request executor.
 #' 
 #' @param config (`list()`)\cr
 #'   The configuration parameters of the current active transaction or query instance.
@@ -69,41 +69,62 @@ stopDockerContainer <- function(name = NULL) {
 #'   In the case of an unsigned message 'application/json' is used ('application/jwt' if signed).
 #'   Use 'application/sparql-query' for raw SPARQL strings.
 #' @param ledger (`string`)\cr
-#'   Optional ledger name appended to the URL path (e.g. 'myorg/mydb').
+#'   Optional ledger reference appended to the URL path.
 #'   When provided the ledger is taken from the URL rather than the request body.
+#' @param method HTTP method.
 #'
 #' @return (`list()`)
-generateFetchParams <- function(config, endpoint, contentType = "application/json", ledger = NULL) {
-  
-  host <- config$host
-  port <- config$port
-  apiKey <- config$apiKey
-  
-  protocol <- if (isTRUE(config$isFlureeHosted) || identical(host, "data.flur.ee")) "https" else "http"
-  url <- paste0(protocol, "://", host)
-  if (!is.null(port)) {
-    url <- paste0(url, ":", port)
+generateFetchParams <- function(
+    config, endpoint, contentType = "application/json", ledger = NULL,
+    method = "POST") {
+  baseUrl <- config$baseUrl
+  if (is.null(baseUrl)) {
+    protocol <- if (isTRUE(config$isFlureeHosted) ||
+                    identical(config$host, "data.flur.ee")) "https" else "http"
+    baseUrl <- paste0(protocol, "://", config$host)
+    if (!is.null(config$port)) baseUrl <- paste0(baseUrl, ":", config$port)
   }
-  url <- paste0(url, "/v1/fluree/", endpoint)
+  apiPath <- config$apiPath %||% "/v1/fluree"
+  if (identical(endpoint, "health")) {
+    url <- paste0(sub("/+$", "", baseUrl), "/health")
+  } else {
+    url <- paste0(sub("/+$", "", baseUrl), "/",
+                  gsub("^/+|/+$", "", apiPath), "/",
+                  gsub("^/+", "", endpoint))
+  }
   if (!is.null(ledger)) {
-    url <- paste0(url, "/", ledger)
+    url <- paste0(url, "/", utils::URLencode(ledger, reserved = TRUE))
   }
 
-  header <- c(
-    'Content-Type' = contentType)
-  
-  if (!is.null(apiKey)) {
-    header <- c(header, 'Authorization' = paste0("Bearer ", apiKey))
+  header <- c("Accept" = "application/json", "Content-Type" = contentType)
+  if (!is.null(config$apiKey) && nzchar(config$apiKey)) {
+    header <- c(header, "Authorization" = paste0("Bearer ", config$apiKey))
   }
-  
-  params <- list(
+
+  list(
     url = url,
     config = list(
-      method = "POST",
-      headers = header
+      method = toupper(method),
+      headers = header,
+      timeout = config$timeout %||% 60
     )
   )
-  return(params)
+}
+
+#' Construct a branch-qualified ledger reference
+#'
+#' @param ledger Ledger name.
+#' @param branch Branch name.
+#' @return A `ledger:branch` reference.
+flureeLedgerRef <- function(ledger, branch = "main") {
+  if (length(ledger) != 1L || is.na(ledger) || !nzchar(ledger)) {
+    stop("`ledger` must be one non-empty string.", call. = FALSE)
+  }
+  if (grepl(":", ledger, fixed = TRUE)) return(ledger)
+  if (length(branch) != 1L || is.na(branch) || !nzchar(branch)) {
+    stop("`branch` must be one non-empty string.", call. = FALSE)
+  }
+  paste0(ledger, ":", branch)
 }
 
 deep_merge <- function(x, y) {
@@ -123,6 +144,9 @@ deep_merge <- function(x, y) {
 #'  To be called by any function in this package that makes use of 
 #'  jsonlite::toJSON. Ensures toJSON conversion consistency across all functions.
 #'
+#' @param pretty (`logical`)\cr
+#'   Whether to indent the JSON output.
+#' @noRd
 getDefaultToJSONargs <- function(pretty = FALSE) {
   return(
     list(
@@ -165,4 +189,5 @@ getDefaultFromJSONargs <- function() {
 #' @param b The fallback value to return if `a` is `NULL`.
 #' 
 #' @return The value of `a` if it is not `NULL`, otherwise the value of `b`.
+#' @noRd
 `%||%` <- function(a, b) if (!is.null(a)) a else b

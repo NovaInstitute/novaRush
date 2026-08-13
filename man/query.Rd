@@ -48,6 +48,7 @@ structure containing all the information necessary to interact with the
 Fluree instance via \code{sendQuery()}.
 }
 \examples{
+\dontrun{
 # Existing data:
 #  [
 #    { "@id": "freddy", "name": "Freddy" },
@@ -70,5 +71,6 @@ queryInstance <- query(exampleQuery)
 
 queryList <- fromJSON(exampleQuery, simplifyDataFrame = FALSE, simplifyMatrix = FALSE, simplifyVector = FALSE)
 queryInstance <- query(queryList)
+}
 
 }

@@ -76,11 +76,13 @@ addToContext = function(currentConfig, context) {
 #' If both contexts are strings, they are combined into a list.
 #' 
 #' @examples
+#' \dontrun{
 #' mergeContexts("https://example.org/context1", "https://example.org/context2")
 #' mergeContexts("https://example.org/context1", list("https://example.org/context2"))
 #' mergeContexts(list("https://example.org/context1"), list("https://example.org/context2"))
 #' mergeContexts(list("https://example.org/context1"), list(a = "https://example.org/context2"))
 #' 
+#' }
 mergeContexts <- function(context1, context2) {
   if (is.character(context1) && length(context1) == 1) {
     if (is.character(context2) && length(context2) == 1) {

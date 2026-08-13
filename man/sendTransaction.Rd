@@ -18,7 +18,9 @@ This function makes use of \code{httr} package to send the configured transactio
 to the Fluree \verb{/transact} API endpoint.
 }
 \examples{
+\dontrun{
 transactionInstance <- transact(exampleData)
 sendTransaction(transactionInstance)
+}
 
 }

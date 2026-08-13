@@ -6,6 +6,9 @@
 \usage{
 Update(...)
 }
+\arguments{
+\item{...}{Passed to \code{\link[=transact]{transact()}}.}
+}
 \description{
 Convenience wrapper: configures and sends an update transaction to the
 Fluree v4 \verb{/update} endpoint. The transaction must contain a \code{where} clause
