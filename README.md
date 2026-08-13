@@ -165,6 +165,54 @@ Rscript -e 'devtools::test(filter = "live-named-graph", reporter = "summary")'
 The test writes uniquely named graphs and leaves them available for inspection.
 Named-graph deletion is intentionally not part of this API yet.
 
+## Native vectors and exact similarity
+
+`novaRush` stores embeddings with Fluree's native `@vector` datatype and uses
+exact inline similarity functions. Callers supply all property IRIs so the
+client does not impose a tagging ontology:
+
+```r
+embedding_graph <- "https://data.nova.org/graphs/embeddings/model-v1"
+embedding_property <- "https://data.nova.org/tagging/embedding"
+
+upsertVectors(
+  records = embedding_records,
+  graph = embedding_graph,
+  vector_property = embedding_property,
+  model = "text-embedding-3-small",
+  model_property = "https://data.nova.org/tagging/embeddingModel",
+  dimension_property = "https://data.nova.org/tagging/embeddingDimension",
+  config = config,
+  branch = "main"
+)
+
+nearest <- searchVectors(
+  graph = embedding_graph,
+  vector_property = embedding_property,
+  query_vector = query_embedding,
+  metric = "cosine",
+  limit = 10,
+  config = config,
+  branch = "main"
+)
+```
+
+Vectors must be numeric, finite, non-empty, and consistently dimensioned.
+Fluree stores them as 32-bit floating-point values. Query literals use the full
+`f:embeddingVector` datatype because `@vector` is transaction shorthand.
+
+Run the live vector test with:
+
+```bash
+FLUREE_LIVE_TEST=true \
+FLUREE_BASE_URL=http://localhost:8090 \
+FLUREE_TEST_LEDGER=novarush-integration \
+Rscript -e 'devtools::test(filter = "live-vector", reporter = "summary")'
+```
+
+HNSW indexing remains a future performance optimization. The public search API
+is intentionally independent of the eventual indexed-search implementation.
+
 ## Usage
 
 Below follows a quick walk through of the functions included in this packages.
@@ -410,6 +458,5 @@ exampleQuery <- '{
 Query(config = conf, ledger = 'demo', exampleQuery, signQuery = FALSE)
 
 ```
-
 
 

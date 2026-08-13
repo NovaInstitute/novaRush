@@ -216,6 +216,46 @@ FlureeInstance <-  R6::R6Class("FlureeInstance",
     },
 
     #' @description
+    #' Store vector-bearing JSON-LD resources in a named graph.
+    #' @param records (`list`)
+    #'   JSON-LD resources containing raw numeric embeddings.
+    #' @param graph (`character`)
+    #'   Absolute named-graph IRI.
+    #' @param vector_property (`character`)
+    #'   Absolute embedding property IRI.
+    #' @param branch (`character`)
+    #'   Target branch.
+    #' @param ... Additional arguments passed to [upsertVectors()].
+    #' @return The parsed Fluree transaction receipt.
+    upsertVectors = function(records, graph, vector_property,
+                             branch = self$config$branch, ...) {
+      novaRush:::upsertVectors(
+        records, graph, vector_property, self$config,
+        branch = branch, ...
+      )
+    },
+
+    #' @description
+    #' Search vectors in a named graph using exact similarity.
+    #' @param graph (`character`)
+    #'   Absolute named-graph IRI.
+    #' @param vector_property (`character`)
+    #'   Absolute embedding property IRI.
+    #' @param query_vector (`numeric`)
+    #'   Query embedding.
+    #' @param branch (`character`)
+    #'   Source branch.
+    #' @param ... Additional arguments passed to [searchVectors()].
+    #' @return Parsed similarity results.
+    searchVectors = function(graph, vector_property, query_vector,
+                             branch = self$config$branch, ...) {
+      novaRush:::searchVectors(
+        graph, vector_property, query_vector, self$config,
+        branch = branch, ...
+      )
+    },
+
+    #' @description
     #' Create a new instance of the QueryInstance class.
     #'
     #' @param query (`list()`)\cr
