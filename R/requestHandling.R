@@ -8,6 +8,94 @@ fluree_trace_payload <- function(x) {
   x
 }
 
+.fluree_trace_level <- function() {
+  value <- getOption("novaRush.trace", Sys.getenv("NOVARUSH_TRACE", "off"))
+  value <- tolower(as.character(value %||% "off")[[1L]])
+  aliases <- c("false" = "off", "0" = "off", "true" = "summary",
+               "1" = "summary", "full" = "payloads")
+  if (value %in% names(aliases)) value <- aliases[[value]]
+  if (!value %in% c("off", "summary", "payloads")) {
+    warning(
+      "Unknown novaRush trace level '", value,
+      "'; expected off, summary, or payloads. Tracing is disabled.",
+      call. = FALSE
+    )
+    value <- "off"
+  }
+  value
+}
+
+.fluree_trace_counter <- local({
+  counter <- 0L
+  function() {
+    counter <<- counter + 1L
+    counter
+  }
+})
+
+.fluree_trace_stem <- function(operation) {
+  safe <- gsub("[^A-Za-z0-9._-]+", "-", tolower(operation))
+  safe <- gsub("(^-+|-+$)", "", safe)
+  paste0(
+    format(Sys.time(), "%Y%m%dT%H%M%OS3"), "-p", Sys.getpid(), "-",
+    sprintf("%04d", .fluree_trace_counter()), "-", safe
+  )
+}
+
+.fluree_trace_start <- function(level, operation, method, url, requestBody) {
+  if (identical(level, "off")) return(NULL)
+  bytes <- if (is.null(requestBody)) 0L else nchar(requestBody, type = "bytes")
+  message(
+    "[novaRush] ", operation, " | ", method, " ", url,
+    " | request ", format(bytes, big.mark = ","), " bytes"
+  )
+  if (!identical(level, "payloads")) return(NULL)
+  directory <- getOption(
+    "novaRush.trace_dir", Sys.getenv("NOVARUSH_TRACE_DIR", "")
+  )
+  if (!length(directory) || is.na(directory) || !nzchar(directory)) {
+    warning(
+      "NOVARUSH_TRACE=payloads requires NOVARUSH_TRACE_DIR; only summary ",
+      "output will be produced.", call. = FALSE
+    )
+    return(NULL)
+  }
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  if (!dir.exists(directory)) {
+    warning("Could not create novaRush trace directory: ", directory,
+            call. = FALSE)
+    return(NULL)
+  }
+  stem <- file.path(directory, .fluree_trace_stem(operation))
+  writeLines(requestBody %||% "", paste0(stem, ".request.json"),
+             useBytes = TRUE)
+  metadata <- list(
+    operation = operation, method = method, url = url,
+    request_bytes = bytes, request_file = paste0(basename(stem), ".request.json")
+  )
+  jsonlite::write_json(metadata, paste0(stem, ".meta.json"),
+                       auto_unbox = TRUE, pretty = TRUE)
+  message("[novaRush] request payload: ", paste0(stem, ".request.json"))
+  stem
+}
+
+.fluree_trace_finish <- function(level, stem, operation, status, responseText,
+                                 elapsed) {
+  if (identical(level, "off")) return(invisible(NULL))
+  bytes <- nchar(responseText %||% "", type = "bytes")
+  message(
+    "[novaRush] ", operation, " | HTTP ", status, " | response ",
+    format(bytes, big.mark = ","), " bytes | ",
+    format(round(elapsed, 3), nsmall = 3), " s"
+  )
+  if (identical(level, "payloads") && !is.null(stem)) {
+    response_file <- paste0(stem, ".response.json")
+    writeLines(responseText %||% "", response_file, useBytes = TRUE)
+    message("[novaRush] response payload: ", response_file)
+  }
+  invisible(NULL)
+}
+
 .fluree_request_condition <- function(message, operation, url, method,
                                       status = NULL, response = NULL,
                                       parent = NULL, uncertain = FALSE) {
@@ -88,6 +176,12 @@ fluree_request <- function(config, endpoint, method = "GET", body = NULL,
     )
   }
 
+  traceLevel <- .fluree_trace_level()
+  traceStem <- .fluree_trace_start(
+    traceLevel, operation, method, params$url, requestBody
+  )
+  started <- proc.time()[["elapsed"]]
+
   response <- tryCatch(
     .fluree_perform_request(
       method = method,
@@ -105,6 +199,10 @@ fluree_request <- function(config, endpoint, method = "GET", body = NULL,
 
   status <- response$status
   responseText <- response$text
+  .fluree_trace_finish(
+    traceLevel, traceStem, operation, status, responseText,
+    proc.time()[["elapsed"]] - started
+  )
   if (status >= 400L && !status %in% allowStatus) {
     summary <- if (nzchar(responseText)) substr(responseText, 1L, 2000L) else ""
     stop(.fluree_request_condition(

@@ -27,7 +27,6 @@ Imports:
     purrr,
     R6,
     rlang,
-    semanticModelR (>= 0.2.0),
     stats,
     tibble,
     utils
@@ -38,9 +37,8 @@ Depends:
 Suggests:
     knitr,
     rmarkdown,
+    semanticModelR (>= 0.2.0),
     testthat (>= 3.0.0),
     tidygraph
-Remotes:
-    NovaInstitute/semanticModelR
 VignetteBuilder: knitr
 Config/testthat/edition: 3

@@ -39,6 +39,12 @@ fluree_graph <- function(con,
                          limit = NULL,
                          query = NULL,
                          typed = FALSE) {
+  if (!requireNamespace("semanticModelR", quietly = TRUE)) {
+    stop(
+      "fluree_graph() requires the optional semanticModelR package.",
+      call. = FALSE
+    )
+  }
   check_connection(con)
 
   q <- query %||% default_graph_query(con, subject_type, limit)

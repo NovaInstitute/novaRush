@@ -93,6 +93,10 @@ with_ledger <- function(con, body) {
 # Everything becomes a JSON-LD @graph list
 as_jsonld_payload <- function(data, object_type = NULL) {
   if (inherits(data, "tbl_graph")) {
+    if (!requireNamespace("semanticModelR", quietly = TRUE)) {
+      stop("Writing tbl_graph objects requires the optional semanticModelR package.",
+           call. = FALSE)
+    }
     data <- semanticModelR::as_triples(data)
   }
 
@@ -103,6 +107,10 @@ as_jsonld_payload <- function(data, object_type = NULL) {
            "per observation, or semanticModelR::pivotLongerSPO() when you have a ",
            "node and predicate specification. Minting IRIs is a modelling decision, ",
            "so it is not done for you.", call. = FALSE)
+    }
+    if (!requireNamespace("semanticModelR", quietly = TRUE)) {
+      stop("Writing triple tables requires the optional semanticModelR package.",
+           call. = FALSE)
     }
     triples <- semanticModelR::as_rdf_triples(data, object_type)
     graph <- semanticModelR::triples_to_jsonld(triples)[["@graph"]]
