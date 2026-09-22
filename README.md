@@ -27,21 +27,19 @@ Full walkthrough: `vignette("tidy_fluree")`.
 
 ## Install
 
-`semanticModelR` (>= 0.2.0) is required and is not on CRAN, so install with `remotes`
-(or `pak`, or `devtools`). Those read the `Remotes:` field in `DESCRIPTION` and pull it
-in for you:
+The core Fluree client has no non-CRAN dependency and can be installed directly:
 
 ```r
-# install.packages("remotes")
-remotes::install_github("NovaInstitute/novaRush")
+remotes::install_local("/path/to/novaRush")
 ```
 
-`install.packages()`, `R CMD INSTALL` and a bare `renv::restore()` all ignore
-`Remotes:`, so they fail with `there is no package called 'semanticModelR'`. If you hit
-that, or you already have a copy older than 0.2.0, install the dependency first:
+`semanticModelR` is optional. It is only needed for legacy RDF modelling helpers,
+triple-table conversion, and `fluree_graph()`. The JSON-LD, named-graph, vector,
+branch, query, and transaction APIs work without it. If you need those optional
+features, install a compatible local checkout of `semanticModelR` first:
 
 ```r
-remotes::install_github("NovaInstitute/semanticModelR")
+install.packages("/path/to/semanticModelR", repos = NULL, type = "source")
 ```
 
 ## Reading

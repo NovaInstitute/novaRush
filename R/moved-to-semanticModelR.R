@@ -11,6 +11,13 @@ warn_moved <- function(name) {
             "in a future version. Use semanticModelR::", name, "() instead.",
             call. = FALSE)
   }
+  if (!requireNamespace("semanticModelR", quietly = TRUE)) {
+    stop(
+      name, "() requires the optional semanticModelR package. Install it to use ",
+      "legacy RDF modelling helpers.",
+      call. = FALSE
+    )
+  }
   invisible(NULL)
 }
 
