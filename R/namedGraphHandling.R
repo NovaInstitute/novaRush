@@ -95,6 +95,46 @@ upsertNamedGraph <- function(document, graph, config,
   )
 }
 
+#' Apply an exact delete/insert update to a named graph
+#'
+#' This helper performs no domain interpretation. Callers provide the exact
+#' JSON-LD resources to retract and insert. At least one side must be supplied.
+#'
+#' @param delete Optional JSON-LD document, resource, or resource list to
+#'   retract from `graph`.
+#' @param insert Optional JSON-LD document, resource, or resource list to add
+#'   to `graph`.
+#' @param graph Absolute named-graph IRI.
+#' @param config Fluree configuration created by [setConfig()].
+#' @param branch Target branch. Defaults to `config$branch`.
+#'
+#' @return The parsed Fluree transaction receipt.
+#' @export
+updateNamedGraph <- function(delete = NULL, insert = NULL, graph, config,
+                             branch = config$branch) {
+  validateGraphIri(graph)
+  validateBranchName(branch)
+  if (is.null(delete) && is.null(insert)) {
+    stop("Provide at least one of `delete` or `insert`.", call. = FALSE)
+  }
+  body <- list()
+  if (!is.null(delete)) {
+    body$delete <- namedGraphDocument(delete, graph)[["@graph"]]
+  }
+  if (!is.null(insert)) {
+    body$insert <- namedGraphDocument(insert, graph)[["@graph"]]
+  }
+  fluree_request(
+    config,
+    endpoint = "update",
+    method = "POST",
+    body = body,
+    query = list(ledger = flureeLedgerRef(config$ledger, branch)),
+    operation = paste0("update named graph ", graph),
+    write = TRUE
+  )
+}
+
 #' Query one named graph
 #'
 #' Restricts a JSON-LD query to one user-defined graph within a selected ledger
