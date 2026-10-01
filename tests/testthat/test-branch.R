@@ -90,3 +90,77 @@ test_that("R6 branch methods use the functional API", {
     .package = "novaRush"
   ))
 })
+
+test_that("branchInfo and branchHead expose the selected commit", {
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  captured <- NULL
+  info <- testthat::with_mocked_bindings(
+    branchInfo(config, "review"),
+    fluree_ledger_info = function(config, branch) {
+      captured <<- branch
+      list(branch = branch, commit = list(id = "fluree:commit:sha256:abc"))
+    },
+    .package = "novaRush"
+  )
+  expect_equal(captured, "review")
+  expect_equal(info$branch, "review")
+  expect_equal(testthat::with_mocked_bindings(
+    branchHead(config, "review"),
+    branchInfo = function(...) info,
+    .package = "novaRush"
+  ), "fluree:commit:sha256:abc")
+})
+
+test_that("branchHead rejects responses without a commit identity", {
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  expect_error(testthat::with_mocked_bindings(
+    branchHead(config),
+    branchInfo = function(...) list(commit = list()),
+    .package = "novaRush"
+  ), "commit identity")
+})
+
+test_that("mergeBranch checks the expected target and sends a merge", {
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  captured <- NULL
+  result <- testthat::with_mocked_bindings(
+    mergeBranch(config, "review-a", expected_target_head = "head-1"),
+    branchHead = function(config, branch) "head-1",
+    fluree_request = function(config, endpoint, method, body, operation,
+                              allowStatus, returnResponse, write) {
+      captured <<- list(endpoint = endpoint, method = method, body = body,
+                        allowStatus = allowStatus, write = write)
+      list(status = 200L, body = list(target = "main", commit = "head-2"))
+    },
+    .package = "novaRush"
+  )
+  expect_equal(captured$endpoint, "merge")
+  expect_equal(captured$method, "POST")
+  expect_equal(captured$body,
+               list(ledger = "demo", source = "review-a", target = "main"))
+  expect_equal(captured$allowStatus, 409L)
+  expect_true(captured$write)
+  expect_equal(result$commit, "head-2")
+})
+
+test_that("mergeBranch rejects stale targets before submitting", {
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  error <- tryCatch(testthat::with_mocked_bindings(
+    mergeBranch(config, "review-a", expected_target_head = "head-1"),
+    branchHead = function(...) "head-2",
+    .package = "novaRush"
+  ), error = identity)
+  expect_s3_class(error, "fluree_branch_conflict")
+  expect_equal(error$actual_target_head, "head-2")
+})
+
+test_that("mergeBranch turns HTTP 409 into a branch conflict", {
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  error <- tryCatch(testthat::with_mocked_bindings(
+    mergeBranch(config, "review-a"),
+    fluree_request = function(...) list(status = 409L, body = list(error = "conflict")),
+    .package = "novaRush"
+  ), error = identity)
+  expect_s3_class(error, "fluree_branch_conflict")
+  expect_equal(error$response$error, "conflict")
+})

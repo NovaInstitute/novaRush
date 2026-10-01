@@ -129,3 +129,38 @@ test_that("R6 named-graph methods forward configuration", {
   expect_equal(result$branch, "candidate")
   expect_equal(result$ledger, "demo")
 })
+
+test_that("updateNamedGraph places exact deletes and inserts", {
+  captured <- NULL
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  graph <- "https://example.org/graph/current"
+  result <- testthat::with_mocked_bindings(
+    updateNamedGraph(
+      delete = list("@id" = "https://example.org/old",
+                    "https://schema.org/name" = "Old"),
+      insert = list("@id" = "https://example.org/new",
+                    "https://schema.org/name" = "New"),
+      graph = graph, config = config, branch = "review"
+    ),
+    fluree_request = function(config, endpoint, method, body, query,
+                              operation, write) {
+      captured <<- list(endpoint = endpoint, method = method, body = body,
+                        query = query, operation = operation, write = write)
+      list(t = 4L)
+    },
+    .package = "novaRush"
+  )
+  expect_equal(result$t, 4L)
+  expect_equal(captured$endpoint, "update")
+  expect_equal(captured$query$ledger, "demo:review")
+  expect_equal(captured$body$delete[[1]][["@graph"]], graph)
+  expect_equal(captured$body$insert[[1]][["@graph"]], graph)
+  expect_true(captured$write)
+})
+
+test_that("updateNamedGraph requires a change", {
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  expect_error(updateNamedGraph(
+    graph = "https://example.org/graph/current", config = config
+  ), "at least one")
+})

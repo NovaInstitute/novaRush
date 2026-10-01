@@ -49,3 +49,30 @@ test_that("live Fluree branch inherits and isolates knowledge", {
   expect_true("candidate-only" %in% live_query_values(candidate_result))
   expect_false("candidate-only" %in% live_query_values(main_result))
 })
+
+test_that("live Fluree branch merges into an unchanged main", {
+  skip_if_no_live_fluree()
+  config <- live_fluree_config()
+  createLedger(config)
+  base_head <- branchHead(config, "main")
+  branch <- live_fluree_branch_name("merge")
+  createBranch(config, branch = branch, from = "main")
+  graph <- live_fluree_graph_iri("merge")
+  marker <- paste0(graph, "/published")
+  upsertNamedGraph(list(
+    "@id" = marker,
+    "https://schema.org/name" = "merged"
+  ), graph, config, branch = branch)
+
+  expect_true(is.list(mergeBranch(
+    config, source = branch, target = "main",
+    expected_target_head = base_head
+  )))
+  result <- queryNamedGraph(list(
+    select = list("?value"),
+    where = list(list(
+      "@id" = marker, "https://schema.org/name" = "?value"
+    ))
+  ), graph, config, branch = "main")
+  expect_true("merged" %in% live_query_values(result))
+})
