@@ -91,3 +91,117 @@ createBranch <- function(config, branch, from = config$branch,
   }
   response$body
 }
+
+#' Inspect a Fluree branch
+#'
+#' @param config Fluree configuration created by [setConfig()].
+#' @param branch Branch to inspect. Defaults to `config$branch`.
+#'
+#' @return The parsed Fluree ledger information for the selected branch.
+#' @export
+branchInfo <- function(config, branch = config$branch) {
+  validateBranchName(branch)
+  fluree_ledger_info(config, branch = branch)
+}
+
+#' Read the current commit identity of a Fluree branch
+#'
+#' @param config Fluree configuration created by [setConfig()].
+#' @param branch Branch to inspect. Defaults to `config$branch`.
+#'
+#' @return A single commit identity string.
+#' @export
+branchHead <- function(config, branch = config$branch) {
+  info <- branchInfo(config, branch)
+  commit <- info$commit %||% list()
+  head <- commit$id %||% commit$hash %||% commit$address
+  if (is.null(head) || length(head) != 1L || is.na(head) || !nzchar(head)) {
+    stop("Fluree did not return a commit identity for branch '", branch,
+         "'.", call. = FALSE)
+  }
+  as.character(head)
+}
+
+#' Merge one Fluree branch into another
+#'
+#' The optional expected target head protects callers from publishing work
+#' prepared against an older target. Fluree still performs its own atomic
+#' branch conflict check when the merge is submitted.
+#'
+#' @param config Fluree configuration created by [setConfig()].
+#' @param source Source branch containing the prepared changes.
+#' @param target Target branch. Defaults to `"main"`.
+#' @param expected_target_head Optional commit identity previously read with
+#'   [branchHead()].
+#' @param strategy Optional server-supported conflict strategy. Omit for the
+#'   server default.
+#'
+#' @return The parsed Fluree merge response.
+#' @export
+mergeBranch <- function(config, source, target = "main",
+                        expected_target_head = NULL, strategy = NULL) {
+  validateBranchName(source)
+  validateBranchName(target)
+  if (identical(source, target)) {
+    stop("A branch cannot be merged into itself.", call. = FALSE)
+  }
+  if (!is.null(expected_target_head)) {
+    expected_target_head <- as.character(expected_target_head)
+    if (length(expected_target_head) != 1L || is.na(expected_target_head) ||
+        !nzchar(expected_target_head)) {
+      stop("`expected_target_head` must be one non-empty string.",
+           call. = FALSE)
+    }
+    actual <- branchHead(config, target)
+    if (!identical(actual, expected_target_head)) {
+      stop(structure(
+        list(
+          message = paste0(
+            "Cannot merge stale branch '", source, "': target branch '",
+            target, "' advanced from ", expected_target_head, " to ", actual,
+            "."
+          ),
+          call = NULL,
+          source = source,
+          target = target,
+          expected_target_head = expected_target_head,
+          actual_target_head = actual
+        ),
+        class = c("fluree_branch_conflict", "error", "condition")
+      ))
+    }
+  }
+  if (!is.null(strategy) &&
+      (length(strategy) != 1L || is.na(strategy) || !nzchar(strategy))) {
+    stop("`strategy` must be NULL or one non-empty string.", call. = FALSE)
+  }
+  body <- list(ledger = config$ledger, source = source, target = target)
+  if (!is.null(strategy)) body$strategy <- strategy
+  response <- fluree_request(
+    config,
+    endpoint = "merge",
+    method = "POST",
+    body = body,
+    operation = paste0("merge branch ", config$ledger, ":", source,
+                       " into ", target),
+    allowStatus = 409L,
+    returnResponse = TRUE,
+    write = TRUE
+  )
+  if (identical(response$status, 409L)) {
+    stop(structure(
+      list(
+        message = paste0(
+          "Fluree rejected the merge of '", source, "' into '", target,
+          "' because the branches conflict."
+        ),
+        call = NULL,
+        source = source,
+        target = target,
+        response = response$body
+      ),
+      class = c("fluree_branch_conflict", "error", "condition")
+    ))
+  }
+  response$body
+}
