@@ -95,22 +95,27 @@ upsertNamedGraph <- function(document, graph, config,
   )
 }
 
-#' Apply an exact delete/insert update to a named graph
+#' Apply a delete/insert update to a named graph
 #'
-#' This helper performs no domain interpretation. Callers provide the exact
-#' JSON-LD resources to retract and insert. At least one side must be supplied.
+#' This helper performs no domain interpretation. Callers provide JSON-LD
+#' resources to retract and insert. When `where` is supplied, variables bound
+#' by that pattern can be used in `delete` and `insert`; the whole update is
+#' scoped to `graph`.
 #'
 #' @param delete Optional JSON-LD document, resource, or resource list to
 #'   retract from `graph`.
 #' @param insert Optional JSON-LD document, resource, or resource list to add
 #'   to `graph`.
+#' @param where Optional JSON-LD pattern, resource, or resource list used to
+#'   bind variables for a conditional update in `graph`.
 #' @param graph Absolute named-graph IRI.
 #' @param config Fluree configuration created by [setConfig()].
 #' @param branch Target branch. Defaults to `config$branch`.
 #'
 #' @return The parsed Fluree transaction receipt.
 #' @export
-updateNamedGraph <- function(delete = NULL, insert = NULL, graph, config,
+updateNamedGraph <- function(delete = NULL, insert = NULL, where = NULL,
+                             graph, config,
                              branch = config$branch) {
   validateGraphIri(graph)
   validateBranchName(branch)
@@ -118,11 +123,23 @@ updateNamedGraph <- function(delete = NULL, insert = NULL, graph, config,
     stop("Provide at least one of `delete` or `insert`.", call. = FALSE)
   }
   body <- list()
+  if (!is.null(where)) {
+    body$graph <- graph
+    body$where <- .jsonld_document_parts(where)$nodes
+  }
   if (!is.null(delete)) {
-    body$delete <- namedGraphDocument(delete, graph)[["@graph"]]
+    body$delete <- if (is.null(where)) {
+      namedGraphDocument(delete, graph)[["@graph"]]
+    } else {
+      .jsonld_document_parts(delete)$nodes
+    }
   }
   if (!is.null(insert)) {
-    body$insert <- namedGraphDocument(insert, graph)[["@graph"]]
+    body$insert <- if (is.null(where)) {
+      namedGraphDocument(insert, graph)[["@graph"]]
+    } else {
+      .jsonld_document_parts(insert)$nodes
+    }
   }
   fluree_request(
     config,
@@ -131,6 +148,38 @@ updateNamedGraph <- function(delete = NULL, insert = NULL, graph, config,
     body = body,
     query = list(ledger = flureeLedgerRef(config$ledger, branch)),
     operation = paste0("update named graph ", graph),
+    write = TRUE
+  )
+}
+
+#' Execute a SPARQL update on a Fluree branch
+#'
+#' Sends a raw SPARQL 1.1 update to Fluree's update endpoint. This is useful
+#' for graph-scoped wildcard deletion where the stored RDF object's lexical
+#' representation or datatype must be preserved by variable binding.
+#'
+#' @param update One non-empty SPARQL update string.
+#' @param config Fluree configuration created by [setConfig()].
+#' @param branch Target branch. Defaults to `config$branch`.
+#' @param operation Human-readable operation name used in errors.
+#'
+#' @return The parsed Fluree transaction receipt.
+#' @export
+sparqlUpdate <- function(update, config, branch = config$branch,
+                         operation = "SPARQL update") {
+  validateBranchName(branch)
+  if (length(update) != 1L || is.na(update) || !nzchar(trimws(update))) {
+    stop("`update` must be one non-empty SPARQL update string.",
+         call. = FALSE)
+  }
+  fluree_request(
+    config,
+    endpoint = "update",
+    method = "POST",
+    body = update,
+    query = list(ledger = flureeLedgerRef(config$ledger, branch)),
+    contentType = "application/sparql-update",
+    operation = operation,
     write = TRUE
   )
 }
