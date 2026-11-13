@@ -7,6 +7,7 @@
 updateNamedGraph(
   delete = NULL,
   insert = NULL,
+  where = NULL,
   graph,
   config,
   branch = config$branch
@@ -19,6 +20,9 @@ retract from \code{graph}.}
 \item{insert}{Optional JSON-LD document, resource, or resource list to add
 to \code{graph}.}
 
+\item{where}{Optional JSON-LD pattern, resource, or resource list used to
+bind variables for a conditional update in \code{graph}.}
+
 \item{graph}{Absolute named-graph IRI.}
 
 \item{config}{Fluree configuration created by \code{\link[=setConfig]{setConfig()}}.}
@@ -29,6 +33,8 @@ to \code{graph}.}
 The parsed Fluree transaction receipt.
 }
 \description{
-This helper performs no domain interpretation. Callers provide the exact
-JSON-LD resources to retract and insert. At least one side must be supplied.
+This helper performs no domain interpretation. Callers provide JSON-LD
+resources to retract and insert. When \code{where} is supplied, variables bound
+by that pattern can be used in \code{delete} and \code{insert}; the whole update
+is scoped to \code{graph}.
 }

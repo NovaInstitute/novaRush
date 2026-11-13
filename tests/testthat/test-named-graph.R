@@ -71,6 +71,94 @@ test_that("upsertNamedGraph targets the selected branch", {
   expect_true(captured$write)
 })
 
+test_that("updateNamedGraph places exact deletes and inserts", {
+  captured <- NULL
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  graph <- "https://example.org/graph/current"
+  result <- testthat::with_mocked_bindings(
+    updateNamedGraph(
+      delete = list("@id" = "https://example.org/old",
+                    "https://schema.org/name" = "Old"),
+      insert = list("@id" = "https://example.org/new",
+                    "https://schema.org/name" = "New"),
+      graph = graph, config = config, branch = "review"
+    ),
+    fluree_request = function(config, endpoint, method, body, query,
+                              operation, write) {
+      captured <<- list(endpoint = endpoint, method = method, body = body,
+                        query = query, operation = operation, write = write)
+      list(t = 4L)
+    },
+    .package = "novaRush"
+  )
+  expect_equal(result$t, 4L)
+  expect_equal(captured$endpoint, "update")
+  expect_equal(captured$query$ledger, "demo:review")
+  expect_equal(captured$body$delete[[1]][["@graph"]], graph)
+  expect_equal(captured$body$insert[[1]][["@graph"]], graph)
+  expect_true(captured$write)
+})
+
+test_that("updateNamedGraph scopes conditional updates to the named graph", {
+  captured <- NULL
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  graph <- "https://example.org/graph/current"
+  property <- "https://example.org/recordPayload"
+  deletion <- list("@id" = "https://example.org/entity")
+  deletion[[property]] <- list("@variable" = "?oldPayload")
+  testthat::with_mocked_bindings(
+    updateNamedGraph(
+      where = deletion, delete = deletion, graph = graph, config = config,
+      branch = "review"
+    ),
+    fluree_request = function(config, endpoint, method, body, query,
+                              operation, write) {
+      captured <<- body
+      list(t = 5L)
+    },
+    .package = "novaRush"
+  )
+  expect_identical(captured$graph, graph)
+  expect_identical(captured$where[[1]][[property]][["@variable"]],
+                   "?oldPayload")
+  expect_identical(captured$delete[[1]][[property]][["@variable"]],
+                   "?oldPayload")
+  expect_null(captured$delete[[1]][["@graph"]])
+})
+
+test_that("updateNamedGraph requires a change", {
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  expect_error(updateNamedGraph(
+    graph = "https://example.org/graph/current", config = config
+  ), "at least one")
+})
+
+test_that("sparqlUpdate sends raw SPARQL to the selected branch", {
+  captured <- NULL
+  config <- setConfig(baseUrl = "http://fluree.test", ledger = "demo")
+  update <- paste(
+    "DELETE { GRAPH <https://example.org/g> { ?s ?p ?o } }",
+    "WHERE { GRAPH <https://example.org/g> { ?s ?p ?o } }"
+  )
+  result <- testthat::with_mocked_bindings(
+    sparqlUpdate(update, config, branch = "review"),
+    fluree_request = function(config, endpoint, method, body, query,
+                              contentType, operation, write) {
+      captured <<- list(endpoint = endpoint, method = method, body = body,
+                        query = query, contentType = contentType,
+                        operation = operation, write = write)
+      list(t = 6L)
+    },
+    .package = "novaRush"
+  )
+  expect_equal(result$t, 6L)
+  expect_identical(captured$endpoint, "update")
+  expect_identical(captured$body, update)
+  expect_identical(captured$query$ledger, "demo:review")
+  expect_identical(captured$contentType, "application/sparql-update")
+  expect_true(captured$write)
+})
+
 test_that("queryNamedGraph constructs a structured graph source", {
   captured <- NULL
   config <- setConfig(
